@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "canvas": "^3.2.0",
+    "jsbarcode": "^3.12.1",
+    "quagga": "^0.12.1",
+    "react-barcode-reader": "^0.0.2"
+  }
+}
