@@ -39,6 +39,34 @@ export default function RegistrarMovimientoPage() {
 
   }, []);
 
+  const fetchHerramientaByBarcode = async (barcode) => {
+    setLoading(true);
+    setError('');
+    try{
+      const response = await fetch('/api/herramientas/buscar-por-codigo-barras/${barcode.toUpperCase()}');
+      if(!response.ok) {
+        throw new Error('Herramienta no encontrada con código ${barcode}');
+      }
+      const herramienta = await response.json();
+
+      setSelectedHerramienta(herramienta);
+      setFormData(prev => ({
+        ...prev,
+        herramienta: herramienta._id,
+        barcode: barcode.toUpperCase()
+      }));
+
+      console.log('Herramienta encontrada:', herramienta);
+    }catch (err) {
+      setError(err.message);
+      setSelectedHerramienta(null);
+      setFormData(prev => ({ ...prev, herramienta: '', barcode: '' }));
+      console.error('Error al buscar herramienta:',err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const handleChange = e => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -51,31 +79,37 @@ export default function RegistrarMovimientoPage() {
     }
   };
 
-  const handleBarcodeDetected = async (barcode) => {
-    setError(null);
-    setShowScanner(false);
-    
-    try {
-      // Buscar herramienta por código de barras
-      const res = await api.get(`/barcode/buscar/${barcode}`);
-      const herramienta = res.data;
-      
-      setFormData(prev => ({
-        ...prev,
-        herramienta: herramienta._id,
-        barcode: barcode
-      }));
-      setSelectedHerramienta(herramienta);
-      alert(`Herramienta encontrada: ${herramienta.nombre}`);
-    } catch (err) {
-      setError('No se encontró ninguna herramienta con este código de barras');
-      console.error('Error al buscar por código de barras:', err);
+  const handleBarcodeDetected = (barcode) => {
+    if (barcode && barcode.length === 8) { // Validación básica: 8 chars
+      fetchHerramientaByBarcode(barcode);
+      setShowScanner(false); // Cerrar escáner después de detectar
+    } else {
+      setError('Código de barras inválido. Debe tener 8 caracteres hexadecimales (ej. E317FD89)');
+    }
+  };
+
+  const handleBarcodeManualChange = e => {
+    const barcode = e.target.value.toUpperCase();
+    setFormData(prev => ({ ...prev, barcode }));
+
+    if (barcode.length === 10 && /^[A-F0-9]{10}$/i.test(barcode)) {
+
+      fetchHerramientaByBarcode(barcode);
+    } else if (barcode.length > 0) {
+      setError('Código debe ser 8 caracteres hexadecimales (A-F,0-9)');
+      setSelectedHerramienta(null);
+      setFormData(prev => ({ ...prev, herramienta: '' }));
+    } else {
+      setError('');
+      setSelectedHerramienta(null);
+      setFormData(prev => ({ ...prev, herramienta: '' }));
     }
   };
 
   const handleSubmit = async e => {
     e.preventDefault();
-    setError(null);
+    setLoading(true);
+    setError('');
 
     if (!formData.herramienta && !formData.barcode) {
       setError('Debe seleccionar una herramienta o escanear un código de barras');
@@ -103,6 +137,7 @@ export default function RegistrarMovimientoPage() {
         delete payload.herramienta;
       }
       
+      console.log('Payload enviado a /movimientos:', payload);
       await api.post('/movimientos', payload);
       alert('Movimiento registrado con éxito');
       navigate('/movimientos');
@@ -136,6 +171,20 @@ export default function RegistrarMovimientoPage() {
             )}
           </div>
         )}
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">Ingresar código de barras manualmente</label>
+          <input
+            type="text"
+            placeholder='Ej.E317FD89'
+            value={formData.barcode}
+            onChange={handleBarcodeManualChange}
+            maxLength="8"
+            className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500"
+            disabled={loading}
+          />
+          {loading && <p className="text-sm text-blue-600 mt-1">Buscando herramienta...</p>}
+        </div>
 
         <div className="flex space-x-2 mb-4">
           <button

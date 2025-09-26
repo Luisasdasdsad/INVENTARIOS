@@ -3,18 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../services/api.js';
 
 export default function MovimientosList() {
+  // ESTADOS (incluyendo pdfLoading y NUEVO: filtros)
   const [movimientos, setMovimientos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [filtros, setFiltros] = useState({ tipo: '', fechaDesde: '', fechaHasta: '' }); // NUEVO: Estado para filtros
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchMovimientos = async () => {
       try {
+        console.log('Iniciando fetch de movimientos...'); // DEBUG
         const res = await api.get('/movimientos');
-        setMovimientos(res.data);
+        console.log('Movimientos cargados:', res.data ? res.data.length : 0); // DEBUG
+        setMovimientos(res.data || []);
       } catch (err) {
-        setError('Error al cargar movimientos');
+        console.error('Error en fetchMovimientos:', err); // DEBUG
+        setError('Error al cargar movimientos: ' + (err.message || 'Desconocido'));
       } finally {
         setLoading(false);
       }
@@ -23,8 +29,77 @@ export default function MovimientosList() {
     fetchMovimientos();
   }, []);
 
-  if (loading) return <p>Cargando movimientos...</p>;
-  if (error) return <p className="text-red-600">{error}</p>;
+  // NUEVO: Handler para cambios en filtros
+  const handleFiltroChange = (e) => {
+    const { name, value } = e.target;
+    setFiltros(prev => ({ ...prev, [name]: value }));
+  };
+
+  // FUNCIÓN PDF ACTUALIZADA (usa filtros en URL)
+  const descargarPDF = async () => {
+    setPdfLoading(true);
+    try {
+      console.log('Iniciando descarga PDF con filtros:', filtros); // DEBUG
+      // Construir query params con filtros
+      const params = new URLSearchParams();
+      if (filtros.tipo) params.append('tipo', filtros.tipo);
+      if (filtros.fechaDesde) params.append('fechaDesde', filtros.fechaDesde);
+      if (filtros.fechaHasta) params.append('fechaHasta', filtros.fechaHasta);
+      
+      const url = `http://localhost:5000/api/movimientos/pdf?${params.toString()}`; // Full URL + params
+      console.log('URL PDF:', url); // DEBUG
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.msg || `Error ${response.status}: Inténtelo de nuevo`);
+      }
+
+      const blob = await response.blob();
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      link.download = `reporte-movimientos-${new Date().toISOString().split('T')[0]}${filtros.tipo ? `-tipo-${filtros.tipo}` : ''}.pdf`; // Nombre con filtro opcional
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(link.href);
+
+      console.log('PDF descargado exitosamente'); // DEBUG
+      alert('PDF descargado exitosamente');
+    } catch (err) {
+      console.error('Error en descargarPDF:', err); // DEBUG
+      alert('Error al generar PDF: ' + err.message);
+      setError('Error en PDF: ' + err.message);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  // DEBUG RENDER
+  console.log('Renderizando MovimientosList - Loading:', loading, 'Error:', error, 'Movimientos count:', movimientos.length);
+
+  if (loading) {
+    return (
+      <div className="p-6 bg-white rounded shadow max-w-5xl mx-auto">
+        <p>Cargando movimientos...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 bg-white rounded shadow max-w-5xl mx-auto">
+        <p className="text-red-600 mb-4">{error}</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          Recargar Página
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 bg-white rounded shadow max-w-5xl mx-auto">
@@ -43,11 +118,61 @@ export default function MovimientosList() {
           >
             Registrar Salida
           </button>
+          <button
+            onClick={descargarPDF}
+            disabled={pdfLoading}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-blue-400"
+          >
+            {pdfLoading ? 'Generando PDF...' : 'Descargar PDF'}
+          </button>
         </div>
       </div>
 
+      {/* NUEVA SECCIÓN: Filtros para PDF */}
+      <div className="mb-4 p-4 bg-gray-50 rounded border">
+        <h3 className="font-semibold mb-2">Filtros para Reporte PDF (opcional):</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Tipo:</label>
+            <select
+              name="tipo"
+              value={filtros.tipo}
+              onChange={handleFiltroChange}
+              className="w-full px-3 py-2 border rounded"
+            >
+              <option value="">Todos</option>
+              <option value="entrada">Entrada</option>
+              <option value="salida">Salida</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Desde:</label>
+            <input
+              type="date"
+              name="fechaDesde"
+              value={filtros.fechaDesde}
+              onChange={handleFiltroChange}
+              className="w-full px-3 py-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Hasta:</label>
+            <input
+              type="date"
+              name="fechaHasta"
+              value={filtros.fechaHasta}
+              onChange={handleFiltroChange}
+              className="w-full px-3 py-2 border rounded"
+            />
+          </div>
+        </div>
+        <p className="text-xs text-gray-500 mt-2">Deja vacío para todos los movimientos. El PDF se filtrará según tus selecciones.</p>
+      </div>
+
       {movimientos.length === 0 ? (
-        <p>No hay movimientos registrados.</p>
+        <div className="p-4 bg-yellow-50 border rounded">
+          <p>No hay movimientos registrados. <button onClick={() => navigate('/movimientos/registrar?tipo=entrada')} className="text-blue-600 underline">Registra uno ahora</button></p>
+        </div>
       ) : (
         <table className="min-w-full border border-gray-300">
           <thead className="bg-gray-100">

@@ -1,6 +1,12 @@
 import JsBarcode from 'jsbarcode';
 import { createCanvas } from 'canvas';
 import Herramienta from '../models/herramienta.model.js';
+import crypto from 'crypto';
+
+const generateShortHash = (data, length = 8) => {
+  const hash = crypto.createHash('sha256').update(data).digest('hex');
+  return hash.substring(0, length).toUpperCase();
+};
 
 // Generar código de barras para una herramienta
 export const generarCodigoBarras = async (req, res) => {
@@ -11,20 +17,21 @@ export const generarCodigoBarras = async (req, res) => {
     if (!herramienta) {
       return res.status(404).json({ error: 'Herramienta no encontrada' });
     }
-
-    // Generar código de barras único basado en el código de la herramienta
-    const barcodeValue = `TOOL-${herramienta.codigo}-${Date.now()}`;
-    
-    // Verificar que el código de barras no exista
+    // Generar un valor base para el hash SIN el prefijo "TOOL-"
+    const baseValue = `${herramienta.codigo}-${Date.now()}`;
+    // Generar un código de barras corto usando un hash
+    const barcodeValue = generateShortHash(baseValue, 8); // Código de 8 caracteres
+    // Verificar que el código de barras no exista (aunque con hash es muy improbable)
     const existingBarcode = await Herramienta.findOne({ barcode: barcodeValue });
     if (existingBarcode) {
-      return res.status(400).json({ error: 'Código de barras ya existe' });
+      // Si por alguna razón el hash ya existe (colisión extremadamente rara),
+      // puedes intentar generar uno nuevo o devolver un error.
+      // Para simplificar, aquí devolvemos un error.
+      return res.status(400).json({ error: 'Código de barras generado ya existe (colisión). Intente de nuevo.' });
     }
-
     // Actualizar herramienta con el código de barras
     herramienta.barcode = barcodeValue;
     await herramienta.save();
-
     res.json({
       message: 'Código de barras generado exitosamente',
       barcode: barcodeValue,
@@ -99,13 +106,15 @@ export const generarCodigosBarrasMasivo = async (req, res) => {
         { barcode: '' }
       ]
     });
-
     const resultados = [];
     
     for (const herramienta of herramientasSinCodigo) {
-      const barcodeValue = `TOOL-${herramienta.codigo}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+      // Generar un valor base para el hash SIN el prefijo "TOOL-"
+      const baseValue = `${herramienta.codigo}-${Date.now()}-${Math.random()}`; // Añadir Math.random para mayor unicidad en masivo
+      // Generar un código de barras corto usando un hash
+      const barcodeValue = generateShortHash(baseValue, 8); // Código de 8 caracteres
       
-      // Verificar unicidad
+      // Verificar unicidad (aunque con hash es muy improbable)
       const existingBarcode = await Herramienta.findOne({ barcode: barcodeValue });
       if (!existingBarcode) {
         herramienta.barcode = barcodeValue;
@@ -118,7 +127,6 @@ export const generarCodigosBarrasMasivo = async (req, res) => {
         });
       }
     }
-
     res.json({
       message: `Códigos de barras generados para ${resultados.length} herramientas`,
       herramientas: resultados
