@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "mongodb://mongo:wirKNrCHWRhAzrDfqGPdoWkMXJTxEmby@mongodb.railway.internal:27017",
+  baseURL: "https://backend-production-01e4.up.railway.app/api",
 });
 
 export default api;
