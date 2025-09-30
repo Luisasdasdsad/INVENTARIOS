@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: "mongodb://mongo:wirKNrCHWRhAzrDfqGPdoWkMXJTxEmby@mongodb.railway.internal:27017",
 });
 
 export default api;
