@@ -130,7 +130,9 @@ export default function HerramientasList() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marca</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modelo</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Serie</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unidad</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
@@ -142,7 +144,9 @@ export default function HerramientasList() {
               {herramientas.map((h) => (
                 <tr key={h._id}>
                   <td className="px-6 py-4 whitespace-nowrap">{h.nombre}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{h.codigo}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{h.marca || '-'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{h.modelo || '-'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{h.serie || '-'}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{h.cantidad}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{h.unidad}</td>
                   <td className="px-6 py-4 whitespace-nowrap">

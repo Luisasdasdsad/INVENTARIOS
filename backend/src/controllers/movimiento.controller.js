@@ -59,7 +59,7 @@ export const registrarMovimiento = async (req, res) => {
     await movimiento.save();
 
     const movimientoGuardado = await Movimiento.findById(movimiento._id)
-      .populate('herramienta', 'nombre codigo unidad barcode')
+      .populate('herramienta', 'nombre marca modelo serie unidad barcode')
       .populate('usuario', 'nombre');
 
     res.status(201).json({ msg: 'Movimiento registrado', movimiento: movimientoGuardado });
@@ -72,7 +72,7 @@ export const registrarMovimiento = async (req, res) => {
 export const listarMovimientos = async (req, res) => {
   try {
     const movimientos = await Movimiento.find()
-      .populate('herramienta', 'nombre codigo unidad')
+      .populate('herramienta', 'nombre marca modelo serie unidad')
       .populate('usuario', 'nombre');
     res.json(movimientos);
   } catch (error) {
@@ -99,7 +99,7 @@ export const generarReportePDF = async (req, res) => {
     }
 
     const movimientos = await Movimiento.find(query)
-      .populate('herramienta', 'nombre codigo unidad')
+      .populate('herramienta', 'nombre marca modelo serie unidad')
       .populate('usuario', 'nombre')
       .sort({ createdAt: -1 }) // Más recientes primero, como sample
       .lean();
@@ -154,20 +154,20 @@ export const generarReportePDF = async (req, res) => {
     yPos += 30;
 
     // Tabla: Headers y columnas fijas (optimizadas para sample: herramienta como "eJMLO (3)")
-    const headers = ['Tipo', 'Herramienta', 'Cantidad', 'Unidad', 'Usuario', 'Fecha', 'Nota'];
-    const colWidths = [50, 150, 60, 50, 100, 120, 150]; // Anchos para landscape (suma 680px)
+    const headers = ['Tipo', 'Herramienta', 'Marca', 'Modelo', 'Serie', 'Cantidad', 'Unidad', 'Usuario', 'Fecha', 'Nota'];
+    const colWidths = [40, 100, 80, 80, 80, 50, 50, 80, 100, 100]; // Anchos para landscape (suma 680px)
     const colX = [50]; // Posiciones X acumuladas
     for (let i = 1; i < colWidths.length; i++) {
       colX.push(colX[i - 1] + colWidths[i - 1]);
     }
     const tableEndX = colX[colX.length - 1] + colWidths[colWidths.length - 1];
     const rowHeight = 20;
-    const maxRowsPerPage = 25; // ~500px / 20px
+    const maxRowsPerPage = 20; // ~500px / 20px
     let currentPageRows = 0;
 
     // Función para dibujar header de tabla
     const drawTableHeader = (y) => {
-      doc.font('Helvetica-Bold').fontSize(10);
+      doc.font('Helvetica-Bold').fontSize(8);
       headers.forEach((header, i) => {
         doc.text(header, colX[i], y, { width: colWidths[i], align: i >= 2 && i <= 5 ? 'center' : 'left' });
       });
@@ -181,7 +181,7 @@ export const generarReportePDF = async (req, res) => {
 
     // Función para fila de datos (con truncado para sample)
     const drawDataRow = (mov, y, rowNum) => {
-      doc.font('Helvetica').fontSize(9);
+      doc.font('Helvetica').fontSize(7);
       if (rowNum % 2 === 0) doc.fillColor('#f5f5f5'); // Gris alterno
 
       // Tipo (mayús, badge-like)
@@ -191,6 +191,21 @@ export const generarReportePDF = async (req, res) => {
       let herrName = mov.herramienta ? `${mov.herramienta.nombre || 'N/A'} (${mov.herramienta.codigo || ''})` : 'N/A';
       if (herrName.length > 28) herrName = herrName.substring(0, 28) + '...';
       doc.text(herrName, colX[1], y, { width: colWidths[1], align: 'left' });
+
+      // Marca
+      let marca = mov.herramienta?.marca || '-';
+      if (marca.length > 10) marca = marca.substring(0, 10) + '...';
+      doc.text(marca, colX[2], y, { width: colWidths[2], align: 'left' });
+      
+      // Modelo
+      let modelo = mov.herramienta?.modelo || '-';
+      if (modelo.length > 10) modelo = modelo.substring(0, 10) + '...';
+      doc.text(modelo, colX[3], y, { width: colWidths[3], align: 'left' });
+      
+      // Serie
+      let serie = mov.herramienta?.serie || '-';
+      if (serie.length > 10) serie = serie.substring(0, 10) + '...';
+      doc.text(serie, colX[4], y, { width: colWidths[4], align: 'left' });
 
       // Cantidad (numérico, center)
       doc.text((mov.cantidad || 0).toString(), colX[2], y, { width: colWidths[2], align: 'center' });

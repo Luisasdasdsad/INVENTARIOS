@@ -17,8 +17,8 @@ export const generarCodigoBarras = async (req, res) => {
     if (!herramienta) {
       return res.status(404).json({ error: 'Herramienta no encontrada' });
     }
-    // Generar un valor base para el hash SIN el prefijo "TOOL-"
-    const baseValue = `${herramienta.codigo}-${Date.now()}`;
+    // Generar un valor base para el hash usando marca, modelo y serie
+    const baseValue = `${herramienta.marca}-${herramienta.modelo}-${herramienta.serie || ''}-${Date.now()}`;
     // Generar un código de barras corto usando un hash
     const barcodeValue = generateShortHash(baseValue, 8); // Código de 8 caracteres
     // Verificar que el código de barras no exista (aunque con hash es muy improbable)
@@ -50,18 +50,30 @@ export const generarImagenCodigoBarras = async (req, res) => {
     if (!barcode) {
       return res.status(400).json({ error: 'Código de barras requerido' });
     }
-
-    // Crear canvas para generar la imagen
-    const canvas = createCanvas(200, 100);
+// --- AJUSTES PARA HACER EL CÓDIGO DE BARRAS MÁS PEQUEÑO ---
+    // Puedes pasar estos valores como query parameters (ej. /imagen/:barcode?w=1&h=30)
+    // o definirlos aquí directamente. Para empezar, los definimos aquí.
+    const barWidth = 1; // Ancho de cada barra (1px es bastante pequeño)
+    const barHeight = 30; // Altura de las barras (30px es un buen tamaño para etiquetas)
+    const textFontSize = 10; // Tamaño de la fuente del texto debajo del código
+    const barcodeMargin = 2; // Margen alrededor del código de barras
+    // Calcular el tamaño del canvas. JsBarcode calculará el ancho total
+    // basado en el 'width' y la longitud del código.
+    // Un estimado: (longitud_codigo * barWidth * factor_formato) + (margen_horizontal)
+    // Para CODE128, es aproximadamente 11 módulos por carácter + 13 módulos de inicio/fin.
+    // Un canvas de 150x50px suele ser un buen punto de partida para un código de 8 caracteres.
+    const canvasWidth = 150; // Ajusta según el resultado, 150px es un buen inicio
+    const canvasHeight = 50; // Ajusta según el resultado, 50px es un buen inicio
+    const canvas = createCanvas(canvasWidth, canvasHeight);
     
     // Generar código de barras en el canvas
     JsBarcode(canvas, barcode, {
       format: "CODE128",
-      width: 2,
-      height: 60,
+      width: barWidth,
+      height: barHeight,
       displayValue: true,
-      fontSize: 12,
-      textMargin: 5
+      fontSize: textFontSize,
+      textMargin: barcodeMargin,
     });
 
     // Convertir canvas a buffer
@@ -109,8 +121,8 @@ export const generarCodigosBarrasMasivo = async (req, res) => {
     const resultados = [];
     
     for (const herramienta of herramientasSinCodigo) {
-      // Generar un valor base para el hash SIN el prefijo "TOOL-"
-      const baseValue = `${herramienta.codigo}-${Date.now()}-${Math.random()}`; // Añadir Math.random para mayor unicidad en masivo
+      // Generar un valor base para el hash usando marca, modelo y serie
+      const baseValue = `${herramienta.marca}-${herramienta.modelo}-${herramienta.serie || ''}-${Date.now()}-${Math.random()}`;
       // Generar un código de barras corto usando un hash
       const barcodeValue = generateShortHash(baseValue, 8); // Código de 8 caracteres
       
@@ -122,7 +134,9 @@ export const generarCodigosBarrasMasivo = async (req, res) => {
         resultados.push({
           id: herramienta._id,
           nombre: herramienta.nombre,
-          codigo: herramienta.codigo,
+          marca: herramienta.marca,
+          modelo: herramienta.modelo,
+          serie: herramienta.serie,
           barcode: barcodeValue
         });
       }
@@ -151,18 +165,31 @@ export const verificarDuplicados = async (req, res) => {
         // Verificar nombres similares (ignorando mayúsculas/minúsculas y espacios)
         const nombre1 = h1.nombre.toLowerCase().trim();
         const nombre2 = h2.nombre.toLowerCase().trim();
+
+        // Ahora verificamos duplicados por combinación de marca, modelo y serie
+        const marca1 = h1.marca.toLowerCase().trim();
+        const modelo1 = h1.modelo.toLowerCase().trim();
+        const serie1 = (h1.serie || '').toLowerCase().trim();
+
+        const marca2 = h2.marca.toLowerCase().trim();
+        const modelo2 = h2.modelo.toLowerCase().trim();
+        const serie2 = (h2.serie || '').toLowerCase().trim();
         
-        if (nombre1 === nombre2 || h1.codigo === h2.codigo) {
+        if (nombre1 === nombre2 || (marca1 === marca2 && modelo1 === modelo2 && serie1 === serie2)) {
           duplicados.push({
             herramienta1: {
               id: h1._id,
               nombre: h1.nombre,
-              codigo: h1.codigo
+              marca: h1.marca,
+              modelo: h1.modelo,
+              serie: h1.serie
             },
             herramienta2: {
               id: h2._id,
               nombre: h2.nombre,
-              codigo: h2.codigo
+              marca: h2.marca,
+              modelo: h2.modelo,
+              serie: h2.serie
             },
             tipo: nombre1 === nombre2 ? 'nombre_duplicado' : 'codigo_duplicado'
           });
