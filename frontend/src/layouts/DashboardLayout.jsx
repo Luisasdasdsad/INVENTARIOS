@@ -1,11 +1,20 @@
 import { Outlet, Link } from "react-router-dom";
 import { FaTools, FaClipboardList, FaExchangeAlt, FaHome, FaSignOutAlt } from "react-icons/fa"; // Importar FaHome y FaSignOutAlt
 import { useAuth } from "../contexts/AuthContext"; // Importar useAuth
+
 export default function DashboardLayout() {
   const { logout, user } = useAuth(); // Obtener la función logout y el usuario del contexto
+  const {sidebarOpen, setSidebarOpen} = useState(false);
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar */}
+      <button
+        className = "absolute top-4 left-4 z-20 bg-blue-600 text-white p-2 rounded shadow-lg lg:hideen"
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        aria-label={sidebarOpen ? "Ocultar menú" : "Mostrar menú"}
+        >
+          {sidebarOpen ? <FaTimes /> : <FaBars />}
+      </button>
       <aside className="w-64 bg-white shadow-md p-4">
         <h1 className="text-xl font-bold mb-6">Inventario</h1>
         <nav className="space-y-4">
