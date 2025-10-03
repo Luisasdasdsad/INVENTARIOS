@@ -104,7 +104,7 @@ export default function HerramientasList() {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Lista de Herramientas</h2>
+        <h2 className="text-2xl font-bold">Inventario</h2>
         <div className="flex space-x-2">
           <button
             onClick={handleGenerateMassiveBarcodes}
