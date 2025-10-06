@@ -10,7 +10,7 @@ export const registrarMovimiento = async (req, res) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-  const { herramienta, barcode, tipo, cantidad, nota, nombreUsuario } = req.body;
+  const { herramienta, barcode, tipo, cantidad, nota, nombreUsuario, obra } = req.body;
 
   try {
     let herramientaDoc;

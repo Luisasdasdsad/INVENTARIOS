@@ -39,6 +39,7 @@ export default function AppRouter() {
             <Route path="herramientas" element={<HerramientasList />} />
             <Route path="movimientos" element={<MovimientosList />} />
             <Route path="movimientos/registrar" element={<RegistrarMovimientoPage />} />
+            
             {/* Aquí puedes añadir más rutas protegidas si las necesitas */}
           </Route>
 
