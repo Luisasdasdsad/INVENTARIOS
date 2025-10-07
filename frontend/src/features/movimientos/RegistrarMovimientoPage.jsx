@@ -108,7 +108,7 @@ export default function RegistrarMovimientoPage() {
       console.log('🔄 Iniciando cámara...');
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { 
-          facingMode: 'user',  // Cámara frontal para laptops
+          facingMode: 'environment',  // Cámara frontal para laptops
           width: { min: 320, max: 640 },  
           height: { min: 240, max: 480 }
         } 
