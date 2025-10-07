@@ -6,6 +6,8 @@ import herramientasRoutes from './routes/herramienta.routes.js';
 import barcodeRoutes from './routes/barcode.routes.js';
 import authRoutes from './routes/auth.js';
 import movimientoRoutes from './routes/movimientos.js';
+import fotoRouter from './routes/fotos.routes.js';
+import path from 'path';
 
 dotenv.config();
 const app = express();
@@ -26,6 +28,10 @@ app.use("/api/barcode", barcodeRoutes);
 app.use("/api/auth", authRoutes);
 //Ruta de movimientos
 app.use("/api/movimientos", movimientoRoutes)
+//Ruta foto
+app.use(' /uploads', express.static(path.join(process.cwd(), 'uploads'))); // Servir archivos estáticos
+app.use('/api/fotos', fotoRouter); // Monta las rutas
+
 
 //app.get('/',(resq,res)=> res.send('API Inventarios - Backend (Herramientas)'));
 

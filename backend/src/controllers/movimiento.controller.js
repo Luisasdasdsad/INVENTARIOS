@@ -10,7 +10,7 @@ export const registrarMovimiento = async (req, res) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-  const { herramienta, barcode, tipo, cantidad, nota, nombreUsuario } = req.body;
+  const { herramienta, barcode, tipo, cantidad, nota, nombreUsuario, obra, foto } = req.body;
 
   try {
     let herramientaDoc;
@@ -55,6 +55,8 @@ export const registrarMovimiento = async (req, res) => {
       cantidad,
       usuario: usuario._id,
       nota,
+      obra,
+      foto,
     });
     await movimiento.save();
 
@@ -154,8 +156,8 @@ export const generarReportePDF = async (req, res) => {
     yPos += 30;
 
     // Tabla: Headers y columnas fijas (optimizadas para sample: herramienta como "eJMLO (3)")
-    const headers = ['Tipo', 'Herramienta', 'Marca', 'Modelo', 'Serie', 'Cantidad', 'Unidad', 'Usuario', 'Fecha', 'Nota'];
-    const colWidths = [40, 100, 80, 80, 80, 50, 50, 80, 100, 100]; // Anchos para landscape (suma 680px)
+    const headers = ['Tipo', 'Herramienta', 'Marca', 'Modelo', 'Serie', 'Cantidad', 'Unidad', 'Usuario', 'Fecha','Obra', 'Nota', 'Foto'];
+    const colWidths = [40, 100, 80, 80, 80, 50, 50, 80, 100, 80, 100, 80]; // Anchos para landscape (suma 680px)
     const colX = [50]; // Posiciones X acumuladas
     for (let i = 1; i < colWidths.length; i++) {
       colX.push(colX[i - 1] + colWidths[i - 1]);
@@ -216,6 +218,11 @@ export const generarReportePDF = async (req, res) => {
       // Usuario
       doc.text(mov.usuario?.nombre || 'Desconocido', colX[4], y, { width: colWidths[4], align: 'left' });
 
+      //Obra
+      let obra = mov.obra || '-';
+      if (obra.lenght>15) obra=obra.substring(0,15)+'...';
+      doc.text(obra,colX[9],y,{width:colWidths[9],align:'left'});
+      
       // Fecha (corta, como sample "25/09/2025, 17:19")
       const fechaFmt = new Date(mov.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) + 
                        ', ' + new Date(mov.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
@@ -225,6 +232,9 @@ export const generarReportePDF = async (req, res) => {
       let nota = mov.nota || '-';
       if (nota.length > 35) nota = nota.substring(0, 35) + '...';
       doc.text(nota, colX[6], y, { width: colWidths[6], align: 'left' });
+
+      //Foto
+      doc.text(mov.foto? 'Sí':'No',colX[11],y,{width: colWidths[11],align:'center'})
 
       doc.fillColor('black'); // Reset
 

@@ -6,7 +6,9 @@ const movimientoSchema = new mongoose.Schema({
     cantidad: { type: Number, required: true, min: 1 },
     fecha: { type: Date, default: Date.now },
     usuario: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    nota: { type: String }
+    nota: { type: String },
+    obra: { type: String},
+    foto: { type: String }
 }, { timestamps: true });
 
 export default mongoose.model('Movimiento', movimientoSchema);
