@@ -238,7 +238,7 @@ export default function RegistrarMovimientoPage() {
   setError('');  // Limpia error previo
   
   try {
-    const url = `http://localhost:5000/api/barcode/buscar/${barcode.toUpperCase()}`;
+    const url = `frontend-production-14d4.up.railway.app/api/barcode/buscar/${barcode.toUpperCase()}`;
     console.log('🔍 Iniciando fetch a (full URL):', url);
     
     const response = await fetch(url);
