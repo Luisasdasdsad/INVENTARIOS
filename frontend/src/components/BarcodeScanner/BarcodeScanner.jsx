@@ -5,7 +5,45 @@ const BarcodeScanner = ({ onDetected, onError, isActive = false }) => {
   const scannerRef = useRef(null);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState(null);
+  const [hasDetected, setHasDetected] = useState(false);  // Flag para bloqueo múltiples
 
+  // ← FIX CLAVE: Listener GLOBAL – atado UNA VEZ al componente
+  useEffect(() => {
+    // Ata listener una sola vez (no depende de isActive)
+    const handleDetected = (result) => {
+      const code = result.codeResult.code;
+      
+      // Bloquea si ya detectado (global)
+      if (hasDetected) {
+        console.log('⏸️ Detección ignorada (global) – ya procesada:', code);
+        return;
+      }
+      
+      console.log('📱 Código detectado (único global):', code);
+      setHasDetected(true);  // Marca global
+      
+      if (onDetected) {
+        onDetected(code);  // Llama parent UNA SOLA VEZ
+      }
+      
+      console.log('🛑 Detección única procesada – deteniendo scanner');
+      
+      // Detiene inmediatamente
+      stopScanner();
+    };
+
+    Quagga.onDetected(handleDetected);
+    console.log('🔗 Listener onDetected atado (único)');
+
+    // Cleanup: Remueve listener al desmontar
+    return () => {
+      Quagga.offDetected(handleDetected);
+      console.log('🔌 Listener onDetected removido');
+      stopScanner();
+    };
+  }, []);  // ← VACÍO: Solo una vez al mount (no re-ata)
+
+  // ← useEffect para start/stop basado en isActive
   useEffect(() => {
     if (isActive && !isScanning) {
       startScanner();
@@ -13,16 +51,20 @@ const BarcodeScanner = ({ onDetected, onError, isActive = false }) => {
       stopScanner();
     }
 
+    // Cleanup al cambio de isActive
     return () => {
-      stopScanner();
+      if (!isActive) {
+        stopScanner();
+      }
     };
   }, [isActive]);
 
   const startScanner = () => {
-    if (!scannerRef.current) return;
+    if (!scannerRef.current || hasDetected) return;  // No start si ya detectado
 
     setError(null);
     setIsScanning(true);
+    setHasDetected(false);  // Reset solo al start manual
 
     Quagga.init({
       inputStream: {
@@ -32,8 +74,11 @@ const BarcodeScanner = ({ onDetected, onError, isActive = false }) => {
         constraints: {
           width: 640,
           height: 480,
-          facingMode: "environment" // Usar cámara trasera en móviles
+          facingMode: "environment"
         }
+      },
+      decoder: {
+        readers: ['code_128_reader','ean_reader','code_39_reader']  // Múltiples OK
       },
       locator: {
         patchSize: "medium",
@@ -41,9 +86,6 @@ const BarcodeScanner = ({ onDetected, onError, isActive = false }) => {
       },
       numOfWorkers: 2,
       frequency: 10,
-      decoder: {
-        readers: ["code_128_reader"] // Solo Code128
-      },
       locate: true
     }, (err) => {
       if (err) {
@@ -57,25 +99,14 @@ const BarcodeScanner = ({ onDetected, onError, isActive = false }) => {
       console.log('Quagga inicializado correctamente');
       Quagga.start();
     });
-
-    // Listener para detección de códigos
-    Quagga.onDetected((result) => {
-      const code = result.codeResult.code;
-      console.log('Código detectado:', code);
-      
-      if (onDetected) {
-        onDetected(code);
-      }
-      
-      // Detener scanner después de detectar un código
-      stopScanner();
-    });
   };
 
   const stopScanner = () => {
     if (isScanning) {
       Quagga.stop();
       setIsScanning(false);
+      // NO reset hasDetected aquí – se mantiene true hasta re-start manual
+      console.log('🛑 Scanner detenido (stream off)');
     }
   };
 

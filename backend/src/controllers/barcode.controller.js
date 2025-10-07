@@ -11,7 +11,7 @@ const generateShortHash = (data, length = 8) => {
 // Generar código de barras para una herramienta
 export const generarCodigoBarras = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id   } = req.params;
     const herramienta = await Herramienta.findById(id);
     
     if (!herramienta) {
@@ -94,19 +94,27 @@ export const generarImagenCodigoBarras = async (req, res) => {
 // Buscar herramienta por código de barras
 export const buscarPorCodigoBarras = async (req, res) => {
   try {
-    const { barcode } = req.params;
-    
-    const herramienta = await Herramienta.findOne({ barcode });
-    
-    if (!herramienta) {
-      return res.status(404).json({ error: 'Herramienta no encontrada con este código de barras' });
+    // ← FIX CLAVE: Cambia a 'barcode' (coincide con :barcode en ruta común)
+    const { barcode } = req.params;  // Si tu ruta es :codigo, cambia de vuelta a { codigo }
+    console.log('🔍 Backend: Recibido param:', barcode);  // Debe log "450DCA03" – ve en terminal
+    if (!barcode || barcode.trim() === '') {
+      console.log('❌ Backend: Param vacío/undefined');
+      return res.status(400).json({ error: 'Código de barras requerido' });
     }
-
-    res.json(herramienta);
+    // Busca por campo 'barcode' en DB
+    const herramienta = await Herramienta.findOne({ barcode: barcode.toUpperCase() });
+    if (!herramienta) {
+      console.log('❌ Backend: No encontrada para', barcode);
+      return res.status(404).json({ error: `Herramienta no encontrada con código "${barcode}"` });
+    }
+    console.log('✅ Backend: Encontrada', herramienta.nombre, 'Stock:', herramienta.cantidad);
+    res.json(herramienta);  // JSON: { _id, nombre: "Martillo", barcode: "450DCA03", cantidad: 3, ... }
   } catch (error) {
+    console.error('💥 Backend Error:', error.message);
     res.status(500).json({ error: error.message });
   }
 };
+
 
 // Generar códigos de barras para todas las herramientas sin código
 export const generarCodigosBarrasMasivo = async (req, res) => {

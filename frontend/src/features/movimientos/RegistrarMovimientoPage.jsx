@@ -33,6 +33,7 @@ export default function RegistrarMovimientoPage() {
   const [loading, setLoading] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [selectedHerramienta, setSelectedHerramienta] = useState(null);
+  const [isScanning, setIsScanning] = useState(true); // Controla si el scanner está activo
 
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -233,32 +234,67 @@ export default function RegistrarMovimientoPage() {
   };
 
   const fetchHerramientaByBarcode = async (barcode) => {
-    setLoading(true);
-    setError('');
-    try {
-      const response = await fetch(`/api/herramientas/buscar-por-codigo-barras/${barcode.toUpperCase()}`);
-      if (!response.ok) {
-        throw new Error(`Herramienta no encontrada con código ${barcode}`);
+  setLoading(true);
+  setError('');  // Limpia error previo
+  
+  try {
+    const url = `http://localhost:5000/api/barcode/buscar/${barcode.toUpperCase()}`;
+    console.log('🔍 Iniciando fetch a (full URL):', url);
+    
+    const response = await fetch(url);
+    
+    console.log('📡 Response status:', response.status);  // 200 OK
+    console.log('📡 Content-Type:', response.headers.get('content-type'));  // application/json
+    
+    if (!response.ok) {
+      // Maneja error sin crashear en JSON
+      let errorData = {};
+      try {
+        errorData = await response.json();
+      } catch (jsonErr) {
+        console.warn('No JSON en error response:', jsonErr);
       }
-      const herramienta = await response.json();
-
-      setSelectedHerramienta(herramienta);
-      setFormData(prev => ({
-        ...prev,
-        herramienta: herramienta._id,
-        barcode: barcode.toUpperCase()
-      }));
-
-      console.log('Herramienta encontrada:', herramienta);
-    } catch (err) {
-      setError(err.message);
-      setSelectedHerramienta(null);
-      setFormData(prev => ({ ...prev, herramienta: '', barcode: '' }));
-      console.error('Error al buscar herramienta:', err);
-    } finally {
-      setLoading(false);
+      throw new Error(errorData.error || `Error ${response.status}: Herramienta no encontrada`);
     }
-  };
+    
+    // ← DIRECTO A JSON: Sin responseText o previews
+    const herramienta = await response.json();
+    
+    // ← NO DEBUGS: Quita cualquier console.log con responseText aquí
+    // Ejemplo de lo que BORRAS: console.log('📄 Response text preview:', responseText);  // ELIMINADO
+    
+    console.log('✅ Herramienta JSON recibida:', herramienta.nombre);  // Log simple (opcional)
+    
+    // Setea form y state (éxito)
+    setSelectedHerramienta(herramienta);
+    setFormData(prev => ({
+      ...prev,
+      herramienta: herramienta._id,  // Para select/dropdown
+      barcode: barcode.toUpperCase()  // Muestra en input
+    }));
+    
+    console.log('✅ Form actualizado con herramienta:', herramienta.nombre);  // Confirma set
+    
+    // Alert de éxito
+    alert(`✅ Cargada: ${herramienta.nombre} - Stock: ${herramienta.cantidad}`);
+    
+  } catch (err) {
+    console.error('❌ Error al buscar herramienta:', err.message);
+    setError(err.message);  // Muestra en UI (ej. "No encontrada")
+    setSelectedHerramienta(null);
+    setFormData(prev => ({ 
+      ...prev, 
+      herramienta: '', 
+      barcode: barcode.toUpperCase()  // Mantiene barcode si error
+    }));
+  } finally {
+    setLoading(false);
+    // Opcional: setIsScanning(true);  // Re-activa scanner si quieres auto
+  }
+};
+    
+    // Alert de éxito
+
 
   const handleChange = e => {
     const { name, value } = e.target;
@@ -274,13 +310,14 @@ export default function RegistrarMovimientoPage() {
   };
 
   const handleBarcodeDetected = (barcode) => {
-    if (barcode && barcode.length === 8) {
-      fetchHerramientaByBarcode(barcode);
-      setShowScanner(false);
-    } else {
-      setError('Código de barras inválido. Debe tener 8 caracteres hexadecimales (ej. E317FD89)');
-    }
-  };
+  if (!isScanning) {
+    console.log('⏸️ Bloqueado en parent');
+    return;
+  }
+  console.log('🔄 Parent procesando:', barcode);
+  setIsScanning(false);  // ← PASA A FALSE → Scanner se detiene via isActive
+  fetchHerramientaByBarcode(barcode);
+};
 
   const handleBarcodeManualChange = e => {
     const barcode = e.target.value.toUpperCase();
