@@ -9,6 +9,7 @@ const herramientaSchema = new mongoose.Schema({
   unidad: { type: String, default: "unidad" }, 
   estado: { type: String, enum: ["disponible", "prestado"], default: "disponible" },
   barcode: { type: String, unique: true, sparse: true }, // Código de barras generado
+  qrCode: {type: String, unique: true, sparse:true }, //Código QR 
 }, { timestamps: true });
 
 export default mongoose.model("Herramienta", herramientaSchema);

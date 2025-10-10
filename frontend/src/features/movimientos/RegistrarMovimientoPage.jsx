@@ -4,6 +4,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useSearchParams } from 'react-router-dom';
 import BarcodeScanner from '../../components/BarcodeScanner/BarcodeScanner';
+import EscanerQR from '../../components/EscannerQR/EscannerQR.jsx';
+import axios from 'axios';
 
 export default function RegistrarMovimientoPage() {
   const [searchParams] = useSearchParams();
@@ -13,6 +15,7 @@ export default function RegistrarMovimientoPage() {
   const [formData, setFormData] = useState({
     herramienta: '',
     barcode: '',
+    qrCode: '',
     tipo: tipoInicial,
     cantidad: '',
     nota: '',
@@ -32,11 +35,16 @@ export default function RegistrarMovimientoPage() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  const [showEscanerQR, setShowEscanerQR] = useState(false);
   const [selectedHerramienta, setSelectedHerramienta] = useState(null);
-  const [isScanning, setIsScanning] = useState(true); // Controla si el scanner está activo
+  const [isScanning, setIsScanning] = useState(false); // Controla si el scanner está activo
+  const [qrProcessing, setQrProcessing] = useState(false); // Previene procesamiento múltiple de QR
+  const barcodeProcessingRef = useRef(false); // Previene procesamiento múltiple de barcode
 
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  
 
   // useEffect para cargar herramientas al inicio
   useEffect(() => {
@@ -44,6 +52,11 @@ export default function RegistrarMovimientoPage() {
       .then(res => setHerramientas(res.data))
       .catch(() => setError('Error al cargar herramientas'));
   }, []);
+
+  // Reset qrProcessing cuando se abre el modal QR
+  useEffect(() => {
+    setQrProcessing(false);
+  }, [showEscanerQR]);
 
   // NUEVO useEffect: Para asignar el stream al elemento <video> una vez que se renderiza
   useEffect(() => {
@@ -234,64 +247,57 @@ export default function RegistrarMovimientoPage() {
   };
 
   const fetchHerramientaByBarcode = async (barcode) => {
-  setLoading(true);
-  setError('');  // Limpia error previo
-  
+  if (isScanning) {
+    console.log('⏳ Procesando escaneo anterior – Ignorando...');
+    return null;
+  }
+
+  setIsScanning(true);
+  setError('');
+
   try {
-    const url = `frontend-production-14d4.up.railway.app/api/barcode/buscar/${barcode.toUpperCase()}`;
-    console.log('🔍 Iniciando fetch a (full URL):', url);
-    
-    const response = await fetch(url);
-    
-    console.log('📡 Response status:', response.status);  // 200 OK
-    console.log('📡 Content-Type:', response.headers.get('content-type'));  // application/json
-    
-    if (!response.ok) {
-      // Maneja error sin crashear en JSON
-      let errorData = {};
-      try {
-        errorData = await response.json();
-      } catch (jsonErr) {
-        console.warn('No JSON en error response:', jsonErr);
-      }
-      throw new Error(errorData.error || `Error ${response.status}: Herramienta no encontrada`);
+    const codigo = barcode?.trim()?.toUpperCase();
+    if (!codigo) throw new Error('Código de barras vacío');
+
+    console.log('🔍 API Call: /barcode/buscar/' + codigo);
+    const response = await api.get(`/barcode/buscar/${codigo}`); // Igual que QR (usa api sin /api extra)
+
+    console.log('✅ API Respuesta:', response.data);
+    const herramienta = Array.isArray(response.data)
+      ? response.data[0]
+      : response.data;
+
+    if (!herramienta || !herramienta._id) {
+      throw new Error('Herramienta no encontrada por este código de barras');
     }
-    
-    // ← DIRECTO A JSON: Sin responseText o previews
-    const herramienta = await response.json();
-    
-    // ← NO DEBUGS: Quita cualquier console.log con responseText aquí
-    // Ejemplo de lo que BORRAS: console.log('📄 Response text preview:', responseText);  // ELIMINADO
-    
-    console.log('✅ Herramienta JSON recibida:', herramienta.nombre);  // Log simple (opcional)
-    
-    // Setea form y state (éxito)
+
+    // 🧩 Actualiza estados
     setSelectedHerramienta(herramienta);
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      herramienta: herramienta._id,  // Para select/dropdown
-      barcode: barcode.toUpperCase()  // Muestra en input
+      herramienta: herramienta._id,
+      barcode: codigo,
+      qrCode: '',
     }));
-    
-    console.log('✅ Form actualizado con herramienta:', herramienta.nombre);  // Confirma set
-    
-    // Alert de éxito
-    alert(`✅ Cargada: ${herramienta.nombre} - Stock: ${herramienta.cantidad}`);
-    
-  } catch (err) {
-    console.error('❌ Error al buscar herramienta:', err.message);
-    setError(err.message);  // Muestra en UI (ej. "No encontrada")
-    setSelectedHerramienta(null);
-    setFormData(prev => ({ 
-      ...prev, 
-      herramienta: '', 
-      barcode: barcode.toUpperCase()  // Mantiene barcode si error
-    }));
+
+    console.log(`✅ Herramienta cargada: ${herramienta.nombre} (Stock: ${herramienta.cantidad})`);
+    return herramienta;
+  } catch (error) {
+    console.error('❌ API Error:', error.response?.status, error.response?.data?.error || error.message);
+
+    if (error.response?.status === 404) {
+      throw new Error('Herramienta no encontrada por este código de barras');
+    } else if (error.response?.status === 500) {
+      throw new Error('Error en el servidor – Verifica el código o contacta admin');
+    } else {
+      throw new Error('Error de conexión – Intenta escanear de nuevo');
+    }
   } finally {
-    setLoading(false);
-    // Opcional: setIsScanning(true);  // Re-activa scanner si quieres auto
+    // 🔁 Debounce 2s igual que QR
+    setTimeout(() => setIsScanning(false), 2000);
   }
 };
+
     
     // Alert de éxito
 
@@ -303,30 +309,139 @@ export default function RegistrarMovimientoPage() {
     setFieldErrors(prev => ({ ...prev, [name]: '' }));
 
     if (name === 'herramienta' && value) {
-      setFormData(prev => ({ ...prev, barcode: '' }));
+      setFormData(prev => ({ 
+        ...prev, 
+        barcode: '', 
+        qrCode: ''  // Limpia QR
+      }));
       const herramienta = herramientas.find(h => h._id === value);
       setSelectedHerramienta(herramienta);
     }
   };
 
-  const handleBarcodeDetected = (barcode) => {
-  if (!isScanning) {
-    console.log('⏸️ Bloqueado en parent');
+  const handleBarcodeDetected = async (barcode) => {
+  if (barcodeProcessingRef.current) {
+    console.log('⏸️ Barcode ya procesándose – Ignorando...');
     return;
   }
-  console.log('🔄 Parent procesando:', barcode);
-  setIsScanning(false);  // ← PASA A FALSE → Scanner se detiene via isActive
-  fetchHerramientaByBarcode(barcode);
+  // ✅ FIX: Cambia el check a "if (isScanning)" para bloquear SOLO si ya está procesando
+  // (antes bloqueaba si NO estaba procesando, lo cual era al revés)
+  if (isScanning) {
+    console.log('⏳ Ya procesando escaneo anterior – Ignorando...');
+    return;
+  }
+  console.log('🔄 Procesando barcode en parent:', barcode);
+  barcodeProcessingRef.current = true;
+  setIsScanning(true); // ✅ Set a true ANTES del fetch para bloquear scans subsiguientes
+  try {
+    await fetchHerramientaByBarcode(barcode);
+    // Esperar antes de cerrar el escáner (mismo timeout)
+    setTimeout(() => {
+      setIsScanning(false); // Reset aquí también (redundante pero seguro)
+      setShowScanner(false);
+      console.log('📴 Cámara cerrada correctamente');
+    }, 1000);
+  } catch (err) {
+    console.error('❌ Error en handleBarcodeDetected:', err);
+    setError(err.message || 'Error al procesar barcode');
+  } finally {
+    barcodeProcessingRef.current = false;
+    // No reset isScanning aquí; déjalo para el timeout o el fetch (evita race conditions)
+  }
 };
 
-  const handleBarcodeManualChange = e => {
+const handleBarcodeManualChange = e => {
     const barcode = e.target.value.toUpperCase();
     setFormData(prev => ({ ...prev, barcode }));
-
     if (barcode.length === 8 && /^[A-F0-9]{8}$/i.test(barcode)) {
       fetchHerramientaByBarcode(barcode);
     } else if (barcode.length > 0) {
       setError('Código debe ser 8 caracteres hexadecimales (A-F,0-9)');
+      setSelectedHerramienta(null);
+      setFormData(prev => ({ ...prev, herramienta: '' }));
+    } else {
+      setError('');
+      setSelectedHerramienta(null);
+      setFormData(prev => ({ ...prev, herramienta: '' }));
+    }
+  };
+
+  const fetchHerramientaByQR = async (qrCode) => {
+  if (isScanning) {
+    console.log('⏳ Procesando QR anterior – Ignorando...');
+    return null;
+  }
+  setIsScanning(true);
+  try {
+    console.log('🔍 API Call: /barcode/buscar-qr/' + qrCode);
+    const response = await api.get(`/barcode/buscar-qr/${qrCode}`);  // ← FIX: Use api (baseURL already has /api), so path without /api
+    console.log('✅ API Respuesta:', response.data);
+    return response.data;  // { _id, nombre, cantidad, ... }
+  } catch (error) {
+    console.error('❌ API Error:', error.response?.status, error.response?.data?.error || error.message);
+    if (error.response?.status === 404) {
+      throw new Error('Herramienta no encontrada por este QR');
+    } else if (error.response?.status === 500) {
+      throw new Error('Error en el servidor – Verifica el QR o contacta admin');
+    } else {
+      throw new Error('Error de conexión – Intenta escanear de nuevo');
+    }
+  } finally {
+    setTimeout(() => setIsScanning(false), 2000);  // Debounce 2s
+  }
+};
+
+
+  const handleEscanerQRError = (err) => {
+    console.error('❌ Error en escáner QR:', err);
+    setError('Error en escáner: ' + (err.message || err));
+  };
+
+  const handleScanQR = async (qrCode) => {
+  if (qrProcessing) {
+    console.log('⏸️ QR ya procesándose – Ignorando...');
+    return;
+  }
+  setQrProcessing(true);
+  console.log('🔍 QR Detectado:', qrCode);
+  try {
+    setError('');  // Limpia si tienes
+    alert('Buscando herramienta...');  // Loading simple
+    const herramienta = await fetchHerramientaByQR(qrCode);
+    if (herramienta) {
+      setSelectedHerramienta(herramienta);
+      setFormData(prev => ({
+        ...prev,
+        herramienta: herramienta._id,
+        qrCode: qrCode.toUpperCase(),
+        barcode: ''  // Limpia barcode al seleccionar QR
+      }));
+      const msg = `✅ Cargada: ${herramienta.nombre} - Stock: ${herramienta.cantidad}`;
+      alert(msg);
+      console.log('✅ Autocompletado:', herramienta);
+    } else {
+      throw new Error('No encontrada');
+    }
+  } catch (err) {
+    console.error('❌ QR Process Error:', err.message);
+    const msg = '❌ ' + err.message;
+    setError(msg);
+    alert(msg);
+  } finally {
+    setIsScanning(false);
+    setShowEscanerQR(false);  // Cierra modal
+    setQrProcessing(false);
+  }
+};
+
+  const handleManualQRChange = (e) => {
+    const qr = e.target.value.toUpperCase();
+    setFormData(prev => ({ ...prev, qrCode: qr }));
+    // Valida formato (QR- + chars hex) – busca auto si válido
+    if (qr.startsWith('QR-') && qr.length >= 15 && /^[QR-][A-F0-9]{12,}$/i.test(qr)) {
+      fetchHerramientaByQR(qr);
+    } else if (qr.length > 0 && !qr.startsWith('QR-')) {
+      setError('Código QR debe empezar con "QR-" seguido de caracteres hexadecimales');
       setSelectedHerramienta(null);
       setFormData(prev => ({ ...prev, herramienta: '' }));
     } else {
@@ -342,7 +457,7 @@ export default function RegistrarMovimientoPage() {
     setError('');
     setFieldErrors({});
 
-    if (!formData.herramienta && !formData.barcode) {
+    if (!formData.herramienta && !formData.barcode && !formData.qrCode) {
       setError('Debe seleccionar una herramienta o escanear un código de barras');
       setLoading(false);
       return;
@@ -363,8 +478,12 @@ export default function RegistrarMovimientoPage() {
         ...formData,
         cantidad: Number(formData.cantidad),
       };
+
+      if (formData.qrCode){
+        payload.qrCode = formData.qrCode;
+      }
       
-      if (formData.barcode) {
+      if (formData.barcode && !formData.qrCode) {
         payload.barcode = formData.barcode;
         delete payload.herramienta;
       }
@@ -378,6 +497,10 @@ export default function RegistrarMovimientoPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEscanneQRError = (errMsg) => {
+    setError(`Error en escáner QR: ${errMsg}`);
   };
 
   return (
@@ -401,6 +524,11 @@ export default function RegistrarMovimientoPage() {
                 Código de barras: {formData.barcode}
               </p>
             )}
+            {formData.qrCode && (
+              <p className='text-green-700 text-sm'>
+                Código QR: {formData.qrCode}
+              </p>
+            )}
           </div>
         )}
 
@@ -413,7 +541,7 @@ export default function RegistrarMovimientoPage() {
             onChange={handleBarcodeManualChange}
             maxLength="8"
             className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500"
-            disabled={loading}
+            disabled={loading || !!formData.qrCode}
           />
           {loading && <p className="text-sm text-blue-600 mt-1">Buscando herramienta...</p>}
         </div>
@@ -423,7 +551,7 @@ export default function RegistrarMovimientoPage() {
             type="button"
             onClick={() => setShowScanner(!showScanner)}
             className="flex-1 bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition-colors"
-            disabled={loading}
+            disabled={loading || !!formData.qrCode}
           >
             {showScanner ? '📷 Cerrar Escáner' : '📷 Escanear Código'}
           </button>
@@ -439,6 +567,32 @@ export default function RegistrarMovimientoPage() {
             />
           </div>
         )}
+
+        <div className='mb-4 pt-4 border-t border-gray-200'>
+          <label className='block text-sm font-medium mb-2'>o Ingresar código QR manualmente</label>
+          <input
+            type="text"
+            placeholder="Ej. QR-E674899FFC83"
+            value={formData.qrCode}
+            onChange={handleManualQRChange}
+            maxLength="20"  // Ajusta según tu formato QR
+            className="w-full border p-2 rounded focus:ring-2 focus:ring-purple-500"
+            disabled={loading || !!formData.barcode}  // Deshabilita si barcode activo
+          ></input>
+          {loading && <p className='text-sm text-blue-600 mt-1'>Buscando herramienta por QR</p>}
+        </div>
+
+        <div className="flex space-x-2 mb-4">  {/* Botón escáner QR */}
+          <button
+            type="button"
+            onClick={() => setShowEscanerQR(true)}  // ← Abre modal QR
+            className="flex-1 bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 transition-colors"
+            disabled={loading || !!formData.barcode}
+          >
+            🔲 Escanear QR
+          </button>
+          <span className="flex items-center text-gray-500">o</span>
+        </div>
 
         <select
           name="herramienta"
@@ -622,6 +776,15 @@ export default function RegistrarMovimientoPage() {
           {loading ? 'Registrando...' : 'Registrar Movimiento'}
         </button>
       </form>
+      {/* ← NUEVO: Modal Escáner QR (render condicional) */}
+      {showEscanerQR && (
+        <EscanerQR
+          isOpen={showEscanerQR}
+          onScan={handleScanQR}
+          onClose={() => setShowEscanerQR(false)}
+          onError={(err) => setError('Error escáner: ' + err.message)}
+        />
+      )}
     </div>
   );
 }

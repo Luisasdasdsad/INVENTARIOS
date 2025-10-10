@@ -46,7 +46,7 @@ export default function MovimientosList() {
       if (filtros.fechaDesde) params.append('fechaDesde', filtros.fechaDesde);
       if (filtros.fechaHasta) params.append('fechaHasta', filtros.fechaHasta);
       
-      const url = `http://localhost:5000/api/movimientos/pdf?${params.toString()}`; // Full URL + params
+      const url = `https://backend-production-01e4.up.railway.app/api/movimientos/pdf?${params.toString()}`; // Full URL + params
       console.log('URL PDF:', url); // DEBUG
       
       const response = await fetch(url);

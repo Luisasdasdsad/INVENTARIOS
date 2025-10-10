@@ -5,110 +5,106 @@ const BarcodeScanner = ({ onDetected, onError, isActive = false }) => {
   const scannerRef = useRef(null);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState(null);
-  const [hasDetected, setHasDetected] = useState(false);  // Flag para bloqueo múltiples
+  const isProcessingRef = useRef(false); // evita múltiples lecturas seguidas
+  const hasDetectedRef = useRef(false);
 
-  // ← FIX CLAVE: Listener GLOBAL – atado UNA VEZ al componente
+
+  // 🧠 Detener escáner
+  const stopScanner = () => {
+    try {
+      Quagga.stop();
+      console.log('🛑 Scanner detenido');
+    } catch (err) {
+      console.warn('⚠️ No se pudo detener scanner:', err);
+    }
+    setIsScanning(false);
+  };
+
+  // 📸 Iniciar escáner
+  const startScanner = () => {
+    if (!scannerRef.current) return;
+
+    setError(null);
+    setIsScanning(true);
+
+    Quagga.init(
+      {
+        inputStream: {
+          name: 'Live',
+          type: 'LiveStream',
+          target: scannerRef.current,
+          constraints: {
+            width: 640,
+            height: 480,
+            facingMode: 'environment',
+          },
+        },
+        decoder: {
+          readers: ['code_128_reader', 'ean_reader', 'code_39_reader'],
+        },
+        locator: { patchSize: 'medium', halfSample: true },
+        numOfWorkers: 2,
+        locate: true,
+      },
+      (err) => {
+        if (err) {
+          console.error('❌ Error inicializando Quagga:', err);
+          setError('Error al acceder a la cámara. Verifique los permisos.');
+          setIsScanning(false);
+          if (onError) onError(err);
+          return;
+        }
+        console.log('✅ Quagga inicializado correctamente');
+        Quagga.start();
+      }
+    );
+  };
+
+  // 🎯 Listener de detección
   useEffect(() => {
-    // Ata listener una sola vez (no depende de isActive)
     const handleDetected = (result) => {
-      const code = result.codeResult.code;
-      
-      // Bloquea si ya detectado (global)
-      if (hasDetected) {
-        console.log('⏸️ Detección ignorada (global) – ya procesada:', code);
+      const code = result?.codeResult?.code;
+      if (!code) return;
+
+      if (isProcessingRef.current) {
+        console.log('⏸️ Lectura ignorada (en enfriamiento):', code);
         return;
       }
-      
-      console.log('📱 Código detectado (único global):', code);
-      setHasDetected(true);  // Marca global
-      
-      if (onDetected) {
-        onDetected(code);  // Llama parent UNA SOLA VEZ
-      }
-      
-      console.log('🛑 Detección única procesada – deteniendo scanner');
-      
-      // Detiene inmediatamente
-      stopScanner();
+
+      console.log('📱 Código detectado:', code);
+      isProcessingRef.current = true;
+
+      if (onDetected && !hasDetectedRef.current) {
+  hasDetectedRef.current = true; // marca detección única
+  console.log('📤 Enviando código detectado al parent:', code);
+  onDetected(code);
+}
+
+// ⚠️ No detener cámara aquí, dejar que el parent la cierre
+console.log('✅ Código detectado, esperando instrucción del parent...');
     };
 
     Quagga.onDetected(handleDetected);
-    console.log('🔗 Listener onDetected atado (único)');
+    console.log('🔗 Listener onDetected activo');
 
-    // Cleanup: Remueve listener al desmontar
     return () => {
       Quagga.offDetected(handleDetected);
       console.log('🔌 Listener onDetected removido');
       stopScanner();
     };
-  }, []);  // ← VACÍO: Solo una vez al mount (no re-ata)
+  }, [onDetected]);
 
-  // ← useEffect para start/stop basado en isActive
+  // ⚙️ Activar o detener
   useEffect(() => {
-    if (isActive && !isScanning) {
+    if (isActive) {
+      console.log('▶️ Escáner activado');
       startScanner();
-    } else if (!isActive && isScanning) {
+    } else {
+      console.log('⏹️ Escáner desactivado');
       stopScanner();
     }
-
-    // Cleanup al cambio de isActive
-    return () => {
-      if (!isActive) {
-        stopScanner();
-      }
-    };
+    return () => stopScanner();
   }, [isActive]);
-
-  const startScanner = () => {
-    if (!scannerRef.current || hasDetected) return;  // No start si ya detectado
-
-    setError(null);
-    setIsScanning(true);
-    setHasDetected(false);  // Reset solo al start manual
-
-    Quagga.init({
-      inputStream: {
-        name: "Live",
-        type: "LiveStream",
-        target: scannerRef.current,
-        constraints: {
-          width: 640,
-          height: 480,
-          facingMode: "environment"
-        }
-      },
-      decoder: {
-        readers: ['code_128_reader','ean_reader','code_39_reader']  // Múltiples OK
-      },
-      locator: {
-        patchSize: "medium",
-        halfSample: true
-      },
-      numOfWorkers: 2,
-      frequency: 10,
-      locate: true
-    }, (err) => {
-      if (err) {
-        console.error('Error inicializando Quagga:', err);
-        setError('Error al acceder a la cámara. Verifique los permisos.');
-        setIsScanning(false);
-        if (onError) onError(err);
-        return;
-      }
-      
-      console.log('Quagga inicializado correctamente');
-      Quagga.start();
-    });
-  };
-
-  const stopScanner = () => {
-    if (isScanning) {
-      Quagga.stop();
-      setIsScanning(false);
-      // NO reset hasDetected aquí – se mantiene true hasta re-start manual
-      console.log('🛑 Scanner detenido (stream off)');
-    }
-  };
 
   return (
     <div className="barcode-scanner">
@@ -117,16 +113,11 @@ const BarcodeScanner = ({ onDetected, onError, isActive = false }) => {
           <p>{error}</p>
         </div>
       )}
-      
-      <div 
-        ref={scannerRef} 
+
+      <div
+        ref={scannerRef}
         className="scanner-container bg-black rounded-lg overflow-hidden"
-        style={{ 
-          width: '100%', 
-          maxWidth: '640px', 
-          height: '480px',
-          position: 'relative'
-        }}
+        style={{ width: '100%', maxWidth: '640px', height: '480px', position: 'relative' }}
       >
         {!isScanning && !error && (
           <div className="flex items-center justify-center h-full text-white">
@@ -134,12 +125,10 @@ const BarcodeScanner = ({ onDetected, onError, isActive = false }) => {
           </div>
         )}
       </div>
-      
+
       {isScanning && (
         <div className="mt-4 text-center">
-          <p className="text-sm text-gray-600">
-            Apunte la cámara hacia el código de barras
-          </p>
+          <p className="text-sm text-gray-600">Apunte la cámara hacia el código de barras</p>
           <div className="mt-2">
             <div className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
               <div className="w-2 h-2 bg-blue-600 rounded-full mr-2 animate-pulse"></div>

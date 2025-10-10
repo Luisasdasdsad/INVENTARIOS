@@ -23,7 +23,7 @@ app.get('/', (req, res) => {
 // Ruta de herramientas
 app.use("/api/herramientas",herramientasRoutes);
 // Ruta de códigos de barras
-app.use("/api/barcode", barcodeRoutes);
+app.use("/api/barcode", barcodeRoutes); 
 //Ruta de autenticación
 app.use("/api/auth", authRoutes);
 //Ruta de movimientos
