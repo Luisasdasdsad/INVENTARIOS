@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+ import { useEffect, useState } from "react";
 import api from "../../services/api.js";
 import Modal from "../../components/Modal/Modal";
 import HerramientaForm from "./HerramientaForm";
@@ -16,6 +16,7 @@ export default function HerramientasList() {
   const [selectedHerramienta, setSelectedHerramienta] = useState(null);
   const [generatingBarcode, setGeneratingBarcode] = useState(false);
   const [generatingQR, setGeneratingQR] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchHerramientas = async () => {
     setLoading(true);
@@ -34,6 +35,8 @@ export default function HerramientasList() {
   useEffect(() => {
     fetchHerramientas();
   }, []);
+
+  const filteredHerramientas = herramientas.filter(h => h.nombre.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const handleAddHerramienta = () => {
     setEditingHerramienta(null);
@@ -151,7 +154,16 @@ export default function HerramientasList() {
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <h2 className="text-xl md:text-2xl font-bold text-gray-800">Inventario</h2>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-800">Inventario</h2>
+          <input
+            type="text"
+            placeholder="Buscar por nombre..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
+          />
+        </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <button
             onClick={handleGenerateMassiveBarcodes}
@@ -176,13 +188,13 @@ export default function HerramientasList() {
         </div>
       </div>
 
-      {herramientas.length === 0 ? (
-        <div className="text-center py-12 text-gray-600">No hay herramientas registradas.</div>
+      {filteredHerramientas.length === 0 ? (
+        <div className="text-center py-12 text-gray-600">{searchTerm ? 'No hay herramientas que coincidan con la búsqueda.' : 'No hay herramientas registradas.'}</div>
       ) : (
         <div className="space-y-4">
           {/* Mobile: Cards */}
           <div className="md:hidden space-y-4">
-            {herramientas.map((h) => (
+            {filteredHerramientas.map((h) => (
               <div key={h._id} className="bg-white p-4 rounded-lg shadow-md border divide-y divide-gray-200">
                 <div className="space-y-2 mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">{h.nombre}</h3>
@@ -286,7 +298,7 @@ export default function HerramientasList() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {herramientas.map((h) => (
+                  {filteredHerramientas.map((h) => (
                     <tr key={h._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{h.nombre}</td>
                       <td className="px-6 py-4 whitespace-nowrap">{h.marca || '-'}</td>
