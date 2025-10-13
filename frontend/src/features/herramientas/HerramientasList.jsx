@@ -284,7 +284,9 @@ export default function HerramientasList() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marca</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modelo</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Serie</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unidad</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
@@ -298,7 +300,9 @@ export default function HerramientasList() {
                       <td className="px-4 py-3 whitespace-nowrap font-medium text-gray-900 text-sm">{h.nombre}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm">{h.marca || '-'}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm">{h.modelo || '-'}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm">{h.serie || '-'}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm">{h.tipo || '-'}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm">S/ {h.precio?.toFixed(2) || '0.00'}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm">{h.descripcion || '-'}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm">{h.cantidad}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm">{h.unidad}</td>
                       <td className="px-4 py-3 whitespace-nowrap">

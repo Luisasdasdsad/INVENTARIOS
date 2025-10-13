@@ -6,11 +6,14 @@ export default function HerramientaForm({ herramienta, onSuccess, onCancel }) {
     nombre: '',
     marca: '',
     modelo: '',
-    serie: '',
+    tipo: '',
     cantidad: '',
     unidad: 'unidad',
     estado: 'disponible',
+    descripcion: '',
+    precio: '',
   });
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -20,20 +23,24 @@ export default function HerramientaForm({ herramienta, onSuccess, onCancel }) {
         nombre: herramienta.nombre || '',
         marca: herramienta.marca || '',
         modelo: herramienta.modelo || '',
-        serie: herramienta.serie || '',
+        tipo: herramienta.tipo || '',
         cantidad: herramienta.cantidad || '',
         unidad: herramienta.unidad || 'unidad',
         estado: herramienta.estado || 'disponible',
+        descripcion: herramienta.descripcion || '',
+        precio: herramienta.precio || '',
       });
     } else {
       setFormData({
         nombre: '',
         marca: '',
         modelo: '',
-        serie: '',
+        tipo: '',
         cantidad: '',
         unidad: 'unidad',
         estado: 'disponible',
+        descripcion: '',
+        precio: '',
       });
     }
   }, [herramienta]);
@@ -49,11 +56,12 @@ export default function HerramientaForm({ herramienta, onSuccess, onCancel }) {
     setError('');
 
     // Validación simple (solo lo esencial)
-    if (!formData.nombre || !formData.marca || !formData.modelo) {
-      setError('Nombre, marca y modelo son requeridos');
+    if (!formData.nombre || !formData.marca || !formData.modelo || !formData.tipo) {
+      setError('Nombre, marca, modelo y tipo son requeridos');
       setLoading(false);
       return;
     }
+    
     const cantidadNum = parseInt(formData.cantidad);
     if (isNaN(cantidadNum) || cantidadNum < 1) {
       setError('Cantidad debe ser un número mayor o igual a 1');
@@ -79,10 +87,12 @@ export default function HerramientaForm({ herramienta, onSuccess, onCancel }) {
           nombre: '',
           marca: '',
           modelo: '',
-          serie: '',
+          tipo: '',
           cantidad: '',
           unidad: 'unidad',
           estado: 'disponible',
+          descripcion: '',
+          precio: '',
         });
       }
       onSuccess();
@@ -152,15 +162,23 @@ export default function HerramientaForm({ herramienta, onSuccess, onCancel }) {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1 text-gray-700">Serie (opcional)</label>
-            <input
-              type="text"
-              name="serie"
-              value={formData.serie}
+            <label className="block text-sm font-medium mb-1 text-gray-700">Tipo</label>
+            <select
+              name="tipo"
+              value={formData.tipo}
               onChange={handleChange}
+              required
               className="w-full px-3 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Ej. ABC123"
-            />
+            >
+              <option value="">Selecciona un tipo</option>
+              <option value="herramientas">Herramientas</option>
+              <option value="útiles de escritorio">Útiles de escritorio</option>
+              <option value="equipos de computo">Equipos de computo</option>
+              <option value="muebles">Muebles</option>
+              <option value="útiles de aseo">Útiles de aseo</option>
+              <option value="materiales">Materiales</option>
+              <option value="equipo de protección personal (EPPS)">Equipo de protección personal (EPPS)</option>
+            </select>
           </div>
         </div>
         <div>
@@ -189,6 +207,36 @@ export default function HerramientaForm({ herramienta, onSuccess, onCancel }) {
             value={formData.unidad}
             onChange={handleChange}
             className="w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+        <div>
+          <label htmlFor="precio" className="block text-sm font-medium text-gray-700 mb-1">
+            Precio (S/.)
+          </label>
+          <input
+            type="number"
+            id="precio"
+            name="precio"
+            value={formData.precio}
+            onChange={handleChange}
+            min="0"
+            step="0.01"
+            placeholder="Ej. 120.50"
+            className="w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+        <div>
+          <label html="descripcion" className="block text-sm font-medium text-gray-700 mb-1">
+            Descripción
+          </label>
+          <textarea
+            id="descripcion"
+            name="descripcion"
+            value={formData.descripcion}
+            onChange={handleChange}
+            rows="3"
+            placeholder="Detalles adicionales de la herramienta..."
+            className="w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
           />
         </div>
         <div>
