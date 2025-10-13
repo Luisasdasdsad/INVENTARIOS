@@ -1,4 +1,4 @@
- import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../../services/api.js";
 import Modal from "../../components/Modal/Modal";
 import HerramientaForm from "./HerramientaForm";
@@ -140,65 +140,60 @@ export default function HerramientasList() {
     }
   };
 
-  // ← NUEVO: Handler para error en imagen QR (placeholder)
-  const handleImageError = (e, type) => {
-    e.target.style.display = 'none';
-    // Muestra placeholder div (opcional – agrega un div con texto "Imagen no disponible")
-    console.log(`Error cargando ${type} imagen`);
-  };
-
-  if (loading) return <div className="text-center p-8 md:p-12 text-gray-600">Cargando herramientas...</div>;
-  if (error) return <div className="text-center p-8 md:p-12 text-red-500 bg-red-50 rounded-md m-4">Error: {error}</div>;
+  if (loading) return <div className="text-center p-4 md:p-8 text-gray-600">Cargando herramientas...</div>;
+  if (error) return <div className="text-center p-4 md:p-8 text-red-500 bg-red-50 rounded-md m-2 md:m-4">Error: {error}</div>;
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl w-full">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-          <h2 className="text-xl md:text-2xl font-bold text-gray-800">Inventario</h2>
+    <div className="p-2 md:p-4 lg:p-6 max-w-7xl w-full mx-auto">
+      {/* Header Mejorado */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-6 gap-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
+          <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-800 whitespace-nowrap">Inventario</h2>
           <input
             type="text"
             placeholder="Buscar por nombre..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64 text-sm md:text-base"
           />
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <button
             onClick={handleGenerateMassiveBarcodes}
             disabled={generatingBarcode}
-            className="flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-3 rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 min-h-[44px] w-full sm:w-auto text-sm"
+            className="flex items-center justify-center gap-2 bg-green-600 text-white px-3 py-2 md:px-4 md:py-2 rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 min-h-[44px] w-full sm:w-auto text-xs md:text-sm"
           >
-            {generatingBarcode ? 'Generando...' : <><FaBarcode size={16} /> Generar Barcodes Masivo</>}
+            {generatingBarcode ? 'Generando...' : <><FaBarcode size={14} /> Barcodes Masivo</>}
           </button>
           <button
             onClick={handleGenerateMassiveQRs}
             disabled={generatingQR}
-            className="flex items-center justify-center gap-2 bg-purple-600 text-white px-4 py-3 rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50 min-h-[44px] w-full sm:w-auto text-sm"
+            className="flex items-center justify-center gap-2 bg-purple-600 text-white px-3 py-2 md:px-4 md:py-2 rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50 min-h-[44px] w-full sm:w-auto text-xs md:text-sm"
           >
-            {generatingQR ? 'Generando...' : <><FaQrcode size={16} /> Generar QRs Masivo</>}
+            {generatingQR ? 'Generando...' : <><FaQrcode size={14} /> QRs Masivo</>}
           </button>
           <button
             onClick={handleAddHerramienta}
-            className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-md hover:bg-blue-700 transition-colors min-h-[44px] w-full sm:w-auto text-sm"
+            className="flex items-center justify-center gap-2 bg-blue-600 text-white px-3 py-2 md:px-4 md:py-2 rounded-md hover:bg-blue-700 transition-colors min-h-[44px] w-full sm:w-auto text-xs md:text-sm"
           >
-            <FaPlus size={16} /> Agregar Herramienta
+            <FaPlus size={14} /> Agregar
           </button>
         </div>
       </div>
 
       {filteredHerramientas.length === 0 ? (
-        <div className="text-center py-12 text-gray-600">{searchTerm ? 'No hay herramientas que coincidan con la búsqueda.' : 'No hay herramientas registradas.'}</div>
+        <div className="text-center py-8 md:py-12 text-gray-600 text-sm md:text-base">
+          {searchTerm ? 'No hay herramientas que coincidan con la búsqueda.' : 'No hay herramientas registradas.'}
+        </div>
       ) : (
-        <div className="space-y-4">
-          {/* Mobile: Cards */}
-          <div className="md:hidden space-y-4">
+        <div className="space-y-3 md:space-y-4">
+          {/* Mobile: Cards Mejoradas */}
+          <div className="md:hidden space-y-3">
             {filteredHerramientas.map((h) => (
-              <div key={h._id} className="bg-white p-4 rounded-lg shadow-md border divide-y divide-gray-200">
-                <div className="space-y-2 mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">{h.nombre}</h3>
-                  <div className="text-sm text-gray-600 space-y-1">
+              <div key={h._id} className="bg-white p-3 rounded-lg shadow-sm border divide-y divide-gray-200">
+                <div className="space-y-2 mb-3">
+                  <h3 className="text-base font-semibold text-gray-900">{h.nombre}</h3>
+                  <div className="text-xs text-gray-600 space-y-1">
                     <p><span className="font-medium">Marca:</span> {h.marca || '-'}</p>
                     <p><span className="font-medium">Modelo:</span> {h.modelo || '-'}</p>
                     <p><span className="font-medium">Serie:</span> {h.serie || '-'}</p>
@@ -215,44 +210,44 @@ export default function HerramientasList() {
 
                 {/* Códigos en Mobile */}
                 <div className="py-3">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Códigos</h4>
+                  <h4 className="text-xs font-medium text-gray-700 mb-2">Códigos</h4>
                   <div className="space-y-2">
                     {h.barcode ? (
                       <div className="flex items-center justify-between bg-gray-50 p-2 rounded">
                         <span className="text-xs font-mono flex-1 truncate">
-                          <FaBarcode size={12} className="mr-1 inline" /> {h.barcode}
+                          <FaBarcode size={10} className="mr-1 inline" /> {h.barcode}
                         </span>
                       </div>
                     ) : (
                       <button
                         onClick={() => handleGenerateBarcode(h)}
                         disabled={generatingBarcode}
-                        className="w-full text-green-600 hover:text-green-900 text-sm disabled:opacity-50 flex items-center justify-center gap-1 py-2 bg-gray-100 rounded"
+                        className="w-full text-green-600 hover:text-green-900 text-xs disabled:opacity-50 flex items-center justify-center gap-1 py-2 bg-gray-100 rounded"
                       >
-                        <FaBarcode size={14} /> {generatingBarcode ? 'Generando...' : 'Generar Barcode'}
+                        <FaBarcode size={12} /> {generatingBarcode ? 'Generando...' : 'Barcode'}
                       </button>
                     )}
                     {h.qrCode ? (
                       <div className="flex items-center justify-between bg-blue-50 p-2 rounded">
                         <span className="text-xs font-mono flex-1 truncate">
-                          <FaQrcode size={12} className="mr-1 inline" /> {h.qrCode}
+                          <FaQrcode size={10} className="mr-1 inline" /> {h.qrCode}
                         </span>
                       </div>
                     ) : (
                       <button
                         onClick={() => handleGenerateQR(h)}
                         disabled={generatingQR}
-                        className="w-full text-purple-600 hover:text-purple-900 text-sm disabled:opacity-50 flex items-center justify-center gap-1 py-2 bg-gray-100 rounded"
+                        className="w-full text-purple-600 hover:text-purple-900 text-xs disabled:opacity-50 flex items-center justify-center gap-1 py-2 bg-gray-100 rounded"
                       >
-                        <FaQrcode size={14} /> {generatingQR ? 'Generando...' : 'Generar QR'}
+                        <FaQrcode size={12} /> {generatingQR ? 'Generando...' : 'QR'}
                       </button>
                     )}
                     {(h.barcode || h.qrCode) && (
                       <button
                         onClick={() => handleShowCodes(h)}
-                        className="w-full bg-indigo-600 text-white text-sm py-2 rounded hover:bg-indigo-700 flex items-center justify-center gap-1"
+                        className="w-full bg-indigo-600 text-white text-xs py-2 rounded hover:bg-indigo-700 flex items-center justify-center gap-1"
                       >
-                        <FaEye size={14} /> Ver Códigos
+                        <FaEye size={12} /> Ver Códigos
                       </button>
                     )}
                     {!h.barcode && !h.qrCode && (
@@ -265,15 +260,15 @@ export default function HerramientasList() {
                 <div className="flex gap-2 pt-3">
                   <button
                     onClick={() => handleEditHerramienta(h)}
-                    className="flex-1 flex items-center justify-center gap-1 bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 text-sm min-h-[44px]"
+                    className="flex-1 flex items-center justify-center gap-1 bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 text-xs min-h-[40px]"
                   >
-                    <FaEdit size={14} /> Editar
+                    <FaEdit size={12} /> Editar
                   </button>
                   <button
                     onClick={() => handleDeleteHerramienta(h._id)}
-                    className="flex-1 flex items-center justify-center gap-1 bg-red-600 text-white py-2 rounded-md hover:bg-red-700 text-sm min-h-[44px]"
+                    className="flex-1 flex items-center justify-center gap-1 bg-red-600 text-white py-2 rounded-md hover:bg-red-700 text-xs min-h-[40px]"
                   >
-                    <FaTrash size={14} /> Eliminar
+                    <FaTrash size={12} /> Eliminar
                   </button>
                 </div>
               </div>
@@ -282,38 +277,38 @@ export default function HerramientasList() {
 
           {/* Desktop: Tabla */}
           <div className="hidden md:block">
-            <div className="overflow-x-auto bg-white shadow-md rounded-lg">
+            <div className="overflow-x-auto bg-white shadow-sm rounded-lg">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marca</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modelo</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Serie</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unidad</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Códigos</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marca</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modelo</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Serie</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unidad</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Códigos</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredHerramientas.map((h) => (
                     <tr key={h._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{h.nombre}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{h.marca || '-'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{h.modelo || '-'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{h.serie || '-'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{h.cantidad}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{h.unidad}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-3 whitespace-nowrap font-medium text-gray-900 text-sm">{h.nombre}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm">{h.marca || '-'}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm">{h.modelo || '-'}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm">{h.serie || '-'}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm">{h.cantidad}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm">{h.unidad}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                           h.estado === 'disponible' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                         }`}>
                           {h.estado}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm">
+                      <td className="px-4 py-3 text-sm">
                         <div className="space-y-1">
                           {h.barcode ? (
                             <div className="flex items-center justify-between text-xs bg-gray-50 p-1 rounded">
@@ -330,7 +325,7 @@ export default function HerramientasList() {
                               <FaBarcode size={10} /> Gen Barcode
                             </button>
                           )}
-                                                    {h.qrCode ? (
+                          {h.qrCode ? (
                             <div className="flex items-center justify-between text-xs bg-blue-50 p-1 rounded">
                               <span className="font-mono truncate flex-1">
                                 <FaQrcode size={10} className="mr-1 inline" /> {h.qrCode.substring(0, 12)}...
@@ -345,7 +340,6 @@ export default function HerramientasList() {
                               <FaQrcode size={10} /> Gen QR
                             </button>
                           )}
-                          {/* Botón Ver si tiene al menos uno */}
                           {(h.barcode || h.qrCode) && (
                             <button
                               onClick={() => handleShowCodes(h)}
@@ -359,18 +353,18 @@ export default function HerramientasList() {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium space-x-2">
                         <button
                           onClick={() => handleEditHerramienta(h)}
-                          className="text-indigo-600 hover:text-indigo-900 flex items-center gap-1"
+                          className="text-indigo-600 hover:text-indigo-900 flex items-center gap-1 text-xs"
                         >
-                          <FaEdit size={12} /> Editar
+                          <FaEdit size={10} /> Editar
                         </button>
                         <button
                           onClick={() => handleDeleteHerramienta(h._id)}
-                          className="text-red-600 hover:text-red-900 flex items-center gap-1"
+                          className="text-red-600 hover:text-red-900 flex items-center gap-1 text-xs"
                         >
-                          <FaTrash size={12} /> Eliminar
+                          <FaTrash size={10} /> Eliminar
                         </button>
                       </td>
                     </tr>
@@ -382,7 +376,7 @@ export default function HerramientasList() {
         </div>
       )}
 
-      {/* Modal para Form (tu original – sin cambios) */}
+      {/* Modal para Form */}
       {showModal && (
         <Modal onClose={() => setShowModal(false)}>
           <div className="max-h-[90vh] overflow-y-auto p-4 md:p-0">
@@ -395,7 +389,7 @@ export default function HerramientasList() {
         </Modal>
       )}
 
-      {/* ← NUEVO MODAL: Ver Códigos (Barcode + QR con Imágenes Reales – Responsive) */}
+      {/* Modal para Ver Códigos - Mejorado para móvil */}
       {showCodesModal && selectedHerramienta && (
         <Modal onClose={() => setShowCodesModal(false)}>
           <div className="p-4 md:p-6 max-h-[90vh] overflow-y-auto">
@@ -404,9 +398,9 @@ export default function HerramientasList() {
             </h3>
             <div className="space-y-6">
               {/* Info Herramienta */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-semibold mb-2 text-gray-700">Detalles</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+              <div className="bg-gray-50 p-3 md:p-4 rounded-lg">
+                <h4 className="font-semibold mb-2 text-gray-700 text-sm md:text-base">Detalles</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs md:text-sm text-gray-600">
                   <p><strong>Marca:</strong> {selectedHerramienta.marca || '-'}</p>
                   <p><strong>Modelo:</strong> {selectedHerramienta.modelo || '-'}</p>
                   <p><strong>Serie:</strong> {selectedHerramienta.serie || '-'}</p>
@@ -421,70 +415,67 @@ export default function HerramientasList() {
                 </div>
               </div>
 
-               {/* ← SECCIÓN CÓDIGOS: Side-by-Side (Grid 2 Columnas – Sin Responsive) */}
-<div className="grid grid-cols-2 gap-6 mb-6">  {/* ← Grid fijo 2 cols, gap horizontal, mb para espacio antes cerrar */}
-  
-  {/* ← COLUMNA 1: Barcode (Izquierda) */}
-  <div className="text-center border-r border-gray-200 pr-6">  {/* ← pr-6 para espacio visual, border opcional para separar */}
-    <h4 className="font-semibold mb-2 text-gray-700 flex items-center justify-center gap-2">
-      <FaBarcode size={16} /> Código de Barras
-    </h4>
-    {selectedHerramienta.barcode ? (
-      <>
-        <div className="mb-2">
-          <BarcodeDisplay 
-            value={selectedHerramienta.barcode}
-            height={80}
-            showActions={false} 
-            className="mx-auto max-w-full"  // ← Height fijo 64px para browser (ajusta si overlap)
-          />
-        </div>
-      </>
-    ) : (
-      <div className="space-y-2">
-        <p className="text-gray-500 italic">No hay código de barras generado.</p>
-        <button
-          onClick={() => handleGenerateBarcode(selectedHerramienta)}
-          disabled={generatingBarcode}
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2 mx-auto"
-        >
-          <FaBarcode size={14} /> Generar Barcode
-        </button>
-      </div>
-    )}
-  </div>
+              {/* Códigos - Responsive */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-4">
+                {/* Barcode */}
+                <div className="text-center border-b md:border-b-0 md:border-r border-gray-200 pb-4 md:pb-0 md:pr-6">
+                  <h4 className="font-semibold mb-3 text-gray-700 flex items-center justify-center gap-2 text-sm md:text-base">
+                    <FaBarcode size={14} /> Código de Barras
+                  </h4>
+                  {selectedHerramienta.barcode ? (
+                    <>
+                      <div className="mb-2">
+                        <BarcodeDisplay 
+                          value={selectedHerramienta.barcode}
+                          height={60}
+                          showActions={false}
+                          className="mx-auto max-w-full"
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-gray-500 italic text-sm">No hay código de barras generado.</p>
+                      <button
+                        onClick={() => handleGenerateBarcode(selectedHerramienta)}
+                        disabled={generatingBarcode}
+                        className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2 mx-auto text-sm"
+                      >
+                        <FaBarcode size={12} /> Generar Barcode
+                      </button>
+                    </div>
+                  )}
+                </div>
 
-  {/* ← COLUMNA 2: QR (Derecha) */}
-  <div className="text-center pl-6">
-    <h4 className="font-semibold mb-4 text-gray-700 flex items-center justify-center gap-2">
-      <FaQrcode size={16} /> Código QR
-    </h4>
-    {selectedHerramienta.qrCode ? (
-      <QRDisplay 
-        qrCode={selectedHerramienta.qrCode}
-        showActions={false}  // ← Oculta download en "ver"
-        className="mx-auto" 
-      />
-    ) : (
-      <div className="space-y-2">
-        <p className="text-gray-500 italic">No hay código QR.</p>
-        <button
-          onClick={() => handleGenerateQR(selectedHerramienta)}
-          className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 flex items-center gap-2 mx-auto"
-        >
-          <FaQrcode size={14} /> Generar
-        </button>
-      </div>
-    )}
-  </div>
-
-</div>
-
+                {/* QR */}
+                <div className="text-center pt-4 md:pt-0 md:pl-6">
+                  <h4 className="font-semibold mb-3 text-gray-700 flex items-center justify-center gap-2 text-sm md:text-base">
+                    <FaQrcode size={14} /> Código QR
+                  </h4>
+                  {selectedHerramienta.qrCode ? (
+                    <QRDisplay 
+                      qrCode={selectedHerramienta.qrCode}
+                      showActions={false}
+                      className="mx-auto" 
+                    />
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-gray-500 italic text-sm">No hay código QR.</p>
+                      <button
+                        onClick={() => handleGenerateQR(selectedHerramienta)}
+                        className="bg-purple-600 text-white px-3 py-2 rounded hover:bg-purple-700 flex items-center gap-2 mx-auto text-sm"
+                      >
+                        <FaQrcode size={12} /> Generar
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {/* Botón Cerrar */}
               <button
                 onClick={() => setShowCodesModal(false)}
-                className="w-full bg-gray-500 text-white px-6 py-3 rounded-md hover:bg-gray-600 min-h-[44px] mt-4"
+                className="w-full bg-gray-500 text-white px-4 py-3 rounded-md hover:bg-gray-600 min-h-[44px] text-sm md:text-base"
               >
                 Cerrar
               </button>
