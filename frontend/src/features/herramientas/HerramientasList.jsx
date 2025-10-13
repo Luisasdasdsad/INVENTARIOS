@@ -151,7 +151,7 @@ export default function HerramientasList() {
   if (error) return <div className="text-center p-8 md:p-12 text-red-500 bg-red-50 rounded-md m-4">Error: {error}</div>;
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto">
+    <div className="p-4 md:p-6 max-w-7xl w-full">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
