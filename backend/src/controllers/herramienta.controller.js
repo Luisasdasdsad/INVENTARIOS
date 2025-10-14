@@ -7,13 +7,14 @@ export const crearHerramienta = async (req, res) => {
     let foto = '';
 
     if(req.file) {
+      console.log('Subiendo foto para nueva herramienta');
       const result = await new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
           {
             resource_type: 'image',
             folder: 'inventario/herramientas',
-            public_id: 'herramienta-${Date.now()}',
-            tranformation: [
+            public_id: `herramienta-${Date.now()}`,
+            transformation: [
               { width: 800, height: 600, crop: 'limit', quality: 'auto'},
               { fetch_format: 'auto'},
             ],
@@ -24,7 +25,7 @@ export const crearHerramienta = async (req, res) => {
             else resolve(result);
           }
         );
-        uploadStram.end(req.file.buffer);
+        uploadStream.end(req.file.buffer);
       });
       foto = result.secure_url;
     }
@@ -63,7 +64,7 @@ export const actualizarHerramientas = async (req, res) => {
           {
             resource_type: 'image',
             folder: 'inventario/herramientas',
-            public_id: 'herramienta-${Date.now()}',
+            public_id: `herramienta-${Date.now()}`,
             transformation: [
               { width: 800, height: 600, crop: 'limit', quality: 'auto'},
               { fetch_format: 'auto'},
