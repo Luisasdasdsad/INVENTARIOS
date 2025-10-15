@@ -2,14 +2,18 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api.js';
 import { FaFilePdf, FaSignInAlt, FaSignOutAlt, FaDownload, FaRedo } from 'react-icons/fa';
+import { generarReporteMovimientos } from '../../utils/generarReporteMovimiento.js';
+
 
 export default function MovimientosList() {
   const [movimientos, setMovimientos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [pdfLoading, setPdfLoading] = useState(false);
-  const [filtros, setFiltros] = useState({ tipo: '', fechaDesde: '', fechaHasta: '' });
+  const [filtros, setFiltros] = useState({ tipo: '', usuario: '', fechaDesde: '', fechaHasta: '' });
   const navigate = useNavigate();
+
+  
 
   useEffect(() => {
     const fetchMovimientos = async () => {
@@ -34,45 +38,6 @@ export default function MovimientosList() {
     setFiltros(prev => ({ ...prev, [name]: value }));
   };
 
-  const descargarPDF = async () => {
-    setPdfLoading(true);
-    try {
-      console.log('Iniciando descarga PDF con filtros:', filtros);
-      const params = new URLSearchParams();
-      if (filtros.tipo) params.append('tipo', filtros.tipo);
-      if (filtros.fechaDesde) params.append('fechaDesde', filtros.fechaDesde);
-      if (filtros.fechaHasta) params.append('fechaHasta', filtros.fechaHasta);
-      
-      const url = `https://backend-production-01e4.up.railway.app/api/movimientos/pdf?${params.toString()}`;
-      console.log('URL PDF:', url);
-      
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.msg || `Error ${response.status}: Inténtelo de nuevo`);
-      }
-
-      const blob = await response.blob();
-      const link = document.createElement('a');
-      link.href = window.URL.createObjectURL(blob);
-      link.download = `reporte-movimientos-${new Date().toISOString().split('T')[0]}${filtros.tipo ? `-tipo-${filtros.tipo}` : ''}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(link.href);
-
-      console.log('PDF descargado exitosamente');
-      alert('PDF descargado exitosamente');
-    } catch (err) {
-      console.error('Error en descargarPDF:', err);
-      alert('Error al generar PDF: ' + err.message);
-      setError('Error en PDF: ' + err.message);
-    } finally {
-      setPdfLoading(false);
-    }
-  };
-
   const recargarDatos = () => {
     setLoading(true);
     setError(null);
@@ -88,6 +53,10 @@ export default function MovimientosList() {
     };
     fetchMovimientos();
   };
+
+  const handleGenerarPDF = () => {
+    generarReporteMovimientos(movimientos);
+  }
 
   console.log('Renderizando MovimientosList - Loading:', loading, 'Error:', error, 'Movimientos count:', movimientos.length);
 
@@ -146,12 +115,10 @@ export default function MovimientosList() {
             <FaSignOutAlt size={14} /> Salida
           </button>
           <button
-            onClick={descargarPDF}
-            disabled={pdfLoading}
-            className="flex items-center justify-center gap-2 bg-blue-600 text-white px-3 py-2 md:px-4 md:py-2 rounded hover:bg-blue-700 disabled:bg-blue-400 transition-colors min-h-[44px] text-sm w-full sm:w-auto"
-          >
+            onClick={() => generarReporteMovimientos(movimientos)}
+            className="flex items-center justify-center gap-2 bg-blue-600 text-white px-3 py-2 md:px-4 md:py-2 rounded hover:bg-blue-700 transition-colors min-h-[44px] text-sm w-full sm:w-auto">
             <FaFilePdf size={14} />
-            {pdfLoading ? 'Generando...' : 'PDF'}
+            Generar PDF
           </button>
         </div>
       </div>
@@ -264,8 +231,8 @@ export default function MovimientosList() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Movimiento</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Herramienta</th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unidad</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
