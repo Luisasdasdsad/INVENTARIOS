@@ -196,7 +196,7 @@ export default function HerramientasList() {
                   <div className="text-xs text-gray-600 space-y-1">
                     <p><span className="font-medium">Marca:</span> {h.marca || '-'}</p>
                     <p><span className="font-medium">Modelo:</span> {h.modelo || '-'}</p>
-                    <p><span className="font-medium">Serie:</span> {h.serie || '-'}</p>
+                    <p><span className="font-medium">Tipo:</span> {h.tipo || '-'}</p>
                     <p><span className="font-medium">Cantidad:</span> {h.cantidad} {h.unidad}</p>
                   </div>
                   <div className="flex items-center justify-between pt-2">
@@ -407,7 +407,7 @@ export default function HerramientasList() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs md:text-sm text-gray-600">
                   <p><strong>Marca:</strong> {selectedHerramienta.marca || '-'}</p>
                   <p><strong>Modelo:</strong> {selectedHerramienta.modelo || '-'}</p>
-                  <p><strong>Serie:</strong> {selectedHerramienta.serie || '-'}</p>
+                  <p><strong>Tipo:</strong> {selectedHerramienta.tipo || '-'}</p>
                   <p><strong>Cantidad:</strong> {selectedHerramienta.cantidad} {selectedHerramienta.unidad}</p>
                   <p><strong>Estado:</strong> 
                     <span className={`ml-1 px-2 py-1 text-xs rounded-full ${
