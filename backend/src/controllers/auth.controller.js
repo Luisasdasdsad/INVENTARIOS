@@ -34,7 +34,11 @@ export const login = async (req, res) => {
 
     res.json({ token, user: { id: user._id, nombre: user.nombre, email: user.email } });
     } catch (error) {
-    res.status(500).json({ msg: 'Error en servidor', error });
+    console.error("❌ Error en /login:", error); // imprime en Railway Logs
+    res.status(500).json({
+        msg: "Error en servidor",
+        error: error.message || error
+        });
     }
 };
 
