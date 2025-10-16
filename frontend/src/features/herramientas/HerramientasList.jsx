@@ -4,7 +4,8 @@ import Modal from "../../components/Modal/Modal";
 import HerramientaForm from "./HerramientaForm";
 import BarcodeDisplay from "../../components/BarcodeDisplay/BarcodeDisplay";
 import QRDisplay from "../../components/BarcodeDisplay/QRDisplay.jsx";
-import { FaEdit, FaTrash, FaBarcode, FaQrcode, FaPlus, FaEye } from "react-icons/fa";
+import { FaEdit, FaTrash, FaBarcode, FaQrcode, FaPlus, FaEye, FaFilePdf } from "react-icons/fa";
+import { generarReporteInventario } from "../../utils/generarReporteInventario.js";
 
 export default function HerramientasList() {
   const [herramientas, setHerramientas] = useState([]);
@@ -17,6 +18,7 @@ export default function HerramientasList() {
   const [generatingBarcode, setGeneratingBarcode] = useState(false);
   const [generatingQR, setGeneratingQR] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [tipoFilter, setTipoFilter] = useState('');
 
   const fetchHerramientas = async () => {
     setLoading(true);
@@ -36,7 +38,10 @@ export default function HerramientasList() {
     fetchHerramientas();
   }, []);
 
-  const filteredHerramientas = herramientas.filter(h => h.nombre.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredHerramientas = herramientas.filter(h =>
+    h.nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (tipoFilter === '' || h.tipo === tipoFilter)
+  );
 
   const handleAddHerramienta = () => {
     setEditingHerramienta(null);
@@ -149,15 +154,37 @@ export default function HerramientasList() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-6 gap-3">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
           <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-800 whitespace-nowrap">Inventario</h2>
-          <input
-            type="text"
-            placeholder="Buscar por nombre..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64 text-sm md:text-base"
-          />
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <input
+              type="text"
+              placeholder="Buscar por nombre..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-48 text-sm md:text-base"
+            />
+            <select
+              value={tipoFilter}
+              onChange={(e) => setTipoFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-48 text-sm md:text-base"
+            >
+              <option value="">Todos los tipos</option>
+              <option value="herramientas">Herramientas</option>
+              <option value="útiles de escritorio">Útiles de escritorio</option>
+              <option value="equipos de computo">Equipos de computo</option>
+              <option value="muebles">Muebles</option>
+              <option value="útiles de aseo">Útiles de aseo</option>
+              <option value="materiales">Materiales</option>
+              <option value="equipos de protección personal (EPPS)">Equipos de protección personal (EPPS)</option>
+            </select>
+          </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <button
+            onClick={() => generarReporteInventario(filteredHerramientas)}
+            className="flex items-center justify-center gap-2 bg-red-600 text-white px-3 py-2 md:px-4 md:py-2 rounded-md hover:bg-red-700 transition-colors min-h-[44px] w-full sm:w-auto text-xs md:text-sm"
+          >
+            <FaFilePdf size={14} /> Generar Reporte
+          </button>
           <button
             onClick={handleGenerateMassiveBarcodes}
             disabled={generatingBarcode}
