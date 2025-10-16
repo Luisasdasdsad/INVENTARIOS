@@ -10,8 +10,11 @@ import {
   buscarPorQRCode,
   generarQRCodesMasivo
 } from '../controllers/barcode.controller.js';
+import { auth } from '../middlewares/auth.js';
 
 const router = express.Router();
+
+router.use(auth);
 
 // Generar código de barras para una herramienta específica
 router.post('/generar/:id', generarCodigoBarras);

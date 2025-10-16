@@ -1,9 +1,12 @@
 import express from 'express';
 import { subirFoto } from '../controllers/foto.controller.js';  // Importa la función del controlador
 import multer from 'multer';
+import { auth } from '../middlewares/auth.js';
 
 // CORREGIDO: Define fotoRouter aquí (era lo que faltaba)
 const fotoRouter = express.Router();
+
+fotoRouter.use(auth);
 
 // Config Multer: Usa memoria (buffer) en lugar de disco – ideal para Cloudinary
 const storage = multer.memoryStorage();  // CAMBIADO: No guarda en /uploads local

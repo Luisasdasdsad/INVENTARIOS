@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import DashboardLayout from '../layouts/DashboardLayout';
 
 export const PrivateRoute = () => {
   const { isAuthenticated, loading } = useAuth();
@@ -8,5 +9,5 @@ export const PrivateRoute = () => {
     return <div className="flex justify-center items-center min-h-screen">Cargando...</div>;
   }
 
-  return isAuthenticated ? <Outlet /> : <Navigate to="/login" />;
+  return isAuthenticated ? <DashboardLayout><Outlet /></DashboardLayout> : <Navigate to="/login" />;
 };

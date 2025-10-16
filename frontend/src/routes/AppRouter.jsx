@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import DashboardLayout from "../layouts/DashboardLayout";
 import AuthLayout from "../layouts/AuthLayout";
 import HerramientasList from "../features/herramientas/HerramientasList";
 import MovimientosList from "../features/movimientos/MovimientosList";
@@ -7,19 +6,8 @@ import Home from "../pages/Home";
 import LoginPage from "../pages/Auth/LoginPage";
 import RegisterPage from "../pages/Auth/RegisterPage";
 import RegistrarMovimientoPage from "../features/movimientos/RegistrarMovimientoPage";
-import { AuthProvider, useAuth } from "../contexts/AuthContext";
-import HerramientaForm from "../features/herramientas/HerramientaForm";
-
-// Componente para proteger rutas
-const PrivateRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-
-  if (loading) {
-    return <p className="text-center p-4">Cargando...</p>; // O un spinner de carga
-  }
-
-  return isAuthenticated ? children : <Navigate to="/login" />;
-};
+import { AuthProvider } from "../contexts/AuthContext";
+import { PrivateRoute } from "../components/PrivateRoute";
 
 export default function AppRouter() {
   return (
@@ -34,7 +22,7 @@ export default function AppRouter() {
           </Route>
 
           {/* Rutas Protegidas (Dashboard) */}
-          <Route path="/" element={<PrivateRoute><DashboardLayout /></PrivateRoute>}>
+          <Route path="/" element={<PrivateRoute />}>
             <Route path="home" element={<Home />} /> {/* Ruta para el componente Home */}
             <Route path="herramientas" element={<HerramientasList />} />
             <Route path="movimientos" element={<MovimientosList />} />

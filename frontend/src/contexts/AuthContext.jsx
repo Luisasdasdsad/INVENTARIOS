@@ -13,14 +13,22 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      // Aquí podrías hacer una llamada al backend para validar el token
-      // y obtener los datos del usuario si es necesario.
-      // Por ahora, asumimos que si hay token, el usuario está autenticado.
-      setIsAuthenticated(true);
-      // Podrías decodificar el token o tener un endpoint /me para obtener el usuario
-      // setUser({ name: "Usuario Demo" }); // Placeholder
+      // Validar el token con el backend
+      api.get('/auth/validate')
+        .then(res => {
+          setIsAuthenticated(true);
+          setUser(res.data.user);
+        })
+        .catch(() => {
+          // Token inválido o expirado, limpiar
+          localStorage.removeItem('token');
+          setIsAuthenticated(false);
+          setUser(null);
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const login = async (credentials) => {

@@ -29,11 +29,20 @@ export const login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: 'Credenciales inválidas' });
 
-    const payload = { id: user._id, email: user.email };
+    const payload = { id: user._id, email: user.email, nombre: user.nombre };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
 
     res.json({ token, user: { id: user._id, nombre: user.nombre, email: user.email } });
     } catch (error) {
     res.status(500).json({ msg: 'Error en servidor', error });
+    }
+};
+
+export const validate = async (req, res) => {
+    try {
+        // El middleware auth ya verifica el token, así que req.user está disponible
+        res.json({ user: { id: req.user.id, nombre: req.user.nombre, email: req.user.email } });
+    } catch (error) {
+        res.status(500).json({ msg: 'Error en servidor', error });
     }
 };
