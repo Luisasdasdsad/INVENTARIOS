@@ -5,16 +5,9 @@ import dotenv from 'dotenv';
 import herramientasRoutes from './routes/herramienta.routes.js';
 import barcodeRoutes from './routes/barcode.routes.js';
 import authRoutes from './routes/auth.js';
-<<<<<<< HEAD
-import movimientoRoutes from './routes/movimientos.js'; // Movimientos de Herramientas
-import productoRoutes from './routes/producto.routes.js';
-import movimientoProductoRoutes from './routes/movimientoProducto.routes.js'; // <-- NUEVO: Movimientos de Productos
-
-=======
 import movimientoRoutes from './routes/movimientos.js';
 import fotoRouter from './routes/fotos.routes.js';
 import path from 'path';
->>>>>>> 9a5119de10d4f228053212b90cdb27f36c2c2b9e
 
 dotenv.config();
 const app = express();
