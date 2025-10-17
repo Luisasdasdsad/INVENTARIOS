@@ -1,9 +1,12 @@
 import express from 'express';
 import { movimientoCreateValidator } from '../validators/movimientoValidator.js';
-import { registrarMovimiento, listarMovimientos, generarReportePDF } from '../controllers/movimiento.controller.js';
+import { registrarMovimiento, listarMovimientos } from '../controllers/movimiento.controller.js';
 import { validationResult } from 'express-validator';
+import { auth } from '../middlewares/auth.js';
 
 const router = express.Router();
+
+router.use(auth);
 
 router.get('/', listarMovimientos);
 router.post(
@@ -17,6 +20,5 @@ router.post(
   },
   registrarMovimiento
 );
-router.get('/pdf', generarReportePDF);
 
 export default router;

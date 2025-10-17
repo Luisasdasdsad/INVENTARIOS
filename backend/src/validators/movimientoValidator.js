@@ -13,8 +13,14 @@ export const movimientoCreateValidator = [
     .optional({ nullable: true })
     .isString()
     .trim()
-    .isLength({ min: 8, max: 8 })
-    .matches(/^[A-Fa-f0-9]{8}$/i)
+    .custom((value) => {
+         // NUEVO: Si es vacío (después de trim), pasa la validación
+         if (!value || value.trim() === '') {
+           return true;
+         }
+         // Si no vacío, valida longitud y formato
+         return value.length === 8 && /^[A-Fa-f0-9]{8}$/i.test(value);
+    })
     .withMessage('Código de barras debe ser exactamente 8 caracteres hexadecimales (A-F, 0-9), ej. E317FD89'),
 
   // Tipo: Requerido, flexible con espacios y case
@@ -47,7 +53,7 @@ export const movimientoCreateValidator = [
     })
     .withMessage('Cantidad debe ser un número entero positivo (ej. 1, 12) - acepta string o number'),
 
-  // Nombre de usuario: Requerido (nuevo)
+  // Nombre de usuario: Requerido 
   body('nombreUsuario')
     .notEmpty()
     .withMessage('Nombre de usuario es requerido')
@@ -56,11 +62,35 @@ export const movimientoCreateValidator = [
     .isLength({ min: 1 })
     .withMessage('Nombre de usuario debe tener al menos 1 carácter (ej. Luis)'),
 
-  // Nota: Opcional (nuevo)
+  // Nota: Opcional 
   body('nota')
     .optional({ nullable: true })
     .isString()
     .trim()
     .isLength({ max: 500 })
-    .withMessage('Nota no puede exceder 500 caracteres')
+    .withMessage('Nota no puede exceder 500 caracteres'),
+  
+  // Obra: Opcional
+  body('obra')
+    .optional({ nullable: true })
+    .isString()
+    .trim()
+    .isLength({ max: 200 })
+    .withMessage('Obra no puede exceder 200 caracteres'),  
+  
+  //Foto: Opcional
+  body('foto')
+    .optional({ nullable: true })
+    .isString()
+    .trim()
+    .custom((value) => {
+         // NUEVO: Si es vacío (después de trim), pasa la validación
+         if (!value || value.trim() === '') {
+           return true;
+         }
+         // Si no vacío, valida si es URL válida (acepta http/https o rutas locales como /uploads)
+         const urlRegex = /^(https?:\/\/|\/uploads\/)/i;
+         return urlRegex.test(value);
+    })
+    .withMessage('Foto debe ser una URL válida')
 ];

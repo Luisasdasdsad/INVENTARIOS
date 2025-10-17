@@ -4,10 +4,17 @@ import {
   generarImagenCodigoBarras,
   buscarPorCodigoBarras,
   generarCodigosBarrasMasivo,
-  verificarDuplicados
+  verificarDuplicados,
+  generarImagenQRCode,
+  generarQRCode,
+  buscarPorQRCode,
+  generarQRCodesMasivo
 } from '../controllers/barcode.controller.js';
+import { auth } from '../middlewares/auth.js';
 
 const router = express.Router();
+
+router.use(auth);
 
 // Generar código de barras para una herramienta específica
 router.post('/generar/:id', generarCodigoBarras);
@@ -23,5 +30,11 @@ router.post('/generar-masivo', generarCodigosBarrasMasivo);
 
 // Verificar duplicados
 router.get('/verificar-duplicados', verificarDuplicados);
+
+// Rutas para códigos QR
+router.post('/generar-qr/:id', generarQRCode);
+router.get('/imagen-qr/:qrCode', generarImagenQRCode);
+router.get('/buscar-qr/:qrCode', buscarPorQRCode);
+router.post('/generar-qr-masivo', generarQRCodesMasivo);
 
 export default router;

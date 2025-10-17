@@ -1,9 +1,39 @@
 import Herramienta from "../models/herramienta.model.js";
+import cloudinary from "../config/cloudinary.js";
 
 // Crear herramienta
 export const crearHerramienta = async (req, res) => {
   try {
-    const nuevaHerramienta = new Herramienta(req.body);
+    let foto = '';
+
+    if(req.file) {
+      console.log('Subiendo foto para nueva herramienta');
+      const result = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            resource_type: 'image',
+            folder: 'inventario/herramientas',
+            public_id: `herramienta-${Date.now()}`,
+            transformation: [
+              { width: 800, height: 600, crop: 'limit', quality: 'auto'},
+              { fetch_format: 'auto'},
+            ],
+            upload_preset: process.env.UPLOAD_PRESET,
+          },
+          (error, result) => {
+            if (error) reject (error);
+            else resolve(result);
+          }
+        );
+        uploadStream.end(req.file.buffer);
+      });
+      foto = result.secure_url;
+    }
+
+    const nuevaHerramienta = new Herramienta ({
+      ...req.body,
+      foto: foto,
+    })
     const guardada = await nuevaHerramienta.save();
     res.status(201).json(guardada);
   } catch (error) {
@@ -26,7 +56,32 @@ export const listarHerramientas = async (req, res) => {
 export const actualizarHerramientas = async (req, res) => {
   try {
     const {id} =req.params;
-    const actualizada = await Herramienta.findByIdAndUpdate(id,req.body, {
+    let dataActualizada = { ...req.body };
+
+    if(req.file){
+      const result = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            resource_type: 'image',
+            folder: 'inventario/herramientas',
+            public_id: `herramienta-${Date.now()}`,
+            transformation: [
+              { width: 800, height: 600, crop: 'limit', quality: 'auto'},
+              { fetch_format: 'auto'},
+            ],
+            upload_preset: process.env.UPLOAD_PRESET,
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        uploadStream.end(req.file.buffer);
+      });
+      dataActualizada.foto = result.secure_url;
+    }
+
+    const actualizada = await Herramienta.findByIdAndUpdate(id, dataActualizada, {
       new:true,
       runValidators:true // Asegura que las validaciones del esquema se ejecuten
     });
