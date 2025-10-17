@@ -3,10 +3,15 @@ import autoTable from "jspdf-autotable";
 
 export const generarReporteMovimientos = (movimientosFiltrados = []) => {
   const doc = new jsPDF({
-    orientation: "portrait",
+    orientation: "landscape",
     unit: "pt",
     format: "a4",
   });
+
+  // 🔹 Título
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text("REPORTE DE MOVIMIENTOS", 40, 50);
 
   // 🔹 Fecha
   const fecha = new Date().toLocaleDateString("es-PE", {
@@ -15,9 +20,13 @@ export const generarReporteMovimientos = (movimientosFiltrados = []) => {
     year: "numeric",
   });
   doc.setFontSize(10);
-  doc.text(`Fecha de generación: ${fecha}`, 40, 120);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Fecha de generación: ${fecha}`, 40, 80);
 
-  // 🔹 Columnas (se agregan Obra y Nota)
+  // 🔹 Total de movimientos
+  doc.text(`Total de movimientos: ${movimientosFiltrados.length}`, 40, 100);
+
+  // 🔹 Columnas
   const columnas = [
     { header: "Fecha", dataKey: "fecha" },
     { header: "Movimiento", dataKey: "tipo" },
@@ -28,13 +37,13 @@ export const generarReporteMovimientos = (movimientosFiltrados = []) => {
     { header: "Nota", dataKey: "nota" },
   ];
 
-  // 🔹 Filas (se agregan obra y nota)
+  // 🔹 Filas
   const filas = movimientosFiltrados.map((m) => ({
-    fecha: new Date(m.fecha).toLocaleDateString(),
+    fecha: new Date(m.fecha || m.createdAt).toLocaleDateString(),
     tipo: m.tipo || "—",
-    herramienta: m.herramienta?.nombre || m.herramienta || "—",
+    herramienta: m.herramienta?.tipo || "—",
     cantidad: m.cantidad || 0,
-    usuario: m.usuario?.nombre || m.usuario || "—",
+    usuario: m.usuario?.nombre || "—",
     obra: m.obra || "—",
     nota: m.nota || "—",
   }));
@@ -43,18 +52,27 @@ export const generarReporteMovimientos = (movimientosFiltrados = []) => {
   autoTable(doc, {
     columns: columnas,
     body: filas,
-    startY: 35,
+    startY: 120,
     theme: "grid",
     headStyles: {
       fillColor: [33, 150, 243],
       textColor: 255,
       halign: "center",
-      fontSize: 10,
+      fontSize: 9,
     },
-    bodyStyles: { fontSize: 9, cellPadding: 3 },
+    bodyStyles: { fontSize: 8, cellPadding: 3 },
     styles: { lineColor: [200, 200, 200], lineWidth: 0.2 },
     alternateRowStyles: { fillColor: [245, 245, 245] },
     margin: { left: 10, right: 10 },
+    columnStyles: {
+      fecha: { cellWidth: 80 },
+      tipo: { cellWidth: 80 },
+      herramienta: { cellWidth: 100 },
+      cantidad: { cellWidth: 60, halign: "center" },
+      usuario: { cellWidth: 100 },
+      obra: { cellWidth: 100 },
+      nota: { cellWidth: 100 },
+    },
   });
 
   // 🔹 Pie de página

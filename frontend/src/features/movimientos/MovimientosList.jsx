@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api.js';
 import { FaFilePdf, FaSignInAlt, FaSignOutAlt, FaDownload, FaRedo } from 'react-icons/fa';
-import { generarReporteMovimientos } from '../../utils/generarReporteMovimiento.js';
+import { generarReporteMovimientos as generarReporteMovimientosPDF } from '../../utils/generarReporteMovimiento.js';
 
 
 export default function MovimientosList() {
@@ -10,7 +10,7 @@ export default function MovimientosList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [pdfLoading, setPdfLoading] = useState(false);
-  const [filtros, setFiltros] = useState({ tipo: '', usuario: '', fechaDesde: '', fechaHasta: '' });
+  const [filtros, setFiltros] = useState({ movimientos: '', tipoHerramienta: '', fechaInicio: '', fechaFin:'' });
   const navigate = useNavigate();
 
   
@@ -54,8 +54,43 @@ export default function MovimientosList() {
     fetchMovimientos();
   };
 
-  const handleGenerarPDF = () => {
-    generarReporteMovimientos(movimientos);
+  const handleGenerarReporteMovimientos = () => {
+    // Aplicar filtros si están definidos
+    let movimientosFiltrados = [...movimientos];
+
+  // Filtrar por tipo de movimiento
+    if (filtros.movimientos) {
+      movimientosFiltrados = movimientosFiltrados.filter(
+        (m) => m.tipo === filtros.movimientos
+      );
+    }
+
+  // Filtrar por tipo de herramienta
+    if (filtros.tipoHerramienta) {
+      movimientosFiltrados = movimientosFiltrados.filter(
+        (m) => m.herramienta?.tipo === filtros.tipoHerramienta
+      );
+    }
+
+  // Filtrar por rango de fechas
+    if (filtros.fechaInicio || filtros.fechaFin) {
+      const inicio = filtros.fechaInicio ? new Date(filtros.fechaInicio) : null;
+      const fin = filtros.fechaFin ? new Date(filtros.fechaFin) : null;
+
+      movimientosFiltrados = movimientosFiltrados.filter((m) => {
+        const fechaMov = new Date(m.createdAt);
+        if (inicio && fechaMov < inicio) return false;
+        if (fin && fechaMov > fin) return false;
+        return true;
+      });
+    }
+
+    if (movimientosFiltrados.length === 0) {
+      alert("No hay movimientos que coincidan con los filtros seleccionados.");
+      return;
+    }
+
+    generarReporteMovimientosPDF(movimientosFiltrados);
   }
 
   console.log('Renderizando MovimientosList - Loading:', loading, 'Error:', error, 'Movimientos count:', movimientos.length);
@@ -115,7 +150,7 @@ export default function MovimientosList() {
             <FaSignOutAlt size={14} /> Salida
           </button>
           <button
-            onClick={() => generarReporteMovimientos(movimientos)}
+            onClick={handleGenerarReporteMovimientos}
             className="flex items-center justify-center gap-2 bg-blue-600 text-white px-3 py-2 md:px-4 md:py-2 rounded hover:bg-blue-700 transition-colors min-h-[44px] text-sm w-full sm:w-auto">
             <FaFilePdf size={14} />
             Generar PDF
@@ -125,13 +160,13 @@ export default function MovimientosList() {
 
       {/* Filtros para PDF - Responsive */}
       <div className="mb-4 md:mb-6 p-3 md:p-4 bg-gray-50 rounded border">
-        <h3 className="font-semibold mb-2 text-sm md:text-base">Filtros para Reporte PDF (opcional):</h3>
+        <h3 className="font-semibold mb-2 text-sm md:text-base"> Reporte PDF (opcional):</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
           <div>
-            <label className="block text-xs md:text-sm font-medium mb-1">Tipo:</label>
+            <label className="block text-xs md:text-sm font-medium mb-1">Movimientos:</label>
             <select
-              name="tipo"
-              value={filtros.tipo}
+              name="movimientos"
+              value={filtros.movimientos}
               onChange={handleFiltroChange}
               className="w-full px-3 py-2 border rounded text-sm md:text-base"
             >
@@ -141,23 +176,41 @@ export default function MovimientosList() {
             </select>
           </div>
           <div>
+            <label className="block text-xs md:text-sm font-medium mb-1">Tipo:</label>
+            <select
+              name="tipoHerramienta"
+              value={filtros.tipoHerramienta}
+              onChange={handleFiltroChange}
+              className="w-full px-3 py-2 border rounded text-sm md:text-base"
+            >
+              <option value="">Todos</option>
+              <option value="herramientas">Herramientas</option>
+              <option value="útiles de escritorio">Útiles de escritorio</option>
+              <option value="equipos de computo">Equipos de computo</option>
+              <option value="muebles">Muebles</option>
+              <option value="útiles de aseo">Útiles de aseo</option>
+              <option value="materiales">Materiales</option>
+              <option value="equipos de protección personal (EPPS)">Equipos de protección personal (EPPS)</option>
+            </select>
+          </div>
+          <div>
             <label className="block text-xs md:text-sm font-medium mb-1">Desde:</label>
             <input
               type="date"
-              name="fechaDesde"
-              value={filtros.fechaDesde}
+              name="fecha"
+              value={filtros.fecha}
               onChange={handleFiltroChange}
               className="w-full px-3 py-2 border rounded text-sm md:text-base"
             />
           </div>
           <div>
-            <label className="block text-xs md:text-sm font-medium mb-1">Hasta:</label>
-            <input
-              type="date"
-              name="fechaHasta"
-              value={filtros.fechaHasta}
-              onChange={handleFiltroChange}
-              className="w-full px-3 py-2 border rounded text-sm md:text-base"
+            <label className='block text-xs md:text-sm font-medium mb-1'>Hasta:</label>
+            <input 
+              type = "date"
+              name = "fechaFin"
+              value = {filtros.fechaFin}
+              onChange = {handleFiltroChange}
+              className = "w-full px-3 py-2 border rounded text-sm md:text-base"
             />
           </div>
         </div>
@@ -257,9 +310,6 @@ export default function MovimientosList() {
                           <div className="font-medium text-gray-900 text-sm">
                             {mov.herramienta ? mov.herramienta.nombre : 'Herramienta eliminada'}
                           </div>
-                          {mov.herramienta && (
-                            <div className="text-xs text-gray-500">Código: {mov.herramienta.codigo}</div>
-                          )}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-right text-sm">{mov.cantidad}</td>
