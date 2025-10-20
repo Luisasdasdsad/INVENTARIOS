@@ -96,6 +96,26 @@ export default function DashboardLayout() {
             <FaExchangeAlt size={20} />
             {isSidebarOpen && <span>Movimientos</span>}
           </Link>
+          <Link
+            to="/productos"
+            onClick={handleNavClick}
+            className={`flex items-center gap-2 hover:text-blue-600 transition-colors p-2 rounded ${
+              !isSidebarOpen ? 'justify-center' : ''
+            }`}
+          >
+            <FaClipboardList size={20} />
+            {isSidebarOpen && <span>Productos</span>}
+          </Link>
+          <Link
+            to="/cotización"
+            onClick={handleNavClick}
+            className={`flex items-center gap-2 hover:text-blue-600 transition-colors p-2 rounded ${
+            !isSidebarOpen ? 'justify-center' : ''
+            }`}
+          >
+            <FaClipboardList size={20} />
+            {isSidebarOpen && <span>Cotización</span>}
+          </Link>
         </nav>
         
         {/* Sección de usuario y logout */}

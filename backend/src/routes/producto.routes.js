@@ -1,4 +1,6 @@
-import express from 'express';
+import express from "express";
+import multer from "multer";
+import { auth } from "../middlewares/auth.js";
 import {
   crearProducto,
   listarProductos,
@@ -6,22 +8,21 @@ import {
   actualizarProducto,
   eliminarProducto,
   generarCodigoBarrasProducto,
-  generarCodigosBarrasMasivoProductos,
-  buscarProductoPorCodigoBarras
-} from '../controllers/producto.controller.js';
+} from "../controllers/producto.controller.js";
 
 const router = express.Router();
+router.use(auth);
 
-// Rutas CRUD para productos
-router.post('/', crearProducto);
-router.get('/', listarProductos);
-router.get('/:id', obtenerProducto);
-router.put('/:id', actualizarProducto);
-router.delete('/:id', eliminarProducto);
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
-// Rutas de código de barras para productos
-router.post('/generar-barcode/:id', generarCodigoBarrasProducto);
-router.post('/generar-barcode-masivo', generarCodigosBarrasMasivoProductos);
-router.get('/buscar-barcode/:barcode', buscarProductoPorCodigoBarras);
+router.post("/", upload.single("foto"), crearProducto);
+router.get("/", listarProductos);
+router.get("/:id", obtenerProducto);
+router.put("/:id", upload.single("foto"), actualizarProducto);
+router.delete("/:id", eliminarProducto);
+
+// Ruta para generar código de barras
+router.post("/generar-barcode/:id", generarCodigoBarrasProducto);
 
 export default router;

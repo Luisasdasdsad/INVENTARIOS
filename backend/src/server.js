@@ -8,6 +8,8 @@ import authRoutes from './routes/auth.js';
 import movimientoRoutes from './routes/movimientos.js';
 import fotoRouter from './routes/fotos.routes.js';
 import path from 'path';
+import ClienteRoutes from './routes/cliente.routes.js';
+import ProductoRoutes from './routes/producto.routes.js';
 
 dotenv.config();
 const app = express();
@@ -30,6 +32,9 @@ app.use("/api/movimientos", movimientoRoutes)
 //Ruta foto
 app.use(' /uploads', express.static(path.join(process.cwd(), 'uploads'))); // Servir archivos estáticos
 app.use('/api/fotos', fotoRouter); // Monta las rutas
+
+app.use('/api/clientes', ClienteRoutes);
+app.use('/api/productos', ProductoRoutes);
 
 
 mongoose.connect(process.env.MONGO_URI)
