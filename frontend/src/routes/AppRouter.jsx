@@ -9,6 +9,7 @@ import RegistrarMovimientoPage from "../features/movimientos/RegistrarMovimiento
 import { AuthProvider } from "../contexts/AuthContext";
 import { PrivateRoute } from "../components/PrivateRoute";
 import Cotización from "../features/cotización/Cotización";
+import ProductoList from "../features/productos/ProductoList";
 
 export default function AppRouter() {
   return (
@@ -29,6 +30,7 @@ export default function AppRouter() {
             <Route path="movimientos" element={<MovimientosList />} />
             <Route path="movimientos/registrar" element={<RegistrarMovimientoPage />} />
             <Route path="cotización" element={<Cotización />} />
+            <Route path="productos" element={<ProductoList />} />
             
             {/* Aquí puedes añadir más rutas protegidas si las necesitas */}
           </Route>

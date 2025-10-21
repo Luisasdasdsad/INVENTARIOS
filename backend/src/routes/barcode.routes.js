@@ -4,23 +4,21 @@ import {
   generarImagenCodigoBarras,
   buscarPorCodigoBarras,
   generarCodigosBarrasMasivo,
-  verificarDuplicados,
-  generarImagenQRCode,
-  generarQRCode,
-  buscarPorQRCode,
-  generarQRCodesMasivo
+  verificarDuplicados
 } from '../controllers/barcode.controller.js';
 import { auth } from '../middlewares/auth.js';
 
 const router = express.Router();
 
+// ⚠️ RUTAS PÚBLICAS (sin autenticación)
+// Estas no requieren token porque son usadas por <img src="...">
+router.get('/imagen/:barcode', generarImagenCodigoBarras);
+
+// ✅ A PARTIR DE AQUÍ, TODAS LAS RUTAS REQUIEREN TOKEN
 router.use(auth);
 
 // Generar código de barras para una herramienta específica
 router.post('/generar/:id', generarCodigoBarras);
-
-// Generar imagen del código de barras
-router.get('/imagen/:barcode', generarImagenCodigoBarras);
 
 // Buscar herramienta por código de barras
 router.get('/buscar/:barcode', buscarPorCodigoBarras);
@@ -31,10 +29,6 @@ router.post('/generar-masivo', generarCodigosBarrasMasivo);
 // Verificar duplicados
 router.get('/verificar-duplicados', verificarDuplicados);
 
-// Rutas para códigos QR
-router.post('/generar-qr/:id', generarQRCode);
-router.get('/imagen-qr/:qrCode', generarImagenQRCode);
-router.get('/buscar-qr/:qrCode', buscarPorQRCode);
-router.post('/generar-qr-masivo', generarQRCodesMasivo);
+
 
 export default router;

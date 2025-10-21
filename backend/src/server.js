@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import herramientasRoutes from './routes/herramienta.routes.js';
 import barcodeRoutes from './routes/barcode.routes.js';
+import qrRoutes from './routes/qr.routes.js';
 import authRoutes from './routes/auth.js';
 import movimientoRoutes from './routes/movimientos.js';
 import fotoRouter from './routes/fotos.routes.js';
@@ -24,7 +25,9 @@ app.get('/', (req, res) => {
 // Ruta de herramientas
 app.use("/api/herramientas",herramientasRoutes);
 // Ruta de códigos de barras
-app.use("/api/barcode", barcodeRoutes); 
+app.use("/api/barcode", barcodeRoutes);
+// Ruta de códigos QR
+app.use("/api/qr", qrRoutes);
 //Ruta de autenticación
 app.use("/api/auth", authRoutes);
 //Ruta de movimientos
