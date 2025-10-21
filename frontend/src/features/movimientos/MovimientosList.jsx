@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api.js';
-import { FaFilePdf, FaSignInAlt, FaSignOutAlt, FaDownload, FaRedo } from 'react-icons/fa';
-import { generarReporteMovimientos as generarReporteMovimientosPDF } from '../../utils/generarReporteMovimiento.js';
+import { FaFilePdf, FaSignInAlt, FaSignOutAlt, FaDownload, FaRedo, FaPrint } from 'react-icons/fa';
+import { generarReporteMovimientos as generarReporteMovimientosPDF, generarReporteMovimientoIndividual } from '../../utils/generarReporteMovimiento.js';
 
 
 export default function MovimientosList() {
@@ -285,12 +285,13 @@ export default function MovimientosList() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Movimiento</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Herramienta</th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unidad</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nota</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -324,6 +325,15 @@ export default function MovimientosList() {
                         ) : (
                           <span className="text-gray-400">-</span>
                         )}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <button
+                          onClick={() => generarReporteMovimientoIndividual(mov)}
+                          className="bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700 text-xs flex items-center gap-1"
+                          title="Imprimir movimiento individual"
+                        >
+                          <FaPrint size={10} /> PDF
+                        </button>
                       </td>
                     </tr>
                   ))}

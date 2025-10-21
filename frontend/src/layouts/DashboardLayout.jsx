@@ -76,16 +76,18 @@ export default function DashboardLayout() {
             <FaHome size={20} />
             {isSidebarOpen && <span>Inicio</span>}
           </Link>
-          <Link
-            to="/herramientas"
-            onClick={handleNavClick}
-            className={`flex items-center gap-2 hover:text-blue-600 transition-colors p-2 rounded ${
-              !isSidebarOpen ? 'justify-center' : ''
-            }`}
-          >
-            <FaTools size={20} />
-            {isSidebarOpen && <span>Inventario</span>}
-          </Link>
+          {user && user.rol === 'admin' && (
+            <Link
+              to="/herramientas"
+              onClick={handleNavClick}
+              className={`flex items-center gap-2 hover:text-blue-600 transition-colors p-2 rounded ${
+                !isSidebarOpen ? 'justify-center' : ''
+              }`}
+            >
+              <FaTools size={20} />
+              {isSidebarOpen && <span>Inventario</span>}
+            </Link>
+          )}
           <Link
             to="/movimientos"
             onClick={handleNavClick}

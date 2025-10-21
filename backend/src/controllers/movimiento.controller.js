@@ -10,7 +10,7 @@ export const registrarMovimiento = async (req, res) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-  const { herramienta, barcode, tipo, cantidad, nota, nombreUsuario, obra, foto } = req.body;
+  const { herramienta, barcode, tipo, cantidad, nota, obra, foto } = req.body;
 
   try {
     let herramientaDoc;
@@ -22,7 +22,7 @@ export const registrarMovimiento = async (req, res) => {
         return res.status(404).json({ msg: 'Herramienta no encontrada con el código de barras proporcionado' });
       }
     } else if (herramienta) {
-      herramientaDoc = await Herramienta.findById(herramienta);                                 
+      herramientaDoc = await Herramienta.findById(herramienta);
       if (!herramientaDoc) {
         return res.status(404).json({ msg: 'Herramienta no encontrada' });
       }
@@ -37,23 +37,11 @@ export const registrarMovimiento = async (req, res) => {
     if (herramientaDoc.cantidad < 0) herramientaDoc.cantidad = 0;
     await herramientaDoc.save();
 
-    // Buscar o crear usuario con el nombre proporcionado
-    let usuario = await User.findOne({ nombre: nombreUsuario });
-    if (!usuario) {
-      // Crear usuario temporal si no existe
-      usuario = new User({
-        nombre: nombreUsuario,
-        email: `${nombreUsuario.toLowerCase()}@temp.com`,
-        password: 'temp123' // Password temporal
-      });
-      await usuario.save();
-    }
-
     const movimiento = new Movimiento({
       herramienta: herramientaDoc._id,
       tipo,
       cantidad,
-      usuario: usuario._id,
+      usuario: req.user.id, // Asociar al usuario logueado
       nota,
       obra,
       foto,
@@ -73,9 +61,13 @@ export const registrarMovimiento = async (req, res) => {
 
 export const listarMovimientos = async (req, res) => {
   try {
-    const movimientos = await Movimiento.find()
+    // Si el usuario no es admin, solo mostrar sus propios movimientos
+    const filtro = req.user.rol !== 'admin' ? { usuario: req.user.id } : {};
+
+    const movimientos = await Movimiento.find(filtro)
       .populate('herramienta', 'nombre marca modelo serie unidad')
-      .populate('usuario', 'nombre');
+      .populate('usuario', 'nombre')
+      .sort({ createdAt: -1 }); // Ordenar por fecha descendente (más recientes primero)
     res.json(movimientos);
   } catch (error) {
     console.error('Error al listar movimientos:', error);

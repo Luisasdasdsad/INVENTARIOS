@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
       api.get('/auth/validate')
         .then(res => {
           setIsAuthenticated(true);
-          setUser(res.data.user);
+          setUser(res.data.user); // Ahora incluye 'rol'
         })
         .catch(() => {
           // Token inválido o expirado, limpiar

@@ -467,27 +467,24 @@ const handleBarcodeManualChange = e => {
       setLoading(false);
       return;
     }
-    if (!formData.nombreUsuario) {
-      setError('Debe seleccionar un usuario');
-      setLoading(false);
-      return;
-    }
+    // Usuario ya está establecido desde el contexto de auth
 
     try {
+      const { nombreUsuario, ...payloadData } = formData; // Excluir nombreUsuario ya que viene del auth
       const payload = {
-        ...formData,
+        ...payloadData,
         cantidad: Number(formData.cantidad),
       };
 
       if (formData.qrCode){
         payload.qrCode = formData.qrCode;
       }
-      
+
       if (formData.barcode && !formData.qrCode) {
         payload.barcode = formData.barcode;
         delete payload.herramienta;
       }
-      
+
       console.log('Payload enviado a /movimientos:', payload);
       await api.post('/movimientos', payload);
       alert('Movimiento registrado con éxito');
@@ -612,20 +609,15 @@ const handleBarcodeManualChange = e => {
 
       <form onSubmit={handleSubmit} className="space-y-4">
 
-        <select
-          name="nombreUsuario"
-          value={formData.nombreUsuario}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-          required
-          disabled={loading}
-        >
-          <option value="">Seleccione un usuario</option>
-          <option value="Luis">Luis</option>
-          <option value="Roque">Roque</option>
-          <option value="Gary">Gary</option>
-          <option value="Alex">Alex</option>
-        </select>
+        <div>
+          <label className="block text-sm font-medium mb-2">Usuario</label>
+          <input
+            type="text"
+            value={user?.nombre || ''}
+            className="w-full border p-2 rounded bg-gray-100"
+            readOnly
+          />
+        </div>
 
         <div>
           <label className="mr-4">

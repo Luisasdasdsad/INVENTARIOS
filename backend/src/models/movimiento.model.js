@@ -5,7 +5,7 @@ const movimientoSchema = new mongoose.Schema({
     tipo: { type: String, enum: ['entrada', 'salida'], required: true },
     cantidad: { type: Number, required: true, min: 1 },
     fecha: { type: Date, default: Date.now },
-    usuario: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    usuario: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' },
     nota: { type: String },
     obra: { type: String},
     foto: { type: String }

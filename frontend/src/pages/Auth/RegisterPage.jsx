@@ -7,6 +7,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [rol, setRol] = useState('trabajador');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -20,11 +21,11 @@ export default function RegisterPage() {
     }
 
     try {
-      await api.post('/auth/register', { nombre, email, password });
+      await api.post('/auth/register', { nombre, email, password, rol });
       alert('Registro exitoso. Por favor, inicia sesión.');
       navigate('/login');
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al registrar usuario');
+      setError(err.response?.data?.msg || 'Error al registrar usuario');
     }
   };
 
@@ -93,6 +94,21 @@ export default function RegisterPage() {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
+        </div>
+        <div>
+          <label htmlFor="rol" className="block text-sm font-medium text-gray-700">
+            Rol
+          </label>
+          <select
+            id="rol"
+            name="rol"
+            value={rol}
+            onChange={(e) => setRol(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          >
+            <option value="trabajador">Trabajador</option>
+            <option value="admin">Admin</option>
+          </select>
         </div>
         {error && <p className="text-red-500 text-sm">{error}</p>}
         <div>

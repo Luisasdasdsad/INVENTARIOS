@@ -23,6 +23,21 @@ export const movimientoCreateValidator = [
     })
     .withMessage('Código de barras debe ser exactamente 8 caracteres hexadecimales (A-F, 0-9), ej. E317FD89'),
 
+  // QR Code: OPCIONAL (alternativa a herramienta)
+  body('qrCode')
+    .optional({ nullable: true })
+    .isString()
+    .trim()
+    .custom((value) => {
+         // Si es vacío, pasa
+         if (!value || value.trim() === '') {
+           return true;
+         }
+         // Si no vacío, valida formato básico (empieza con QR-)
+         return value.startsWith('QR-') && value.length >= 15;
+    })
+    .withMessage('Código QR debe empezar con "QR-" y tener al menos 15 caracteres'),
+
   // Tipo: Requerido, flexible con espacios y case
   body('tipo')
     .notEmpty()
@@ -53,14 +68,7 @@ export const movimientoCreateValidator = [
     })
     .withMessage('Cantidad debe ser un número entero positivo (ej. 1, 12) - acepta string o number'),
 
-  // Nombre de usuario: Requerido 
-  body('nombreUsuario')
-    .notEmpty()
-    .withMessage('Nombre de usuario es requerido')
-    .isString()
-    .trim()
-    .isLength({ min: 1 })
-    .withMessage('Nombre de usuario debe tener al menos 1 carácter (ej. Luis)'),
+
 
   // Nota: Opcional 
   body('nota')
