@@ -259,6 +259,11 @@ export default function RegistrarMovimientoPage() {
     const codigo = barcode?.trim()?.toUpperCase();
     if (!codigo) throw new Error('Código de barras vacío');
 
+    // ✅ Validar formato: exactamente 8 caracteres hexadecimales
+    if (codigo.length !== 8 || !/^[A-F0-9]{8}$/i.test(codigo)) {
+      throw new Error('Código de barras no válido. Debe ser exactamente 8 caracteres hexadecimales (A-F, 0-9)');
+    }
+
     console.log('🔍 API Call: /barcode/buscar/' + codigo);
     const response = await api.get(`/barcode/buscar/${codigo}`); // Igual que QR (usa api sin /api extra)
 
@@ -395,8 +400,8 @@ const handleBarcodeManualChange = e => {
   }
   setIsScanning(true);
   try {
-    console.log('🔍 API Call: /barcode/buscar-qr/' + qrCode);
-    const response = await api.get(`/barcode/buscar-qr/${qrCode}`);  // ← FIX: Use api (baseURL already has /api), so path without /api
+    console.log('🔍 API Call: /qr/buscar/' + qrCode);
+    const response = await api.get(`/qr/buscar/${qrCode}`);  // ← FIX: Correct endpoint is /qr/buscar, not /barcode/buscar-qr
     console.log('✅ API Respuesta:', response.data);
     return response.data;  // { _id, nombre, cantidad, ... }
   } catch (error) {

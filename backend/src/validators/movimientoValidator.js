@@ -28,6 +28,21 @@ export const movimientoCreateValidator = [
     })
     .withMessage('Código de barras debe ser exactamente 8 caracteres hexadecimales (A-F, 0-9), ej. E317FD89'),
 
+  // QR Code por herramienta: Opcional (alternativa a herramienta o barcode)
+  body('herramientas.*.qrCode')
+    .optional({ nullable: true })
+    .isString()
+    .trim()
+    .custom((value) => {
+         // Si es vacío, pasa
+         if (!value || value.trim() === '') {
+           return true;
+         }
+         // Si no vacío, valida formato QR (QR- seguido de al menos 12 caracteres hex)
+         return /^QR-[A-Fa-f0-9]{12,}$/i.test(value);
+    })
+    .withMessage('Código QR debe empezar con "QR-" seguido de al menos 12 caracteres hexadecimales (A-F, 0-9), ej. QR-E674899FFC83'),
+
   // Cantidad por herramienta: Requerida
   body('herramientas.*.cantidad')
     .notEmpty()
@@ -46,11 +61,11 @@ export const movimientoCreateValidator = [
     })
     .withMessage('Cantidad debe ser un número entero positivo'),
 
-  // Validar que cada herramienta tenga al menos herramienta ID o barcode
+  // Validar que cada herramienta tenga al menos herramienta ID, barcode o qrCode
   body('herramientas.*')
     .custom((value) => {
-      if (!value.herramienta && !value.barcode) {
-        throw new Error('Cada herramienta debe tener ID o código de barras');
+      if (!value.herramienta && !value.barcode && !value.qrCode) {
+        throw new Error('Cada herramienta debe tener ID, código de barras o código QR');
       }
       return true;
     }),

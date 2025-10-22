@@ -10,7 +10,8 @@ const movimientoSchema = new mongoose.Schema({
     usuario: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' },
     nota: { type: String },
     obra: { type: String},
-    foto: { type: String }
+    foto: { type: String },
+    qrCode: { type: String } // Campo opcional para almacenar QR si se usó
 }, { timestamps: true });
 
 export default mongoose.model('Movimiento', movimientoSchema);

@@ -22,15 +22,20 @@ export const registrarMovimiento = async (req, res) => {
 
     // Procesar cada herramienta
     for (const item of herramientas) {
-      const { herramienta: herramientaId, barcode, cantidad } = item;
+      const { herramienta: herramientaId, barcode, qrCode, cantidad } = item;
 
       let herramientaDoc;
 
-      // Buscar herramienta por ID o por código de barras
+      // Buscar herramienta por ID, código de barras o QR
       if (barcode) {
-        herramientaDoc = await Herramienta.findOne({ barcode });
+        herramientaDoc = await Herramienta.findOne({ barcode: barcode.toUpperCase() });
         if (!herramientaDoc) {
           return res.status(404).json({ msg: `Herramienta no encontrada con el código de barras ${barcode}` });
+        }
+      } else if (qrCode) {
+        herramientaDoc = await Herramienta.findOne({ qrCode: qrCode.toUpperCase() });
+        if (!herramientaDoc) {
+          return res.status(404).json({ msg: `Herramienta no encontrada con el código QR ${qrCode}` });
         }
       } else if (herramientaId) {
         herramientaDoc = await Herramienta.findById(herramientaId);
@@ -38,7 +43,7 @@ export const registrarMovimiento = async (req, res) => {
           return res.status(404).json({ msg: 'Herramienta no encontrada' });
         }
       } else {
-        return res.status(400).json({ msg: 'Cada herramienta debe tener ID o código de barras' });
+        return res.status(400).json({ msg: 'Cada herramienta debe tener ID, código de barras o código QR' });
       }
 
       // Verificar stock para salidas
@@ -64,6 +69,7 @@ export const registrarMovimiento = async (req, res) => {
       nota,
       obra,
       foto,
+      qrCode: herramientas.find(h => h.qrCode)?.qrCode || null, // Almacenar QR si se usó
     });
     await movimiento.save();
 

@@ -66,6 +66,18 @@ const BarcodeScanner = ({ onDetected, onError, isActive = false }) => {
       const code = result?.codeResult?.code;
       if (!code) return;
 
+      // ✅ Validar formato básico: solo caracteres alfanuméricos, sin caracteres especiales
+      if (!/^[A-Za-z0-9]+$/.test(code)) {
+        console.log('⏸️ Código inválido (caracteres especiales):', code);
+        return;
+      }
+
+      // ✅ Validar longitud: exactamente 8 caracteres
+      if (code.length !== 8) {
+        console.log('⏸️ Código inválido (longitud ≠ 8):', code);
+        return;
+      }
+
       if (isProcessingRef.current) {
         console.log('⏸️ Lectura ignorada (en enfriamiento):', code);
         return;
