@@ -25,13 +25,9 @@ export const generarReporteMovimientoIndividual = (movimiento) => {
   doc.setFontSize(12);
   doc.setFont("helvetica", "normal");
 
-  // Crear tabla con autoTable
-  const datos = [
+  // Crear tabla con autoTable para detalles generales
+  const datosGenerales = [
     ["Tipo de Movimiento", movimiento.tipo.charAt(0).toUpperCase() + movimiento.tipo.slice(1)],
-    ["Herramienta", movimiento.herramienta?.nombre || 'N/A'],
-    ["Marca", movimiento.herramienta?.marca || 'N/A'],
-    ["Modelo", movimiento.herramienta?.modelo || 'N/A'],
-    ["Cantidad", `${movimiento.cantidad} ${movimiento.herramienta?.unidad || 'unidad'}`],
     ["Responsable", movimiento.usuario?.nombre || 'N/A'],
     ["Obra", movimiento.obra || 'N/A'],
     ["Nota", movimiento.nota || 'Sin nota'],
@@ -47,7 +43,7 @@ export const generarReporteMovimientoIndividual = (movimiento) => {
 
   autoTable(doc, {
     startY: 120,
-    body: datos,
+    body: datosGenerales,
     theme: "grid",
     headStyles: {
       fillColor: [33, 150, 243],
@@ -63,6 +59,50 @@ export const generarReporteMovimientoIndividual = (movimiento) => {
     columnStyles: {
       0: { cellWidth: 150, fontStyle: "bold", fillColor: [245, 245, 245] },
       1: { cellWidth: 350 },
+    },
+    styles: {
+      lineColor: [200, 200, 200],
+      lineWidth: 0.5,
+    },
+    alternateRowStyles: { fillColor: [250, 250, 250] },
+    margin: { left: 40, right: 40 },
+  });
+
+  // 🔹 Tabla de herramientas
+  let startYHerramientas = doc.lastAutoTable.finalY + 20;
+
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text("HERRAMIENTAS INVOLUCRADAS", 40, startYHerramientas);
+
+  const herramientasDatos = movimiento.herramientas.map(h => [
+    h.herramienta?.nombre || 'N/A',
+    h.herramienta?.marca || 'N/A',
+    h.herramienta?.modelo || 'N/A',
+    `${h.cantidad} ${h.herramienta?.unidad || 'unidad'}`,
+  ]);
+
+  autoTable(doc, {
+    startY: startYHerramientas + 20,
+    head: [["Herramienta", "Marca", "Modelo", "Cantidad"]],
+    body: herramientasDatos,
+    theme: "grid",
+    headStyles: {
+      fillColor: [33, 150, 243],
+      textColor: 255,
+      halign: "center",
+      fontSize: 10,
+      fontStyle: "bold",
+    },
+    bodyStyles: {
+      fontSize: 10,
+      cellPadding: 8,
+    },
+    columnStyles: {
+      0: { cellWidth: 150 },
+      1: { cellWidth: 100 },
+      2: { cellWidth: 100 },
+      3: { cellWidth: 100, halign: "center" },
     },
     styles: {
       lineColor: [200, 200, 200],
@@ -114,7 +154,7 @@ export const generarReporteMovimientos = (movimientosFiltrados = []) => {
   });
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`Fecha de genera ción: ${fecha}`, 40, 80);
+  doc.text(`Fecha de generación: ${fecha}`, 40, 80);
 
   // 🔹 Total de movimientos
   doc.text(`Total de movimientos: ${movimientosFiltrados.length}`, 40, 100);
@@ -131,25 +171,51 @@ export const generarReporteMovimientos = (movimientosFiltrados = []) => {
     { header: "Nota", dataKey: "nota" },
   ];
 
-  // 🔹 Filas
-  const filas = movimientosFiltrados.map((m) => ({
-    fecha: new Date(m.fecha || m.createdAt).toLocaleDateString("es-PE", {
+  // 🔹 Filas: Expandir cada herramienta en una fila separada
+  const filas = [];
+  movimientosFiltrados.forEach((m) => {
+    const fechaMov = new Date(m.fecha || m.createdAt).toLocaleDateString("es-PE", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
-    }),
-    hora: new Date(m.fecha || m.createdAt).toLocaleTimeString("es-PE", {
+    });
+    const horaMov = new Date(m.fecha || m.createdAt).toLocaleTimeString("es-PE", {
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
-    }),
-    tipo: m.tipo || "—",
-    herramienta: m.herramienta?.nombre || "—",
-    cantidad: m.cantidad || 0,
-    usuario: m.usuario?.nombre || "—",
-    obra: m.obra || "—",
-    nota: m.nota || "—",
-  }));
+    });
+    const tipoMov = m.tipo || "—";
+    const usuarioMov = m.usuario?.nombre || "—";
+    const obraMov = m.obra || "—";
+    const notaMov = m.nota || "—";
+
+    if (m.herramientas && m.herramientas.length > 0) {
+      m.herramientas.forEach((h) => {
+        filas.push({
+          fecha: fechaMov,
+          hora: horaMov,
+          tipo: tipoMov,
+          herramienta: h.herramienta?.nombre || "—",
+          cantidad: h.cantidad || 0,
+          usuario: usuarioMov,
+          obra: obraMov,
+          nota: notaMov,
+        });
+      });
+    } else {
+      // Fallback para movimientos antiguos con una sola herramienta
+      filas.push({
+        fecha: fechaMov,
+        hora: horaMov,
+        tipo: tipoMov,
+        herramienta: m.herramienta?.nombre || "—",
+        cantidad: m.cantidad || 0,
+        usuario: usuarioMov,
+        obra: obraMov,
+        nota: notaMov,
+      });
+    }
+  });
 
   // 🔹 Tabla con diseño
   autoTable(doc, {

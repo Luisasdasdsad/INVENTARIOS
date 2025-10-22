@@ -328,7 +328,7 @@ export default function HerramientaForm({ herramienta, onSuccess, onCancel }) {
               <option value="muebles">Muebles</option>
               <option value="útiles de aseo">Útiles de aseo</option>
               <option value="materiales">Materiales</option>
-              <option value="equipo de protección personal (EPPS)">Equipo de protección personal (EPPS)</option>
+              <option value="equipos de protección personal (EPPS)">Equipos de protección personal (EPPS)</option>
             </select>
           </div>
         </div>
