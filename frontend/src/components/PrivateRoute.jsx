@@ -9,5 +9,9 @@ export const PrivateRoute = () => {
     return <div className="flex justify-center items-center min-h-screen">Cargando...</div>;
   }
 
-  return isAuthenticated ? <DashboardLayout><Outlet /></DashboardLayout> : <Navigate to="/login" />;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+
+  return <DashboardLayout><Outlet /></DashboardLayout>;
 };

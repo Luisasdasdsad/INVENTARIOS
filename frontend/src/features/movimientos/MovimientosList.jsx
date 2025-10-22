@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api.js';
-import { FaFilePdf, FaSignInAlt, FaSignOutAlt, FaDownload, FaRedo } from 'react-icons/fa';
-import { generarReporteMovimientos as generarReporteMovimientosPDF } from '../../utils/generarReporteMovimiento.js';
+import { FaFilePdf, FaSignInAlt, FaSignOutAlt, FaDownload, FaRedo, FaPrint } from 'react-icons/fa';
+import { generarReporteMovimientos as generarReporteMovimientosPDF, generarReporteMovimientoIndividual } from '../../utils/generarReporteMovimiento.js';
 
 
 export default function MovimientosList() {
@@ -249,17 +249,41 @@ export default function MovimientosList() {
                 <div className="space-y-2">
                   <div>
                     <h3 className="font-semibold text-gray-900 text-sm">
-                      {mov.herramienta ? mov.herramienta.nombre : 'Herramienta eliminada'}
+                      {mov.herramientas && mov.herramientas.length > 0 ? (
+                        mov.herramientas.map((h, idx) => (
+                          <div key={idx} className="mb-1">
+                            {h.herramienta?.nombre || 'Herramienta eliminada'} ({h.cantidad} {h.herramienta?.unidad || '-'})
+                          </div>
+                        ))
+                      ) : (
+                        mov.herramienta ? mov.herramienta.nombre : 'Herramienta eliminada'
+                      )}
                     </h3>
-                    {mov.herramienta && (
-                      <p className="text-xs text-gray-600">Código: {mov.herramienta.codigo}</p>
+                    {mov.herramientas && mov.herramientas.length > 0 ? (
+                      mov.herramientas.map((h, idx) => (
+                        <p key={idx} className="text-xs text-gray-600">Código: {h.herramienta?.codigo || 'N/A'}</p>
+                      ))
+                    ) : (
+                      mov.herramienta && (
+                        <p className="text-xs text-gray-600">Código: {mov.herramienta.codigo}</p>
+                      )
                     )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
                       <span className="font-medium">Cantidad:</span>
-                      <p>{mov.cantidad} {mov.herramienta?.unidad || '-'}</p>
+                      <p>
+                        {mov.herramientas && mov.herramientas.length > 0 ? (
+                          mov.herramientas.reduce((total, h) => total + h.cantidad, 0)
+                        ) : (
+                          mov.cantidad
+                        )} {mov.herramientas && mov.herramientas.length > 0 ? (
+                          mov.herramientas[0].herramienta?.unidad || '-'
+                        ) : (
+                          mov.herramienta?.unidad || '-'
+                        )}
+                      </p>
                     </div>
                     <div>
                       <span className="font-medium">Usuario:</span>
@@ -285,12 +309,13 @@ export default function MovimientosList() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Movimiento</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Herramienta</th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unidad</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nota</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -308,12 +333,34 @@ export default function MovimientosList() {
                       <td className="px-4 py-3">
                         <div>
                           <div className="font-medium text-gray-900 text-sm">
-                            {mov.herramienta ? mov.herramienta.nombre : 'Herramienta eliminada'}
+                            {mov.herramientas && mov.herramientas.length > 0 ? (
+                              mov.herramientas.map((h, idx) => (
+                                <div key={idx} className="mb-1">
+                                  {h.herramienta?.nombre || 'Herramienta eliminada'} ({h.cantidad} {h.herramienta?.unidad || '-'})
+                                </div>
+                              ))
+                            ) : (
+                              mov.herramienta ? mov.herramienta.nombre : 'Herramienta eliminada'
+                            )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-right text-sm">{mov.cantidad}</td>
-                      <td className="px-4 py-3 text-sm">{mov.herramienta?.unidad || '-'}</td>
+                      <td className="px-4 py-3 text-right text-sm">
+                        {mov.herramientas && mov.herramientas.length > 0 ? (
+                          mov.herramientas.reduce((total, h) => total + h.cantidad, 0)
+                        ) : (
+                          mov.cantidad
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {mov.herramientas && mov.herramientas.length > 0 ? (
+                          mov.herramientas.map((h, idx) => (
+                            <div key={idx}>{h.herramienta?.unidad || '-'}</div>
+                          ))
+                        ) : (
+                          mov.herramienta?.unidad || '-'
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-sm">{mov.usuario?.nombre || 'Desconocido'}</td>
                       <td className="px-4 py-3 text-sm whitespace-nowrap">
                         {new Date(mov.createdAt).toLocaleString()}
@@ -324,6 +371,15 @@ export default function MovimientosList() {
                         ) : (
                           <span className="text-gray-400">-</span>
                         )}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <button
+                          onClick={() => generarReporteMovimientoIndividual(mov)}
+                          className="bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700 text-xs flex items-center gap-1"
+                          title="Imprimir movimiento individual"
+                        >
+                          <FaPrint size={10} /> PDF
+                        </button>
                       </td>
                     </tr>
                   ))}

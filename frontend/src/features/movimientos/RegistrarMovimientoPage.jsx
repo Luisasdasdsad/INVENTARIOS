@@ -13,16 +13,16 @@ export default function RegistrarMovimientoPage() {
 
   const [herramientas, setHerramientas] = useState([]);
   const [formData, setFormData] = useState({
-    herramienta: '',
-    barcode: '',
-    qrCode: '',
+    herramientas: [{ herramienta: '', barcode: '', qrCode: '', cantidad: '' }],
     tipo: tipoInicial,
-    cantidad: '',
     nota: '',
     nombreUsuario: '',
     obra: '',
     foto: ''
   });
+
+  // Estado para manejar múltiples herramientas
+  const [herramientasSeleccionadas, setHerramientasSeleccionadas] = useState([]);
 
   // Estados para captura de foto
   const [showCamera, setShowCamera] = useState(false);
@@ -36,7 +36,7 @@ export default function RegistrarMovimientoPage() {
   const [loading, setLoading] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [showEscanerQR, setShowEscanerQR] = useState(false);
-  const [selectedHerramienta, setSelectedHerramienta] = useState(null);
+  const [selectedHerramientas, setSelectedHerramientas] = useState([]);
   const [isScanning, setIsScanning] = useState(false); // Controla si el scanner está activo
   const [qrProcessing, setQrProcessing] = useState(false); // Previene procesamiento múltiple de QR
   const barcodeProcessingRef = useRef(false); // Previene procesamiento múltiple de barcode
@@ -271,16 +271,23 @@ export default function RegistrarMovimientoPage() {
       throw new Error('Herramienta no encontrada por este código de barras');
     }
 
-    // 🧩 Actualiza estados
-    setSelectedHerramienta(herramienta);
-    setFormData((prev) => ({
-      ...prev,
-      herramienta: herramienta._id,
+    // 🧩 Agregar a herramientas seleccionadas
+    setHerramientasSeleccionadas(prev => [...prev, {
+      ...herramienta,
       barcode: codigo,
+      qrCode: '',
+      cantidad: 1 // Default cantidad
+    }]);
+
+    // Limpiar formData para permitir agregar más
+    setFormData(prev => ({
+      ...prev,
+      herramienta: '',
+      barcode: '',
       qrCode: '',
     }));
 
-    console.log(`✅ Herramienta cargada: ${herramienta.nombre} (Stock: ${herramienta.cantidad})`);
+    console.log(`✅ Herramienta agregada: ${herramienta.nombre} (Stock: ${herramienta.cantidad})`);
     return herramienta;
   } catch (error) {
     console.error('❌ API Error:', error.response?.status, error.response?.data?.error || error.message);
@@ -305,17 +312,34 @@ export default function RegistrarMovimientoPage() {
   const handleChange = e => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
+
     setFieldErrors(prev => ({ ...prev, [name]: '' }));
 
     if (name === 'herramienta' && value) {
-      setFormData(prev => ({ 
-        ...prev, 
-        barcode: '', 
+      setFormData(prev => ({
+        ...prev,
+        barcode: '',
         qrCode: ''  // Limpia QR
       }));
       const herramienta = herramientas.find(h => h._id === value);
-      setSelectedHerramienta(herramienta);
+      if (herramienta) {
+        // Agregar a herramientas seleccionadas
+        setHerramientasSeleccionadas(prev => [...prev, {
+          ...herramienta,
+          herramienta: herramienta._id,
+          barcode: '',
+          qrCode: '',
+          cantidad: 1 // Default cantidad
+        }]);
+
+        // Limpiar formData para permitir agregar más
+        setFormData(prev => ({
+          ...prev,
+          herramienta: '',
+          barcode: '',
+          qrCode: '',
+        }));
+      }
     }
   };
 
@@ -357,11 +381,9 @@ const handleBarcodeManualChange = e => {
       fetchHerramientaByBarcode(barcode);
     } else if (barcode.length > 0) {
       setError('Código debe ser 8 caracteres hexadecimales (A-F,0-9)');
-      setSelectedHerramienta(null);
       setFormData(prev => ({ ...prev, herramienta: '' }));
     } else {
       setError('');
-      setSelectedHerramienta(null);
       setFormData(prev => ({ ...prev, herramienta: '' }));
     }
   };
@@ -409,16 +431,25 @@ const handleBarcodeManualChange = e => {
     alert('Buscando herramienta...');  // Loading simple
     const herramienta = await fetchHerramientaByQR(qrCode);
     if (herramienta) {
-      setSelectedHerramienta(herramienta);
+      // Agregar a herramientas seleccionadas
+      setHerramientasSeleccionadas(prev => [...prev, {
+        ...herramienta,
+        qrCode: qrCode.toUpperCase(),
+        barcode: '',
+        cantidad: 1 // Default cantidad
+      }]);
+
+      // Limpiar formData para permitir agregar más
       setFormData(prev => ({
         ...prev,
-        herramienta: herramienta._id,
-        qrCode: qrCode.toUpperCase(),
-        barcode: ''  // Limpia barcode al seleccionar QR
+        herramienta: '',
+        qrCode: '',
+        barcode: '',
       }));
-      const msg = `✅ Cargada: ${herramienta.nombre} - Stock: ${herramienta.cantidad}`;
+
+      const msg = `✅ Agregada: ${herramienta.nombre} - Stock: ${herramienta.cantidad}`;
       alert(msg);
-      console.log('✅ Autocompletado:', herramienta);
+      console.log('✅ Herramienta agregada:', herramienta);
     } else {
       throw new Error('No encontrada');
     }
@@ -442,11 +473,9 @@ const handleBarcodeManualChange = e => {
       fetchHerramientaByQR(qr);
     } else if (qr.length > 0 && !qr.startsWith('QR-')) {
       setError('Código QR debe empezar con "QR-" seguido de caracteres hexadecimales');
-      setSelectedHerramienta(null);
       setFormData(prev => ({ ...prev, herramienta: '' }));
     } else {
       setError('');
-      setSelectedHerramienta(null);
       setFormData(prev => ({ ...prev, herramienta: '' }));
     }
   };
@@ -457,37 +486,38 @@ const handleBarcodeManualChange = e => {
     setError('');
     setFieldErrors({});
 
-    if (!formData.herramienta && !formData.barcode && !formData.qrCode) {
-      setError('Debe seleccionar una herramienta o escanear un código de barras');
+    // Validar que al menos una herramienta tenga datos
+    const herramientasValidas = herramientasSeleccionadas.filter(h =>
+      h.herramienta || h.barcode || h.qrCode
+    );
+
+    if (herramientasValidas.length === 0) {
+      setError('Debe seleccionar al menos una herramienta');
       setLoading(false);
       return;
     }
-    if (formData.cantidad <= 0) {
-      setError('La cantidad debe ser mayor que cero');
-      setLoading(false);
-      return;
-    }
-    if (!formData.nombreUsuario) {
-      setError('Debe seleccionar un usuario');
-      setLoading(false);
-      return;
+
+    // Validar que cada herramienta tenga cantidad > 0
+    for (const h of herramientasValidas) {
+      if (!h.cantidad || h.cantidad <= 0) {
+        setError('Todas las herramientas deben tener cantidad mayor que cero');
+        setLoading(false);
+        return;
+      }
     }
 
     try {
+      const { nombreUsuario, ...payloadData } = formData; // Excluir nombreUsuario ya que viene del auth
       const payload = {
-        ...formData,
-        cantidad: Number(formData.cantidad),
+        ...payloadData,
+        herramientas: herramientasValidas.map(h => ({
+          herramienta: h.herramienta || undefined,
+          barcode: h.barcode || undefined,
+          qrCode: h.qrCode || undefined,
+          cantidad: Number(h.cantidad)
+        }))
       };
 
-      if (formData.qrCode){
-        payload.qrCode = formData.qrCode;
-      }
-      
-      if (formData.barcode && !formData.qrCode) {
-        payload.barcode = formData.barcode;
-        delete payload.herramienta;
-      }
-      
       console.log('Payload enviado a /movimientos:', payload);
       await api.post('/movimientos', payload);
       alert('Movimiento registrado con éxito');
@@ -511,24 +541,61 @@ const handleBarcodeManualChange = e => {
       <div className="mb-6 p-4 border rounded-lg bg-gray-50">
         <h3 className="text-lg font-semibold mb-3">Seleccionar Herramienta</h3>
         
-        {selectedHerramienta && (
+        {herramientasSeleccionadas.length > 0 && (
           <div className="mb-4 p-3 bg-green-100 border border-green-300 rounded">
-            <p className="text-green-800">
-              <strong>Herramienta seleccionada:</strong> {selectedHerramienta.nombre} ({selectedHerramienta.codigo})
-            </p>
-            <p className="text-green-700 text-sm">
-              Cantidad disponible: {selectedHerramienta.cantidad} {selectedHerramienta.unidad}
-            </p>
-            {formData.barcode && (
-              <p className="text-green-700 text-sm">
-                Código de barras: {formData.barcode}
-              </p>
-            )}
-            {formData.qrCode && (
-              <p className='text-green-700 text-sm'>
-                Código QR: {formData.qrCode}
-              </p>
-            )}
+            <p className="text-green-800 font-semibold mb-2">Herramientas seleccionadas:</p>
+            {herramientasSeleccionadas.map((h, index) => (
+              <div key={index} className="mb-2 p-2 bg-white rounded border">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-green-800">
+                      <strong>{h.nombre}</strong> ({h.codigo})
+                    </p>
+                    <p className="text-green-700 text-sm">
+                      Cantidad disponible: {h.cantidad} {h.unidad}
+                    </p>
+                    {h.barcode && (
+                      <p className="text-green-700 text-sm">
+                        Código de barras: {h.barcode}
+                      </p>
+                    )}
+                    {h.qrCode && (
+                      <p className='text-green-700 text-sm'>
+                        Código QR: {h.qrCode}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <label className="text-sm font-medium">Cant:</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={h.cantidad}
+                      onChange={(e) => {
+                        const newCantidad = parseInt(e.target.value) || 1;
+                        setHerramientasSeleccionadas(prev =>
+                          prev.map((item, i) =>
+                            i === index ? { ...item, cantidad: newCantidad } : item
+                          )
+                        );
+                      }}
+                      className="w-16 border p-1 rounded text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHerramientasSeleccionadas(prev =>
+                          prev.filter((_, i) => i !== index)
+                        );
+                      }}
+                      className="text-red-600 hover:text-red-800 text-sm"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
@@ -612,20 +679,15 @@ const handleBarcodeManualChange = e => {
 
       <form onSubmit={handleSubmit} className="space-y-4">
 
-        <select
-          name="nombreUsuario"
-          value={formData.nombreUsuario}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-          required
-          disabled={loading}
-        >
-          <option value="">Seleccione un usuario</option>
-          <option value="Luis">Luis</option>
-          <option value="Roque">Roque</option>
-          <option value="Gary">Gary</option>
-          <option value="Alex">Alex</option>
-        </select>
+        <div>
+          <label className="block text-sm font-medium mb-2">Usuario</label>
+          <input
+            type="text"
+            value={user?.nombre || ''}
+            className="w-full border p-2 rounded bg-gray-100"
+            readOnly
+          />
+        </div>
 
         <div>
           <label className="mr-4">
@@ -650,17 +712,7 @@ const handleBarcodeManualChange = e => {
           </label>
         </div>
 
-        <input
-          type="number"
-          name="cantidad"
-          value={formData.cantidad}
-          onChange={handleChange}
-          placeholder="Cantidad"
-          min="1"
-          className="w-full border p-2 rounded"
-          required
-          disabled={loading}
-        />
+        {/* Campo cantidad removido ya que ahora está por herramienta */}
 
         <textarea
           name="nota"

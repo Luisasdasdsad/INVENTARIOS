@@ -12,3 +12,12 @@ export const auth = (req, res, next) => {
         return res.status(401).json({ msg: 'Token inválido' });
     }
 };
+
+export const requireRole = (roles) => {
+    return (req, res, next) => {
+        if (!req.user || !roles.includes(req.user.rol)) {
+            return res.status(403).json({ msg: 'Acceso denegado' });
+        }
+        next();
+    };
+};

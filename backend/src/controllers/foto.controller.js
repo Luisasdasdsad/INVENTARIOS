@@ -18,7 +18,7 @@ export const subirFoto = async (req, res) => {
         {
           resource_type: 'image',
           folder: 'inventario/fotos',
-          public_id: 'movimiento-${Date.now()}',
+          public_id: `movimiento-${Date.now()}`,
           transformation: [
             {
             width: 800,
@@ -27,8 +27,7 @@ export const subirFoto = async (req, res) => {
             quality: 'auto'
             },
             { fetch_format: 'auto'}
-          ],
-          upload_preset: process.env.UPLOAD_PRESET
+          ]
         },
         (error, result) => {
           if (error) {

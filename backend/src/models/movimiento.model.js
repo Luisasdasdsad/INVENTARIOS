@@ -1,11 +1,13 @@
 import mongoose from 'mongoose';
 
 const movimientoSchema = new mongoose.Schema({
-    herramienta: { type: mongoose.Schema.Types.ObjectId, ref: 'Herramienta', required: true },
+    herramientas: [{
+        herramienta: { type: mongoose.Schema.Types.ObjectId, ref: 'Herramienta', required: true },
+        cantidad: { type: Number, required: true, min: 1 }
+    }],
     tipo: { type: String, enum: ['entrada', 'salida'], required: true },
-    cantidad: { type: Number, required: true, min: 1 },
     fecha: { type: Date, default: Date.now },
-    usuario: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    usuario: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' },
     nota: { type: String },
     obra: { type: String},
     foto: { type: String }

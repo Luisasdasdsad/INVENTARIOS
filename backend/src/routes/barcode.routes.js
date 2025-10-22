@@ -22,13 +22,8 @@ router.post('/generar/:id', generarCodigoBarras);
 
 // Buscar herramienta por código de barras
 router.get('/buscar/:barcode', buscarPorCodigoBarras);
-
-// Generar códigos de barras masivamente
 router.post('/generar-masivo', generarCodigosBarrasMasivo);
-
-// Verificar duplicados
 router.get('/verificar-duplicados', verificarDuplicados);
-
 
 
 export default router;

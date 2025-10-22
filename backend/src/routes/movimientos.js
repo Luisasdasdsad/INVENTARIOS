@@ -15,7 +15,10 @@ router.post(
   (req, res, next) => {
     // Validación de errores centralizada
     const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+    if (!errors.isEmpty()) {
+      const errorMessages = errors.array().map(err => err.msg).join(', ');
+      return res.status(400).json({ msg: errorMessages });
+    }
     next();
   },
   registrarMovimiento
