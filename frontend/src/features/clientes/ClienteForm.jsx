@@ -83,27 +83,38 @@ const ClienteForm = ({ onClienteCreado, onClose, clienteEdit }) => {
                 <option value="CE">CE</option>
               </select>
             </div>
-            <div className="mb-2">
-              <label>RUC</label>
-              <input
-                type="text"
-                name="ruc"
-                className="border p-2 w-full rounded"
-                value={cliente.ruc}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="mb-2">
-              <label>Número *</label>
-              <input
-                type="text"
-                name="numero"
-                className="border p-2 w-full rounded"
-                value={cliente.numero}
-                onChange={handleChange}
-                required
-              />
-            </div>
+            {cliente.tipoDoc === "RUC" && (
+              <div className="mb-2">
+                <label>RUC *</label>
+                <input
+                  type="text"
+                  name="ruc"
+                  className="border p-2 w-full rounded"
+                  value={cliente.ruc}
+                  onChange={handleChange}
+                  maxLength="11"
+                  pattern="^\d{11}$"
+                  required
+                  title="El RUC debe tener exactamente 11 dígitos numéricos."
+                />
+              </div>
+            )}
+            {(cliente.tipoDoc === "DNI" || cliente.tipoDoc === "CE") && (
+              <div className="mb-2">
+                <label>Número *</label>
+                <input
+                  type="text"
+                  name="numero"
+                  className="border p-2 w-full rounded"
+                  value={cliente.numero}
+                  onChange={handleChange}
+                  maxLength={cliente.tipoDoc === "DNI" ? "8" : "20"}
+                  pattern={cliente.tipoDoc === "DNI" ? "^\\d{8}$" : "^\\d{1,20}$"}
+                  required
+                  title={cliente.tipoDoc === "DNI" ? "El DNI debe tener exactamente 8 dígitos numéricos." : "El CE debe tener entre 1 y 20 dígitos numéricos."}
+                />
+              </div>
+            )}
             <div className="mb-2">
               <label>Nombre *</label>
               <input

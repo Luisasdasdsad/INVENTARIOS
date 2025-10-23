@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+  import { useState, useEffect, useRef } from 'react';
 import api from '../../services/api.js';
 
 export default function ProductoForm({ producto, onSuccess, onCancel }) {
@@ -9,6 +9,9 @@ export default function ProductoForm({ producto, onSuccess, onCancel }) {
     stock: '',
     precioUnitario: '',
     categoria: '',
+    marca: '',
+    modelo: '',
+    moneda: 'SOLES',
   });
 
   // Estados para captura de foto (AGREGADOS)
@@ -33,6 +36,9 @@ export default function ProductoForm({ producto, onSuccess, onCancel }) {
         stock: producto.stock || '',
         precioUnitario: producto.precioUnitario || '',
         categoria: producto.categoria || '',
+        marca: producto.marca || '',
+        modelo: producto.modelo || '',
+        moneda: producto.moneda || 'SOLES',
       });
       setPreview(producto.foto || '');
       if (producto.foto) {
@@ -46,6 +52,9 @@ export default function ProductoForm({ producto, onSuccess, onCancel }) {
         stock: '',
         precioUnitario: '',
         categoria: '',
+        marca: '',
+        modelo: '',
+        moneda: 'SOLES',
       });
       setPreview('');
       setCapturedImage(null);
@@ -328,7 +337,7 @@ export default function ProductoForm({ producto, onSuccess, onCancel }) {
           </div>
           <div>
             <label htmlFor="precioUnitario" className="block text-sm font-medium text-gray-700 mb-1">
-              Precio Unitario (S/.)
+              Precio Unitario ({formData.moneda === 'DOLARES' ? '$' : 'S/.'})
             </label>
             <input
               type="number"
@@ -341,6 +350,51 @@ export default function ProductoForm({ producto, onSuccess, onCancel }) {
               placeholder="Ej. 120.50"
               className="w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label htmlFor="marca" className="block text-sm font-medium text-gray-700 mb-1">
+              Marca
+            </label>
+            <input
+              type="text"
+              id="marca"
+              name="marca"
+              value={formData.marca}
+              onChange={handleChange}
+              className="w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Ej. Samsung, HP"
+            />
+          </div>
+          <div>
+            <label htmlFor="modelo" className="block text-sm font-medium text-gray-700 mb-1">
+              Modelo
+            </label>
+            <input
+              type="text"
+              id="modelo"
+              name="modelo"
+              value={formData.modelo}
+              onChange={handleChange}
+              className="w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Ej. Galaxy S21, Pavilion"
+            />
+          </div>
+          <div>
+            <label htmlFor="moneda" className="block text-sm font-medium text-gray-700 mb-1">
+              Moneda
+            </label>
+            <select
+              id="moneda"
+              name="moneda"
+              value={formData.moneda}
+              onChange={handleChange}
+              className="w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="SOLES">SOLES (S/.)</option>
+              <option value="DOLARES">DÓLARES ($)</option>
+            </select>
           </div>
         </div>
         <div>

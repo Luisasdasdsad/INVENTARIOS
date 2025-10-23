@@ -10,6 +10,7 @@ import { AuthProvider } from "../contexts/AuthContext";
 import { PrivateRoute } from "../components/PrivateRoute";
 import Cotización from "../features/cotización/Cotización";
 import ProductoList from "../features/productos/ProductoList";
+import ClienteList from "../features/clientes/ClienteList";
 
 export default function AppRouter() {
   return (
@@ -31,7 +32,8 @@ export default function AppRouter() {
             <Route path="movimientos/registrar" element={<RegistrarMovimientoPage />} />
             <Route path="cotización" element={<Cotización />} />
             <Route path="productos" element={<ProductoList />} />
-            
+            <Route path="clientes" element={<ClienteList />} />
+
             {/* Aquí puedes añadir más rutas protegidas si las necesitas */}
           </Route>
 

@@ -1,5 +1,5 @@
 import { Outlet, Link } from "react-router-dom";
-import { FaTools, FaClipboardList, FaExchangeAlt, FaHome, FaSignOutAlt, FaBars, FaTimes } from "react-icons/fa";
+import { FaTools, FaClipboardList, FaExchangeAlt, FaHome, FaSignOutAlt, FaBars, FaTimes, FaUsers } from "react-icons/fa";
 import { useAuth } from "../contexts/AuthContext";
 import { useState, useEffect } from "react";
 
@@ -117,6 +117,16 @@ export default function DashboardLayout() {
           >
             <FaClipboardList size={20} />
             {isSidebarOpen && <span>Cotización</span>}
+          </Link>
+          <Link
+            to="/clientes"
+            onClick={handleNavClick}
+            className={`flex items-center gap-2 hover:text-blue-600 transition-colors p-2 rounded ${
+            !isSidebarOpen ? 'justify-center' : ''
+            }`}
+          >
+            <FaUsers size={20} />
+            {isSidebarOpen && <span>Clientes</span>}
           </Link>
         </nav>
         
