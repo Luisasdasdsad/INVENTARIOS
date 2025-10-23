@@ -1,297 +1,372 @@
 import { useState, useEffect } from "react";
-import generarReporteCotizacion from "../../utils/generarReporteCotización";
-import api from '../../services/api.js';
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import api from "../../services/api";
+import logo from "../../assets/LogoTG.png";
+import ClienteForm from "../clientes/ClienteForm";
 
 const Cotización = () => {
   const [clientes, setClientes] = useState([]);
-  const [productosDisponibles, setProductosDisponibles] = useState([]);
-  const [cliente, setCliente] = useState({
-    nombre: "",
-    documento: "",
-    telefono: "",
-    email: "",
-    direccion: "",
-    empresa: "",
-  });
-  const [selectedClienteId, setSelectedClienteId] = useState("");
-  const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
-  const [moneda, setMoneda] = useState("PEN");
-  const [productos, setProductos] = useState([]);
+  const [clienteSeleccionado, setClienteSeleccionado] = useState("");
+  const [productos, setProductos] = useState([
+    { cantidad: 1, unidad: "", descripcion: "", vUnit: 0, igv: 0, pUnit: 0, total: 0 },
+  ]);
+  const [productosDB, setProductosDB] = useState([]);
+  const [moneda, setMoneda] = useState("SOLES");
+  const [fecha, setFecha] = useState(new Date().toLocaleDateString("es-PE"));
+  const [modalCliente, setModalCliente] = useState(false);
+  const [clienteEdit, setClienteEdit] = useState(null);
+  const [direccionEnvio, setDireccionEnvio] = useState("");
+  const [contactoCot, setContactoCot] = useState("");
+  const [telefonoCot, setTelefonoCot] = useState("");
+  const [infoReferencial, setInfoReferencial] = useState("");
+  const [tipoCambio, setTipoCambio] = useState("");
+  const [observacionesCot, setObservacionesCot] = useState("");
 
+  // 🔹 Cargar clientes y productos
   useEffect(() => {
     const fetchClientes = async () => {
       try {
-        const response = await api.get('/clientes');
-        setClientes(response.data);
+        const res = await api.get("/clientes");
+        setClientes(res.data);
       } catch (error) {
-        console.error('Error fetching clientes:', error);
+        console.error("Error al obtener clientes:", error);
       }
     };
+
     const fetchProductos = async () => {
       try {
-        const response = await api.get('/productos');
-        setProductosDisponibles(response.data);
+        const res = await api.get("/productos");
+        setProductosDB(res.data);
       } catch (error) {
-        console.error('Error fetching productos:', error);
+        console.error("Error al obtener productos:", error);
       }
     };
+
     fetchClientes();
     fetchProductos();
   }, []);
 
-  const handleClienteChange = (e) => {
-    const { name, value } = e.target;
-    setCliente({ ...cliente, [name]: value });
+  // 🔹 Manejo de productos
+  const handleProductoChange = (index, campo, valor) => {
+    const nuevos = [...productos];
+    nuevos[index][campo] = valor;
+    const vUnit = parseFloat(nuevos[index].vUnit) || 0;
+    const cantidad = parseFloat(nuevos[index].cantidad) || 0;
+    const total = vUnit * cantidad;
+    nuevos[index].igv = total * 0.18;
+    nuevos[index].pUnit = vUnit + vUnit * 0.18;
+    nuevos[index].total = total + nuevos[index].igv;
+    setProductos(nuevos);
   };
 
-  const handleSelectCliente = (e) => {
-    const id = e.target.value;
-    setSelectedClienteId(id);
-    if (id) {
-      const selected = clientes.find(c => c._id === id);
-      setCliente({
-        nombre: selected.nombre,
-        documento: selected.documento,
-        telefono: selected.telefono,
-        email: selected.email,
-        direccion: selected.direccion,
-        empresa: selected.empresa,
-      });
-    } else {
-      setCliente({
-        nombre: "",
-        documento: "",
-        telefono: "",
-        email: "",
-        direccion: "",
-        empresa: "",
-      });
+  const agregarProducto = () => {
+    setProductos([
+      ...productos,
+      { cantidad: 1, unidad: "", descripcion: "", vUnit: 0, igv: 0, pUnit: 0, total: 0 },
+    ]);
+  };
+
+  // 🔹 Totales
+  const calcularTotales = () => {
+    let subtotal = 0;
+    productos.forEach((p) => (subtotal += p.total));
+    const igv = subtotal * 0.18;
+    const total = subtotal + igv;
+    return { subtotal, igv, total };
+  };
+
+  // 🔹 Generar PDF
+  const generarPDF = () => {
+    const doc = new jsPDF();
+    doc.addImage(logo, "PNG", 10, 10, 30, 20);
+    doc.setFontSize(14);
+    doc.text("COTIZACIÓN", 150, 20);
+    doc.setFontSize(10);
+    doc.text(`Fecha: ${fecha}`, 150, 27);
+    doc.text(`Moneda: ${moneda}`, 150, 32);
+    if (tipoCambio) doc.text(`Tipo de Cambio: ${tipoCambio}`, 150, 37);
+
+    const cliente = clientes.find((c) => c._id === clienteSeleccionado);
+    doc.text("CLIENTE:", 10, 40);
+    if (cliente) {
+      doc.text(`Nombre: ${cliente.nombre}`, 30, 40);
+      doc.text(`RUC: ${cliente.ruc || "-"}`, 30, 45);
+      doc.text(`Dirección: ${cliente.direccion || "-"}`, 30, 50);
+      doc.text(`Teléfono: ${cliente.telefono || "-"}`, 30, 55);
+      doc.text(`Email: ${cliente.email || "-"}`, 30, 60);
     }
-  };
 
-  const addProducto = () => {
-    setProductos([...productos, { productoId: "", descripcion: "", cantidad: 1, precioUnit: 0 }]);
-  };
-
-  const updateProducto = (index, field, value) => {
-    const newProductos = [...productos];
-    newProductos[index][field] = value;
-    if (field === 'productoId') {
-      const selectedProd = productosDisponibles.find(p => p._id === value);
-      if (selectedProd) {
-        newProductos[index].descripcion = selectedProd.nombre;
-        newProductos[index].precioUnit = selectedProd.precioUnitario;
-      }
+    doc.text("INFORMACIÓN DE ENVÍO:", 10, 70);
+    doc.text(`Dirección de Envío: ${direccionEnvio || "-"}`, 30, 75);
+    doc.text(`Contacto: ${contactoCot || "-"}`, 30, 80);
+    doc.text(`Teléfono: ${telefonoCot || "-"}`, 30, 85);
+    doc.text(`Información Referencial: ${infoReferencial || "-"}`, 30, 90);
+    if (observacionesCot) {
+      doc.text(`Observaciones: ${observacionesCot}`, 30, 95);
     }
-    setProductos(newProductos);
+
+    autoTable(doc, {
+      startY: 105,
+      head: [["N°", "CANT", "UND", "DESCRIPCIÓN", "V. UNIT", "IGV", "P. UNIT", "TOTAL"]],
+      body: productos.map((p, i) => [
+        i + 1,
+        p.cantidad,
+        p.unidad,
+        p.descripcion,
+        p.vUnit.toFixed(2),
+        p.igv.toFixed(2),
+        p.pUnit.toFixed(2),
+        p.total.toFixed(2),
+      ]),
+    });
+
+    const { subtotal, igv, total } = calcularTotales();
+    doc.text(`SUBTOTAL: ${subtotal.toFixed(2)}`, 140, doc.lastAutoTable.finalY + 10);
+    doc.text(`IGV (18%): ${igv.toFixed(2)}`, 140, doc.lastAutoTable.finalY + 15);
+    doc.text(`TOTAL: ${total.toFixed(2)}`, 140, doc.lastAutoTable.finalY + 20);
+
+    doc.save("Cotizacion.pdf");
   };
 
-  const removeProducto = (index) => {
-    setProductos(productos.filter((_, i) => i !== index));
+  const handleClienteCreado = (nuevoCliente) => {
+    setClientes([...clientes, nuevoCliente]);
+    setClienteSeleccionado(nuevoCliente._id);
   };
 
-  const subtotal = productos.reduce(
-    (acc, p) => acc + p.cantidad * p.precioUnit,
-    0
-  );
-  const igv = subtotal * 0.18;
-  const total = subtotal + igv;
-
-  const handleGenerar = () => {
-    const numeroCotizacion = "COT-001"; // Hardcoded for now
-    generarReporteCotizacion({ cliente, productos, subtotal, igv, total, fecha, moneda, numeroCotizacion });
+  const handleEditarCliente = () => {
+    const cliente = clientes.find((c) => c._id === clienteSeleccionado);
+    if (cliente) {
+      setClienteEdit(cliente);
+      setModalCliente(true);
+    }
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <h2 className="text-2xl font-semibold mb-6">Generar Cotización</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Sección Cliente */}
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-lg font-medium mb-4">Cliente</h3>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Seleccionar Cliente Existente</label>
-            <select
-              value={selectedClienteId}
-              onChange={handleSelectCliente}
-              className="w-full p-2 border border-gray-300 rounded-md"
-            >
-              <option value="">Nuevo Cliente</option>
-              {clientes.map(c => (
-                <option key={c._id} value={c._id}>{c.nombre}</option>
-              ))}
-            </select>
-          </div>
-          <div className="grid grid-cols-1 gap-4">
-            <input
-              type="text"
-              name="nombre"
-              placeholder="Nombre"
-              value={cliente.nombre}
-              onChange={handleClienteChange}
-              className="p-2 border border-gray-300 rounded-md"
-            />
-            <input
-              type="text"
-              name="documento"
-              placeholder="Documento (RUC/DNI)"
-              value={cliente.documento}
-              onChange={handleClienteChange}
-              className="p-2 border border-gray-300 rounded-md"
-            />
-            <input
-              type="text"
-              name="telefono"
-              placeholder="Teléfono"
-              value={cliente.telefono}
-              onChange={handleClienteChange}
-              className="p-2 border border-gray-300 rounded-md"
-            />
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={cliente.email}
-              onChange={handleClienteChange}
-              className="p-2 border border-gray-300 rounded-md"
-            />
-            <input
-              type="text"
-              name="direccion"
-              placeholder="Dirección"
-              value={cliente.direccion}
-              onChange={handleClienteChange}
-              className="p-2 border border-gray-300 rounded-md"
-            />
-            <input
-              type="text"
-              name="empresa"
-              placeholder="Empresa"
-              value={cliente.empresa}
-              onChange={handleClienteChange}
-              className="p-2 border border-gray-300 rounded-md"
-            />
-          </div>
-        </div>
+    <div className="p-6">
+      <h1 className="text-xl font-bold mb-4">Generar Cotización</h1>
 
-        {/* Sección Configuraciones */}
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-lg font-medium mb-4">Configuraciones</h3>
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Fecha</label>
-              <input
-                type="date"
-                value={fecha}
-                onChange={(e) => setFecha(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Moneda</label>
-              <select
-                value={moneda}
-                onChange={(e) => setMoneda(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md"
-              >
-                <option value="PEN">PEN</option>
-                <option value="USD">USD</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Sección Productos */}
-      <div className="mt-6 bg-white p-4 rounded-lg shadow">
-        <h3 className="text-lg font-medium mb-4">Productos/Servicios</h3>
-        <button
-          onClick={addProducto}
-          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 mb-4"
+      {/* Selección de Cliente */}
+      <div className="mb-4 flex gap-2 items-center">
+        <select
+          className="border p-2 rounded w-1/3"
+          value={clienteSeleccionado}
+          onChange={(e) => setClienteSeleccionado(e.target.value)}
         >
-          Agregar Producto
+          <option value="">Seleccionar Cliente</option>
+          {clientes.map((c) => (
+            <option key={c._id} value={c._id}>
+              {c.nombre}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={() => {
+            setClienteEdit(null);
+            setModalCliente(true);
+          }}
+          className="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600"
+        >
+          + Cliente
         </button>
-        <table className="w-full table-auto border-collapse border border-gray-300">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border border-gray-300 p-2">Producto</th>
-              <th className="border border-gray-300 p-2">Descripción</th>
-              <th className="border border-gray-300 p-2">Cantidad</th>
-              <th className="border border-gray-300 p-2">Precio Unit.</th>
-              <th className="border border-gray-300 p-2">Total</th>
-              <th className="border border-gray-300 p-2">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {productos.map((p, index) => (
-              <tr key={index}>
-                <td className="border border-gray-300 p-2">
-                  <select
-                    value={p.productoId}
-                    onChange={(e) => updateProducto(index, 'productoId', e.target.value)}
-                    className="w-full p-1 border border-gray-300 rounded"
-                  >
-                    <option value="">Seleccionar</option>
-                    {productosDisponibles.map(prod => (
-                      <option key={prod._id} value={prod._id}>{prod.nombre}</option>
-                    ))}
-                  </select>
-                </td>
-                <td className="border border-gray-300 p-2">
-                  <input
-                    type="text"
-                    value={p.descripcion}
-                    onChange={(e) => updateProducto(index, 'descripcion', e.target.value)}
-                    className="w-full p-1 border border-gray-300 rounded"
-                  />
-                </td>
-                <td className="border border-gray-300 p-2">
-                  <input
-                    type="number"
-                    value={p.cantidad}
-                    onChange={(e) => updateProducto(index, 'cantidad', parseInt(e.target.value))}
-                    className="w-full p-1 border border-gray-300 rounded"
-                  />
-                </td>
-                <td className="border border-gray-300 p-2">
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={p.precioUnit}
-                    onChange={(e) => updateProducto(index, 'precioUnit', parseFloat(e.target.value))}
-                    className="w-full p-1 border border-gray-300 rounded"
-                  />
-                </td>
-                <td className="border border-gray-300 p-2">
-                  {(p.cantidad * p.precioUnit).toFixed(2)}
-                </td>
-                <td className="border border-gray-300 p-2">
-                  <button
-                    onClick={() => removeProducto(index)}
-                    className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
-                  >
-                    Eliminar
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <div className="mt-4 text-right">
-          <p>Subtotal: {moneda} {subtotal.toFixed(2)}</p>
-          <p>IGV (18%): {moneda} {igv.toFixed(2)}</p>
-          <p>Total: {moneda} {total.toFixed(2)}</p>
+        {clienteSeleccionado && (
+          <button
+            onClick={handleEditarCliente}
+            className="bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600"
+          >
+            Editar Cliente
+          </button>
+        )}
+      </div>
+
+      {/* Información de Cotización */}
+      <div className="mb-4 grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium">Dirección de Envío</label>
+          <input
+            type="text"
+            value={direccionEnvio}
+            onChange={(e) => setDireccionEnvio(e.target.value)}
+            className="border p-2 w-full rounded"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium">Contacto</label>
+          <input
+            type="text"
+            value={contactoCot}
+            onChange={(e) => setContactoCot(e.target.value)}
+            className="border p-2 w-full rounded"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium">Teléfono</label>
+          <input
+            type="text"
+            value={telefonoCot}
+            onChange={(e) => setTelefonoCot(e.target.value)}
+            className="border p-2 w-full rounded"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium">Información Referencial</label>
+          <input
+            type="text"
+            value={infoReferencial}
+            onChange={(e) => setInfoReferencial(e.target.value)}
+            className="border p-2 w-full rounded"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium">Fecha de Emisión</label>
+          <input
+            type="date"
+            value={fecha}
+            onChange={(e) => setFecha(e.target.value)}
+            className="border p-2 w-full rounded"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium">Moneda</label>
+          <select
+            value={moneda}
+            onChange={(e) => setMoneda(e.target.value)}
+            className="border p-2 w-full rounded"
+          >
+            <option value="SOLES">SOLES</option>
+            <option value="DOLARES">DOLARES</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium">Tipo de Cambio</label>
+          <input
+            type="number"
+            value={tipoCambio}
+            onChange={(e) => setTipoCambio(e.target.value)}
+            className="border p-2 w-full rounded"
+          />
+        </div>
+        <div className="col-span-2">
+          <label className="block text-sm font-medium">Observaciones</label>
+          <textarea
+            value={observacionesCot}
+            onChange={(e) => setObservacionesCot(e.target.value)}
+            className="border p-2 w-full rounded"
+            rows="3"
+          />
         </div>
       </div>
 
-      <div className="mt-6 text-center">
+      {/* Productos */}
+      <table className="w-full border mb-4">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="p-2 border">Cant</th>
+            <th className="p-2 border">Und</th>
+            <th className="p-2 border">Descripción</th>
+            <th className="p-2 border">V. Unit</th>
+            <th className="p-2 border">IGV</th>
+            <th className="p-2 border">P. Unit</th>
+            <th className="p-2 border">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {productos.map((p, i) => (
+            <tr key={i}>
+              <td className="border p-2">
+                <input
+                  type="number"
+                  value={p.cantidad}
+                  onChange={(e) => handleProductoChange(i, "cantidad", e.target.value)}
+                  className="w-full border p-1 rounded"
+                />
+              </td>
+              <td className="border p-2">
+                <input
+                  value={p.unidad}
+                  onChange={(e) => handleProductoChange(i, "unidad", e.target.value)}
+                  className="w-full border p-1 rounded"
+                />
+              </td>
+              <td className="border p-2">
+                <input
+                  value={p.descripcion}
+                  onChange={(e) => handleProductoChange(i, "descripcion", e.target.value)}
+                  className="w-full border p-1 rounded"
+                />
+              </td>
+              <td className="border p-2">
+                <input
+                  type="number"
+                  value={p.vUnit}
+                  onChange={(e) => handleProductoChange(i, "vUnit", e.target.value)}
+                  className="w-full border p-1 rounded"
+                />
+              </td>
+              <td className="border p-2 text-right">{p.igv.toFixed(2)}</td>
+              <td className="border p-2 text-right">{p.pUnit.toFixed(2)}</td>
+              <td className="border p-2 text-right">{p.total.toFixed(2)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="flex gap-2 mb-4">
+        <select
+          className="border p-2 rounded"
+          onChange={(e) => {
+            const prod = productosDB.find(p => p._id === e.target.value);
+            if (prod) {
+              setProductos([
+                ...productos,
+                {
+                  cantidad: 1,
+                  unidad: prod.unidad || "",
+                  descripcion: prod.nombre || "",
+                  vUnit: prod.precioUnitario || 0,
+                  igv: 0,
+                  pUnit: 0,
+                  total: 0
+                },
+              ]);
+            }
+            e.target.value = "";
+          }}
+        >
+          <option value="">Seleccionar Producto de BD</option>
+          {productosDB.map((p) => (
+            <option key={p._id} value={p._id}>
+              {p.nombre} - S/ {p.precioUnitario}
+            </option>
+          ))}
+        </select>
         <button
-          onClick={handleGenerar}
-          className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700"
+          onClick={agregarProducto}
+          className="bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600"
+        >
+          + Producto Manual
+        </button>
+        <button
+          onClick={generarPDF}
+          className="bg-indigo-500 text-white px-3 py-2 rounded hover:bg-indigo-600"
         >
           Generar PDF
         </button>
       </div>
+
+      {/* Modal Cliente */}
+      {modalCliente && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40">
+          <ClienteForm
+            clienteEdit={clienteEdit}
+            onClienteCreado={handleClienteCreado}
+            onClose={() => {
+              setModalCliente(false);
+              setClienteEdit(null);
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };
