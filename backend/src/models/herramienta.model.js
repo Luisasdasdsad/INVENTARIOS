@@ -6,10 +6,11 @@ const herramientaSchema = new mongoose.Schema({
   modelo: { type: String, required: true },
   tipo: { type: String, enum: ["herramientas","útiles de escritorio","equipos de computo","muebles","útiles de aseo","materiales","equipos de protección personal (EPPS)"], required: true },
   cantidad: { type: Number, required: true, min: 0 },
-  unidad: { type: String, default: "unidad" }, 
+  unidad: { type: String, default: "unidad" },
   estado: { type: String, enum: ["disponible", "prestado"], default: "disponible" },
   descripcion: { type: String, default: "" },
   precio: { type: Number, min: 0, default: 0 },
+  moneda: { type: String, enum: ["PEN", "USD"], default: "PEN" },
   barcode: { type: String, unique: true, sparse: true }, // Código de barras generado
   qrCode: {type: String, unique: true, sparse:true }, //Código QR
   foto: {type: String},
