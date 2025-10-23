@@ -1,6 +1,37 @@
 import Herramienta from "../models/herramienta.model.js";
 import cloudinary from "../config/cloudinary.js";
 
+// Función para parsear cantidad: maneja decimales con coma, puntos, y fracciones simples
+const parseCantidad = (cantidadStr) => {
+  if (typeof cantidadStr === 'number') return cantidadStr;
+  if (!cantidadStr || typeof cantidadStr !== 'string') return 0;
+
+  let str = cantidadStr.trim();
+
+  // Reemplazar coma por punto para decimales
+  str = str.replace(',', '.');
+
+  // Si contiene '/', asumir fracción
+  if (str.includes('/')) {
+    const parts = str.split('/');
+    if (parts.length === 2) {
+      const num = parseFloat(parts[0]);
+      const den = parseFloat(parts[1]);
+      if (!isNaN(num) && !isNaN(den) && den !== 0) {
+        return num / den;
+      }
+    }
+    throw new Error(`Fracción inválida: ${cantidadStr}`);
+  }
+
+  // Parsear como número
+  const num = parseFloat(str);
+  if (isNaN(num)) {
+    throw new Error(`Cantidad inválida: ${cantidadStr}`);
+  }
+  return num;
+};
+
 // Crear herramienta
 export const crearHerramienta = async (req, res) => {
   try {
@@ -32,6 +63,7 @@ export const crearHerramienta = async (req, res) => {
 
     const nuevaHerramienta = new Herramienta ({
       ...req.body,
+      cantidad: parseCantidad(req.body.cantidad),
       foto: foto,
     })
     const guardada = await nuevaHerramienta.save();
@@ -57,6 +89,9 @@ export const actualizarHerramientas = async (req, res) => {
   try {
     const {id} =req.params;
     let dataActualizada = { ...req.body };
+    if (req.body.cantidad !== undefined) {
+      dataActualizada.cantidad = parseCantidad(req.body.cantidad);
+    }
 
     if(req.file){
       const result = await new Promise((resolve, reject) => {

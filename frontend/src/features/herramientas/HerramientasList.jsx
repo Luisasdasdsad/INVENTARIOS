@@ -328,7 +328,7 @@ export default function HerramientasList() {
                       <td className="px-4 py-3 whitespace-nowrap text-sm">{h.marca || '-'}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm">{h.modelo || '-'}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm">{h.tipo || '-'}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm">S/ {h.precio?.toFixed(2) || '0.00'}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm">{h.moneda === 'USD' ? '$' : 'S/'} {h.precio?.toFixed(2) || '0.00'}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm">{h.descripcion || '-'}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm">{h.cantidad}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm">{h.unidad}</td>

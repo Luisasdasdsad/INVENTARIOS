@@ -12,6 +12,7 @@ export default function HerramientaForm({ herramienta, onSuccess, onCancel }) {
     estado: 'disponible',
     descripcion: '',
     precio: '',
+    moneda: 'PEN',
   });
 
   // Estados para captura de foto (AGREGADOS)
@@ -34,11 +35,12 @@ export default function HerramientaForm({ herramienta, onSuccess, onCancel }) {
         marca: herramienta.marca || '',
         modelo: herramienta.modelo || '',
         tipo: herramienta.tipo || '',
-        cantidad: herramienta.cantidad || '',
+        cantidad: herramienta.cantidad !== undefined ? herramienta.cantidad.toString() : '',
         unidad: herramienta.unidad || 'unidad',
         estado: herramienta.estado || 'disponible',
         descripcion: herramienta.descripcion || '',
         precio: herramienta.precio || '',
+        moneda: herramienta.moneda || 'PEN',
       });
       setPreview(herramienta.foto || '');
       if (herramienta.foto) {
@@ -55,6 +57,7 @@ export default function HerramientaForm({ herramienta, onSuccess, onCancel }) {
         estado: 'disponible',
         descripcion: '',
         precio: '',
+        moneda: 'PEN',
       });
       setPreview('');
       setCapturedImage(null);
@@ -337,13 +340,13 @@ export default function HerramientaForm({ herramienta, onSuccess, onCancel }) {
             Cantidad *
           </label>
           <input
-            type="number"
+            type="text"
             id="cantidad"
             name="cantidad"
             value={formData.cantidad}
             onChange={handleChange}
             required
-            min="1"
+            placeholder="Ej. 2.5, 2,5, 1/4"
             className="w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
@@ -360,21 +363,38 @@ export default function HerramientaForm({ herramienta, onSuccess, onCancel }) {
             className="w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
-        <div>
-          <label htmlFor="precio" className="block text-sm font-medium text-gray-700 mb-1">
-            Precio (S/.)
-          </label>
-          <input
-            type="number"
-            id="precio"
-            name="precio"
-            value={formData.precio}
-            onChange={handleChange}
-            min="0"
-            step="0.01"
-            placeholder="Ej. 120.50"
-            className="w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="precio" className="block text-sm font-medium text-gray-700 mb-1">
+              Precio ({formData.moneda === 'PEN' ? 'S/.' : '$'})
+            </label>
+            <input
+              type="number"
+              id="precio"
+              name="precio"
+              value={formData.precio}
+              onChange={handleChange}
+              min="0"
+              step="0.01"
+              placeholder="Ej. 120.50"
+              className="w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label htmlFor="moneda" className="block text-sm font-medium text-gray-700 mb-1">
+              Moneda
+            </label>
+            <select
+              id="moneda"
+              name="moneda"
+              value={formData.moneda}
+              onChange={handleChange}
+              className="w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="PEN">PEN (S/.)</option>
+              <option value="USD">USD ($)</option>
+            </select>
+          </div>
         </div>
         <div>
           <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 mb-1">
