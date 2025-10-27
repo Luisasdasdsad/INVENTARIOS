@@ -80,53 +80,54 @@ const generarReporteCotizacion = async ({
       reader.onload = () => resolve(reader.result);
       reader.readAsDataURL(blob);
     });
-    doc.addImage(imageData, "PNG", margenIzq, 10, 35, 25);
+    doc.addImage(imageData, "PNG", margenIzq, 10, 35, 35);
   } catch (error) {
     console.error("Error loading logo:", error);
     // Continue without logo
   }
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("TEAMGAS SOCIEDAD ANONIMA CERRADA", 48, 15);
+  doc.text("TEAMGAS SOCIEDAD ANONIMA CERRADA", 48, 20);
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text("JR. CORONEL GUERRA NRO. 152 (PLAZA PRINCIPAL)", 48, 20);
-  doc.text("JUNIN - CHUPACA - CHUPACA", 48, 25);
+  doc.text("JR. CORONEL GUERRA NRO. 152 (PLAZA PRINCIPAL)", 48, 25);
+  doc.text("JUNIN - CHUPACA - CHUPACA", 48, 30);
 
   // 🔹 Caja derecha con RUC y número de cotización
   doc.setFontSize(11);
   doc.rect(144, 10, 60, 25);
   doc.text("RUC: 20604956499", 145, 18);
-  doc.text(`N°${numeroCotizacion}`, 145, 27);
+  doc.text("COTIZACIÓN", 145, 23);
+  doc.text(`COT-${numeroCotizacion}`, 145, 28);
 
   // 🔹 2. Bloque Emisor / Cliente
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.text("EMISOR:", margenIzq, 45);
-  doc.text("CLIENTE:", 110, 45);
+  doc.text("EMISOR:", margenIzq, 50);
+  doc.text("CLIENTE:", 110, 50);
 
   // Caja emisor y cliente
-  doc.rect(margenIzq, 47, 90, 25);
-  doc.rect(110, 47, 90, 25);
+  doc.rect(margenIzq, 52, 90, 25);
+  doc.rect(110, 52, 90, 25);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.text("TEAMGAS SAC", margenIzq + 5, 52);
-  doc.text("RUC: 20604956499", margenIzq + 5, 57);
-  doc.text("EMAIL: teamgas@gmail.com", margenIzq + 5, 62);
-  doc.text("TELÉFONO: 987654321", margenIzq + 5, 67);
+  doc.text("TEAMGAS SAC", margenIzq + 5, 57);
+  doc.text("RUC: 20604956499", margenIzq + 5, 62);
+  doc.text("EMAIL: teamgas@gmail.com", margenIzq + 5, 67);
+  doc.text("TELÉFONO: 987654321", margenIzq + 5, 72);
 
-  doc.text(`${cliente.nombre || "#N/A"}`, 115, 52);
-  doc.text(`RUC: ${cliente.documento || "#N/A"}`, 115, 57);
-  doc.text(`DIRECCIÓN: ${cliente.direccion || "#N/A"}`, 115, 62);
-  doc.text(`TELÉFONO: ${cliente.telefono || "#N/A"}`, 115, 67);
+  doc.text(`${cliente.nombre || "#N/A"}`, 115, 57);
+  doc.text(`RUC: ${cliente.documento || "#N/A"}`, 115, 62);
+  doc.text(`DIRECCIÓN: ${cliente.direccion || "#N/A"}`, 115, 67);
+  doc.text(`TELÉFONO: ${cliente.telefono || "#N/A"}`, 115, 72);
 
   // 🔹 3. Datos de la cotización
   doc.setFont("helvetica", "bold");
-  doc.text("DATOS DE LA COTIZACIÓN", margenIzq, 80);
+  doc.text("DATOS DE LA COTIZACIÓN", margenIzq, 85);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.line(margenIzq, 82, 200, 82);
+  doc.line(margenIzq, 87, 200, 87);
 
   // Formatear fecha correctamente para evitar problemas de zona horaria
   const fechaObj = new Date(fecha + 'T00:00:00');
@@ -135,14 +136,14 @@ const generarReporteCotizacion = async ({
     month: '2-digit',
     year: 'numeric'
   });
-  doc.text(`FECHA DE EMISIÓN: ${fechaFormateada}`, margenIzq, 88);
-  doc.text(`CONDICIÓN DE PAGO: ${condicionPago}`, 130, 88);
-  doc.text(`TIEMPO DE VALIDEZ: ${validez}`, margenIzq, 93);
-  doc.text(`MONEDA: ${moneda}`, 130, 93);
+  doc.text(`FECHA DE EMISIÓN: ${fechaFormateada}`, margenIzq, 93);
+  doc.text(`CONDICIÓN DE PAGO: ${condicionPago}`, 130, 93);
+  doc.text(`TIEMPO DE VALIDEZ: ${validez}`, margenIzq, 98);
+  doc.text(`MONEDA: ${moneda}`, 130, 98);
 
   // 🔹 4. Tabla de productos
   autoTable(doc, {
-    startY: 100,
+    startY: 105,
     head: [["N°", "CANT.", "UND", "DESCRIPCIÓN", "P. UNIT", "IGV", "V. UNIT", "TOTAL"]],
     body: productos.map((p, i) => [
       i + 1,
