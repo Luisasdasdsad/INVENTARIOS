@@ -116,7 +116,17 @@ export default function DashboardLayout() {
             }`}
           >
             <FaClipboardList size={20} />
-            {isSidebarOpen && <span>Cotización</span>}
+            {isSidebarOpen && <span>Nueva Cotización</span>}
+          </Link>
+          <Link
+            to="/cotizaciones"
+            onClick={handleNavClick}
+            className={`flex items-center gap-2 hover:text-blue-600 transition-colors p-2 rounded ${
+            !isSidebarOpen ? 'justify-center' : ''
+            }`}
+          >
+            <FaClipboardList size={20} />
+            {isSidebarOpen && <span>Ver Cotizaciones</span>}
           </Link>
           <Link
             to="/clientes"

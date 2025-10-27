@@ -11,6 +11,7 @@ import fotoRouter from './routes/fotos.routes.js';
 import path from 'path';
 import ClienteRoutes from './routes/cliente.routes.js';
 import ProductoRoutes from './routes/producto.routes.js';
+import CotizacionRoutes from './routes/cotizacion.routes.js';
 
 dotenv.config();
 const app = express();
@@ -38,6 +39,7 @@ app.use('/api/fotos', fotoRouter); // Monta las rutas
 
 app.use('/api/clientes', ClienteRoutes);
 app.use('/api/productos', ProductoRoutes);
+app.use('/api/cotizaciones', CotizacionRoutes);
 
 
 mongoose.connect(process.env.MONGO_URI)

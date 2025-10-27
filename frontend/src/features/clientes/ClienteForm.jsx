@@ -189,6 +189,9 @@ const ClienteForm = ({ onClienteCreado, onClose, clienteEdit }) => {
                 className="border p-2 w-full rounded"
                 value={cliente.telefono}
                 onChange={handleChange}
+                maxLength="9"
+                pattern="^\d{9}$"
+                title="El teléfono debe tener exactamente 9 dígitos numéricos."
               />
             </div>
             <div className="mb-2">
@@ -234,6 +237,9 @@ const ClienteForm = ({ onClienteCreado, onClose, clienteEdit }) => {
                 className="border p-2 w-full rounded"
                 value={cliente.telefono}
                 onChange={handleChange}
+                maxLength="9"
+                pattern="^\d{9}$"
+                title="El teléfono debe tener exactamente 9 dígitos numéricos."
               />
             </div>
             <div className="mb-2">

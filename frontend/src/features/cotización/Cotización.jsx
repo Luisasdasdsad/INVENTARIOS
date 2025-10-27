@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import { useLocation } from "react-router-dom";
 import api from "../../services/api";
-import logo from "../../assets/LogoTG.png";
 import ClienteForm from "../clientes/ClienteForm";
+import generarReporteCotizacion from "../../utils/generarReporteCotización";
 
 const Cotización = () => {
+  const location = useLocation();
+  const cotizacionEdit = location.state?.cotizacion; // Para edición
+
   const [clientes, setClientes] = useState([]);
   const [clienteSeleccionado, setClienteSeleccionado] = useState("");
   const [productos, setProductos] = useState([
@@ -16,15 +18,12 @@ const Cotización = () => {
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
   const [modalCliente, setModalCliente] = useState(false);
   const [clienteEdit, setClienteEdit] = useState(null);
-  const [direccionEnvio, setDireccionEnvio] = useState("");
-  const [contactoCot, setContactoCot] = useState("");
-  const [telefonoCot, setTelefonoCot] = useState("");
-  const [infoReferencial, setInfoReferencial] = useState("");
-  const [tipoCambio, setTipoCambio] = useState("");
-  const [tipoCambioLoading, setTipoCambioLoading] = useState(false);
   const [observacionesCot, setObservacionesCot] = useState("");
+  const [numeroCotizacion, setNumeroCotizacion] = useState("");
+  const [descuento, setDescuento] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
 
-  // 🔹 Cargar clientes, productos y tipo de cambio
+  // 🔹 Cargar clientes y productos, y manejar edición
   useEffect(() => {
     const fetchClientes = async () => {
       try {
@@ -44,54 +43,39 @@ const Cotización = () => {
       }
     };
 
-    const fetchTipoCambio = async () => {
-      setTipoCambioLoading(true);
-      try {
-        // Try exchangerate-api first (more reliable CORS)
-        const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log('Exchange Rate API Response:', data); // Debug log
-        if (data && data.rates && data.rates.PEN) {
-          setTipoCambio(data.rates.PEN.toFixed(3));
-        }
-      } catch (error) {
-        console.error("Error al obtener tipo de cambio:", error);
-        // Try SUNAT API as fallback (may have CORS issues)
-        try {
-          const fallbackResponse = await fetch('https://api.apis.net.pe/v1/tipo-cambio-sunat');
-          const fallbackData = await fallbackResponse.json();
-          console.log('SUNAT API Response:', fallbackData); // Debug log
-          if (fallbackData && fallbackData.compra) {
-            setTipoCambio(fallbackData.compra.toString());
-          }
-        } catch (fallbackError) {
-          console.error("Fallback API also failed:", fallbackError);
-          // Set a default value if both APIs fail
-          setTipoCambio("3.800");
-        }
-      } finally {
-        setTipoCambioLoading(false);
-      }
-    };
-
     fetchClientes();
     fetchProductos();
-    fetchTipoCambio();
-  }, []);
+
+    // Si hay una cotización para editar
+    if (cotizacionEdit) {
+      setIsEditing(true);
+      setClienteSeleccionado(cotizacionEdit.cliente._id);
+      setProductos(cotizacionEdit.productos.map(p => ({
+        cantidad: p.cantidad,
+        unidad: p.unidad || "",
+        descripcion: p.descripcion,
+        vUnit: p.vUnit || 0,
+        igv: p.igv || 0,
+        pUnit: p.precioUnitario,
+        total: p.total,
+      })));
+      setMoneda(cotizacionEdit.moneda || "SOLES");
+      setFecha(new Date(cotizacionEdit.fecha).toISOString().split('T')[0]);
+      setObservacionesCot(cotizacionEdit.observaciones || "");
+      setNumeroCotizacion(cotizacionEdit.numeroCotizacion);
+      setDescuento(cotizacionEdit.descuento || 0);
+    }
+  }, [cotizacionEdit]);
 
   // 🔹 Manejo de productos
   const handleProductoChange = (index, campo, valor) => {
     const nuevos = [...productos];
     nuevos[index][campo] = valor;
-    const vUnit = parseFloat(nuevos[index].vUnit) || 0;
+    const pUnit = parseFloat(nuevos[index].pUnit) || 0;
     const cantidad = parseFloat(nuevos[index].cantidad) || 0;
-    const total = vUnit * cantidad;
-    nuevos[index].igv = total * 0.18;
-    nuevos[index].pUnit = vUnit + vUnit * 0.18;
-    nuevos[index].total = total + nuevos[index].igv;
+    nuevos[index].igv = pUnit * 0.18;
+    nuevos[index].vUnit = pUnit - nuevos[index].igv;
+    nuevos[index].total = pUnit * cantidad;
     setProductos(nuevos);
   };
 
@@ -112,77 +96,97 @@ const Cotización = () => {
   const calcularTotales = () => {
     let subtotal = 0;
     productos.forEach((p) => (subtotal += p.total));
-    const igv = subtotal * 0.18;
-    const total = subtotal + igv;
-    return { subtotal, igv, total };
+    const descuentoAmount = descuento; // Ahora es un monto directo, no porcentaje
+    const discountedSubtotal = subtotal - descuentoAmount;
+    const igv = 0; // IGV ya está incluido en los totales de productos
+    const total = discountedSubtotal; // El total es el subtotal con descuento (IGV ya incluido)
+    return { subtotal, descuentoAmount, discountedSubtotal, igv, total };
+  };
+
+  // 🔹 Guardar cotización en BD
+  const guardarCotizacion = async () => {
+    if (!clienteSeleccionado || !numeroCotizacion) {
+      alert("Selecciona un cliente y asigna un número de cotización");
+      return false;
+    }
+
+    const { discountedSubtotal } = calcularTotales();
+    const cotizacionData = {
+      cliente: clienteSeleccionado,
+      productos: productos.map(p => ({
+        descripcion: p.descripcion,
+        cantidad: p.cantidad,
+        unidad: p.unidad,
+        precioUnitario: parseFloat(p.pUnit) || 0,
+        igv: p.igv,
+        vUnit: p.vUnit,
+        total: p.total,
+      })),
+      fecha,
+      totalGeneral: discountedSubtotal,
+      descuento,
+      moneda,
+      observaciones: observacionesCot,
+      numeroCotizacion,
+    };
+
+    try {
+      if (isEditing && cotizacionEdit) {
+        await api.put(`/cotizaciones/${cotizacionEdit._id}`, cotizacionData);
+        alert("Cotización actualizada exitosamente");
+      } else {
+        await api.post("/cotizaciones", cotizacionData);
+        alert("Cotización guardada exitosamente");
+      }
+      return true;
+    } catch (error) {
+      console.error("Error al guardar cotización:", error);
+      if (error.response?.status === 400 && error.response?.data?.msg?.includes("duplicate key")) {
+        alert("El número de cotización ya existe. Por favor, usa un número único.");
+      } else {
+        alert("Error al guardar la cotización: " + (error.response?.data?.msg || error.message));
+      }
+      return false;
+    }
   };
 
   // 🔹 Generar PDF
   const generarPDF = async () => {
-    const doc = new jsPDF();
+    // Guardar la cotización automáticamente antes de generar el PDF
+    const guardadoExitoso = await guardarCotizacion();
 
-    // Load logo image
-    try {
-      const response = await fetch(logo);
-      const blob = await response.blob();
-      const imageData = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.readAsDataURL(blob);
-      });
-      doc.addImage(imageData, "PNG", 10, 10, 30, 20);
-    } catch (error) {
-      console.error("Error loading logo:", error);
-      // Continue without logo
+    // Solo generar PDF si el guardado fue exitoso
+    if (!guardadoExitoso) {
+      return;
     }
-
-    doc.setFontSize(14);
-    doc.text("COTIZACIÓN", 150, 20);
-    doc.setFontSize(10);
-    doc.text(`Fecha: ${fecha}`, 150, 27);
-    doc.text(`Moneda: ${moneda}`, 150, 32);
-    if (tipoCambio) doc.text(`Tipo de Cambio: ${tipoCambio}`, 150, 37);
 
     const cliente = clientes.find((c) => c._id === clienteSeleccionado);
-    doc.text("CLIENTE:", 10, 40);
-    if (cliente) {
-      doc.text(`Nombre: ${cliente.nombre}`, 30, 40);
-      doc.text(`RUC: ${cliente.ruc || "-"}`, 30, 45);
-      doc.text(`Dirección: ${cliente.direccion || "-"}`, 30, 50);
-      doc.text(`Teléfono: ${cliente.telefono || "-"}`, 30, 55);
-      doc.text(`Email: ${cliente.email || "-"}`, 30, 60);
-    }
+    const { subtotal, descuentoAmount, discountedSubtotal, igv, total } = calcularTotales();
 
-    doc.text("INFORMACIÓN DE ENVÍO:", 10, 70);
-    doc.text(`Dirección de Envío: ${direccionEnvio || "-"}`, 30, 75);
-    doc.text(`Contacto: ${contactoCot || "-"}`, 30, 80);
-    doc.text(`Teléfono: ${telefonoCot || "-"}`, 30, 85);
-    doc.text(`Información Referencial: ${infoReferencial || "-"}`, 30, 90);
-    if (observacionesCot) {
-      doc.text(`Observaciones: ${observacionesCot}`, 30, 95);
-    }
-
-    autoTable(doc, {
-      startY: 105,
-      head: [["N°", "CANT", "UND", "DESCRIPCIÓN", "V. UNIT", "IGV", "P. UNIT", "TOTAL"]],
-      body: productos.map((p, i) => [
-        i + 1,
-        p.cantidad,
-        p.unidad,
-        p.descripcion,
-        p.vUnit.toFixed(2),
-        p.igv.toFixed(2),
-        p.pUnit.toFixed(2),
-        p.total.toFixed(2),
-      ]),
+    await generarReporteCotizacion({
+      cliente: {
+        nombre: cliente?.nombre || "#N/A",
+        documento: cliente?.ruc || cliente?.documento || "#N/A",
+        direccion: cliente?.direccion || "#N/A",
+        telefono: cliente?.telefono || "#N/A",
+      },
+      productos: productos.map(p => ({
+        cantidad: p.cantidad,
+        unidad: p.unidad,
+        descripcion: p.descripcion,
+        precioUnit: parseFloat(p.pUnit) || 0,
+      })),
+      subtotal: subtotal,
+      descuento: descuentoAmount,
+      igv,
+      total: discountedSubtotal,
+      fecha,
+      moneda,
+      numeroCotizacion: numeroCotizacion || "001",
+      condicionPago: "CONTADO",
+      validez: "15 días",
+      observaciones: observacionesCot,
     });
-
-    const { subtotal, igv, total } = calcularTotales();
-    doc.text(`SUBTOTAL: ${subtotal.toFixed(2)}`, 140, doc.lastAutoTable.finalY + 10);
-    doc.text(`IGV (18%): ${igv.toFixed(2)}`, 140, doc.lastAutoTable.finalY + 15);
-    doc.text(`TOTAL: ${total.toFixed(2)}`, 140, doc.lastAutoTable.finalY + 20);
-
-    doc.save("Cotizacion.pdf");
   };
 
   const handleClienteCreado = (nuevoCliente) => {
@@ -242,42 +246,6 @@ const Cotización = () => {
         <h2 className="text-base md:text-lg font-semibold mb-4 text-gray-800">Información de Cotización</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Dirección de Envío</label>
-            <input
-              type="text"
-              value={direccionEnvio}
-              onChange={(e) => setDireccionEnvio(e.target.value)}
-              className="border border-gray-300 p-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Contacto</label>
-            <input
-              type="text"
-              value={contactoCot}
-              onChange={(e) => setContactoCot(e.target.value)}
-              className="border border-gray-300 p-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-            <input
-              type="text"
-              value={telefonoCot}
-              onChange={(e) => setTelefonoCot(e.target.value)}
-              className="border border-gray-300 p-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Información Referencial</label>
-            <input
-              type="text"
-              value={infoReferencial}
-              onChange={(e) => setInfoReferencial(e.target.value)}
-              className="border border-gray-300 p-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
-            />
-          </div>
-          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Emisión</label>
             <input
               type="date"
@@ -298,23 +266,24 @@ const Cotización = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Cambio</label>
-            <div className="relative">
-              <input
-                type="number"
-                value={tipoCambio}
-                onChange={(e) => setTipoCambio(e.target.value)}
-                className="border border-gray-300 p-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
-                placeholder={tipoCambioLoading ? "Cargando..." : ""}
-                disabled={tipoCambioLoading}
-              />
-              {tipoCambioLoading && (
-                <div className="absolute right-2 top-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                </div>
-              )}
-            </div>
-            <p className="text-xs text-gray-500 mt-1">Tipo de cambio oficial (SUNAT)</p>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Número de Cotización</label>
+            <input
+              type="text"
+              value={numeroCotizacion}
+              onChange={(e) => setNumeroCotizacion(e.target.value)}
+              placeholder="001"
+              className="border border-gray-300 p-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Descuento (monto)</label>
+            <input
+              type="number"
+              min="0"
+              value={descuento}
+              onChange={(e) => setDescuento(parseFloat(e.target.value) || 0)}
+              className="border border-gray-300 p-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
+            />
           </div>
           <div className="md:col-span-2 lg:col-span-3">
             <label className="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
@@ -322,7 +291,7 @@ const Cotización = () => {
               value={observacionesCot}
               onChange={(e) => setObservacionesCot(e.target.value)}
               className="border border-gray-300 p-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
-              rows="3"
+              rows="8"
             />
           </div>
         </div>
@@ -336,14 +305,14 @@ const Cotización = () => {
             <table className="w-full border-collapse">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="p-2 md:p-3 border border-gray-300 text-left text-xs md:text-sm font-medium text-gray-700">Cant</th>
-                  <th className="p-2 md:p-3 border border-gray-300 text-left text-xs md:text-sm font-medium text-gray-700">Und</th>
+                  <th className="p-2 md:p-3 border border-gray-300 text-left text-xs md:text-sm font-medium text-gray-700 w-20">Cant</th>
+                  <th className="p-2 md:p-3 border border-gray-300 text-left text-xs md:text-sm font-medium text-gray-700 w-24">Und</th>
                   <th className="p-2 md:p-3 border border-gray-300 text-left text-xs md:text-sm font-medium text-gray-700">Descripción</th>
-                  <th className="p-2 md:p-3 border border-gray-300 text-left text-xs md:text-sm font-medium text-gray-700">V. Unit</th>
-                  <th className="p-2 md:p-3 border border-gray-300 text-left text-xs md:text-sm font-medium text-gray-700">IGV</th>
-                  <th className="p-2 md:p-3 border border-gray-300 text-left text-xs md:text-sm font-medium text-gray-700">P. Unit</th>
-                  <th className="p-2 md:p-3 border border-gray-300 text-left text-xs md:text-sm font-medium text-gray-700">Total</th>
-                  <th className="p-2 md:p-3 border border-gray-300 text-left text-xs md:text-sm font-medium text-gray-700">Acciones</th>
+                  <th className="p-2 md:p-3 border border-gray-300 text-left text-xs md:text-sm font-medium text-gray-700 w-20">P. Unit</th>
+                  <th className="p-2 md:p-3 border border-gray-300 text-left text-xs md:text-sm font-medium text-gray-700 w-16">IGV</th>
+                  <th className="p-2 md:p-3 border border-gray-300 text-left text-xs md:text-sm font-medium text-gray-700 w-20">V. Unit</th>
+                  <th className="p-2 md:p-3 border border-gray-300 text-left text-xs md:text-sm font-medium text-gray-700 w-20">Total</th>
+                  <th className="p-2 md:p-3 border border-gray-300 text-left text-xs md:text-sm font-medium text-gray-700 w-24">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -366,22 +335,25 @@ const Cotización = () => {
                       />
                     </td>
                     <td className="border border-gray-300 p-2">
-                      <input
+                      <textarea
                         value={p.descripcion}
                         onChange={(e) => handleProductoChange(i, "descripcion", e.target.value)}
-                        className="w-full border border-gray-300 p-1 md:p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
+                        className="w-full border border-gray-300 p-1 md:p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base resize-none"
+                        rows="5"
+                        placeholder="Descripción del producto"
                       />
                     </td>
                     <td className="border border-gray-300 p-2">
                       <input
                         type="number"
-                        value={p.vUnit}
-                        onChange={(e) => handleProductoChange(i, "vUnit", e.target.value)}
+                        min="0"
+                        value={p.pUnit}
+                        onChange={(e) => handleProductoChange(i, "pUnit", e.target.value)}
                         className="w-full border border-gray-300 p-1 md:p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
                       />
                     </td>
                     <td className="border border-gray-300 p-2 text-right text-sm md:text-base">{p.igv.toFixed(2)}</td>
-                    <td className="border border-gray-300 p-2 text-right text-sm md:text-base">{p.pUnit.toFixed(2)}</td>
+                    <td className="border border-gray-300 p-2 text-right text-sm md:text-base">{p.vUnit.toFixed(2)}</td>
                     <td className="border border-gray-300 p-2 text-right text-sm md:text-base">{p.total.toFixed(2)}</td>
                     <td className="border border-gray-300 p-2">
                       <button
@@ -406,11 +378,11 @@ const Cotización = () => {
           onChange={(e) => {
             const prod = productosDB.find(p => p._id === e.target.value);
             if (prod) {
-              const vUnit = prod.precioUnitario || 0;
+              const pUnit = prod.precioUnitario || 0;
               const cantidad = 1;
-              const total = vUnit * cantidad;
-              const igv = total * 0.18;
-              const pUnit = vUnit + vUnit * 0.18;
+              const igv = pUnit * 0.18;
+              const vUnit = pUnit - igv;
+              const total = pUnit * cantidad;
               setProductos([
                 ...productos,
                 {
@@ -420,7 +392,7 @@ const Cotización = () => {
                   vUnit,
                   igv,
                   pUnit,
-                  total: total + igv
+                  total
                 },
               ]);
             }
@@ -441,8 +413,24 @@ const Cotización = () => {
           + Producto Manual
         </button>
         <button
+          onClick={guardarCotizacion}
+          disabled={!clienteSeleccionado}
+          className={`px-3 py-2 md:px-4 md:py-2 rounded-md transition-colors min-h-[44px] w-full sm:w-auto text-xs md:text-sm ${
+            clienteSeleccionado
+              ? "bg-green-600 text-white hover:bg-green-700"
+              : "bg-gray-400 text-gray-700 cursor-not-allowed"
+          }`}
+        >
+          {isEditing ? "Actualizar Cotización" : "Guardar Cotización"}
+        </button>
+        <button
           onClick={generarPDF}
-          className="bg-indigo-600 text-white px-3 py-2 md:px-4 md:py-2 rounded-md hover:bg-indigo-700 transition-colors min-h-[44px] w-full sm:w-auto text-xs md:text-sm"
+          disabled={!clienteSeleccionado || !numeroCotizacion || productos.length === 0}
+          className={`px-3 py-2 md:px-4 md:py-2 rounded-md transition-colors min-h-[44px] w-full sm:w-auto text-xs md:text-sm ${
+            clienteSeleccionado && numeroCotizacion && productos.length > 0
+              ? "bg-indigo-600 text-white hover:bg-indigo-700"
+              : "bg-gray-400 text-gray-700 cursor-not-allowed"
+          }`}
         >
           Generar PDF
         </button>
