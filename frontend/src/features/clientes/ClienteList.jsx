@@ -10,7 +10,7 @@ const ClienteList = () => {
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [clienteEdit, setClienteEdit] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchClientes();
@@ -30,21 +30,14 @@ const ClienteList = () => {
     }
   };
 
-  const filteredClientes = clientes.filter(cliente =>
+  const filteredClientes = clientes.filter((cliente) =>
     cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
     cliente.nombreComercial?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (cliente.tipoDoc === "RUC" ? cliente.ruc : cliente.numero)?.includes(searchTerm)
+    (cliente.tipoDoc === "RUC"
+      ? cliente.ruc
+      : cliente.numero
+    )?.includes(searchTerm)
   );
-
-  const handleClienteCreado = (nuevoCliente) => {
-    if (clienteEdit) {
-      setClientes(clientes.map(c => c._id === nuevoCliente._id ? nuevoCliente : c));
-    } else {
-      setClientes([...clientes, nuevoCliente]);
-    }
-    setShowForm(false);
-    setClienteEdit(null);
-  };
 
   const handleEdit = (cliente) => {
     setClienteEdit(cliente);
@@ -52,124 +45,179 @@ const ClienteList = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("¿Estás seguro de que quieres eliminar este cliente?")) {
+    if (window.confirm("¿Estás seguro de que deseas eliminar este cliente?")) {
       try {
         await api.delete(`/clientes/${id}`);
-        setClientes(clientes.filter(c => c._id !== id));
+        setClientes(clientes.filter((c) => c._id !== id));
       } catch (err) {
         console.error("Error al eliminar cliente:", err);
       }
     }
   };
 
-  if (loading) return <div className="text-center p-4 md:p-8 text-gray-600">Cargando clientes...</div>;
-  if (error) return <div className="text-center p-4 md:p-8 text-red-500 bg-red-50 rounded-md m-2 md:m-4">Error: {error}</div>;
+  const handleClienteCreado = (nuevoCliente) => {
+    if (clienteEdit) {
+      setClientes((prev) =>
+        prev.map((c) => (c._id === nuevoCliente._id ? nuevoCliente : c))
+      );
+    } else {
+      setClientes((prev) => [...prev, nuevoCliente]);
+    }
+    setShowForm(false);
+    setClienteEdit(null);
+  };
+
+  if (loading)
+    return (
+      <div className="text-center p-6 text-gray-600 animate-pulse">
+        Cargando clientes...
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="text-center p-6 bg-red-100 text-red-700 rounded-md shadow-sm">
+        {error}
+      </div>
+    );
 
   return (
-    <div className="p-2 md:p-4 lg:p-6 max-w-7xl w-full mx-auto">
-      {/* Header Mejorado */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-6 gap-3">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
-          <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-800 whitespace-nowrap">Clientes</h2>
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <div className="relative w-full sm:w-64">
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={14} />
-              <input
-                type="text"
-                placeholder="Buscar por nombre o documento..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full text-sm md:text-base"
-              />
-            </div>
+    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+        <h2 className="text-2xl font-bold text-gray-800 tracking-tight">
+          Clientes
+        </h2>
+
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <div className="relative w-full sm:w-72">
+            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Buscar por nombre, RUC o número..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 w-full text-sm md:text-base"
+            />
           </div>
+
+          <button
+            onClick={() => {
+              setClienteEdit(null);
+              setShowForm(true);
+            }}
+            className="flex items-center justify-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-black font-medium px-4 py-2 rounded-lg shadow-sm transition-colors"
+          >
+            <FaPlus size={14} /> Nuevo Cliente
+          </button>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center justify-center gap-2 bg-blue-600 text-white px-3 py-2 md:px-4 md:py-2 rounded-md hover:bg-blue-700 transition-colors min-h-[44px] w-full sm:w-auto text-xs md:text-sm"
-        >
-          <FaPlus size={14} /> Nuevo Cliente
-        </button>
       </div>
 
+      {/* Lista */}
       {filteredClientes.length === 0 ? (
-        <div className="text-center py-8 md:py-12 text-gray-600 text-sm md:text-base">
-          {searchTerm ? 'No hay clientes que coincidan con la búsqueda.' : 'No hay clientes registrados.'}
+        <div className="text-center py-10 text-gray-600 text-sm md:text-base bg-gray-50 rounded-lg">
+          {searchTerm
+            ? "No se encontraron clientes que coincidan con la búsqueda."
+            : "No hay clientes registrados aún."}
         </div>
       ) : (
         <div className="space-y-3 md:space-y-4">
-          {/* Mobile: Cards Mejoradas */}
+          {/* Móvil - Tarjetas */}
           <div className="md:hidden space-y-3">
             {filteredClientes.map((cliente) => (
-              <div key={cliente._id} className="bg-white p-3 rounded-lg shadow-sm border divide-y divide-gray-200">
-                <div className="space-y-2 mb-3">
-                  <h3 className="text-base font-semibold text-gray-900">{cliente.nombre}</h3>
-                  <div className="text-xs text-gray-600 space-y-1">
-                    <p><span className="font-medium">Tipo Doc:</span> {cliente.tipoDoc}</p>
-                    <p><span className="font-medium">Documento:</span> {cliente.tipoDoc === "RUC" ? cliente.ruc : cliente.numero}</p>
-                    <p><span className="font-medium">Nombre Comercial:</span> {cliente.nombreComercial || '-'}</p>
-                    <p><span className="font-medium">Teléfono:</span> {cliente.telefono || '-'}</p>
-                    <p><span className="font-medium">Email:</span> {cliente.email || '-'}</p>
-                  </div>
+              <div
+                key={cliente._id}
+                className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition"
+              >
+                <h3 className="text-base font-bold text-gray-900 mb-2">
+                  {cliente.nombre}
+                </h3>
+                <div className="text-sm text-gray-600 space-y-1">
+                  <p>
+                    <span className="font-semibold">Tipo Doc:</span>{" "}
+                    {cliente.tipoDoc}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Número:</span>{" "}
+                    {cliente.tipoDoc === "RUC"
+                      ? cliente.ruc
+                      : cliente.numero}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Dirección:</span>{" "}
+                    {cliente.direccion || "No especificada"}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Teléfono:</span>{" "}
+                    {cliente.telefono || "No disponible"}
+                  </p>
                 </div>
 
-                {/* Acciones */}
-                <div className="flex gap-2 pt-3">
+                <div className="flex gap-2 pt-4">
                   <button
                     onClick={() => handleEdit(cliente)}
-                    className="flex-1 flex items-center justify-center gap-1 bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 text-xs min-h-[40px]"
+                    className="flex-1 bg-yellow-500 text-black py-2 rounded-md hover:bg-yellow-600 text-xs font-medium"
                   >
-                    <FaEdit size={12} /> Editar
+                    <FaEdit className="inline-block mr-1" /> Editar
                   </button>
                   <button
                     onClick={() => handleDelete(cliente._id)}
-                    className="flex-1 flex items-center justify-center gap-1 bg-red-600 text-white py-2 rounded-md hover:bg-red-700 text-xs min-h-[40px]"
+                    className="flex-1 bg-red-600 text-white py-2 rounded-md hover:bg-red-700 text-xs font-medium"
                   >
-                    <FaTrash size={12} /> Eliminar
+                    <FaTrash className="inline-block mr-1" /> Eliminar
                   </button>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Desktop: Tabla */}
+          {/* Escritorio - Tabla */}
           <div className="hidden md:block">
-            <div className="overflow-x-auto bg-white shadow-sm rounded-lg">
+            <div className="overflow-x-auto bg-white shadow-sm rounded-lg border border-gray-200">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-yellow-100 text-gray-800">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo Doc</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documento</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre Comercial</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Teléfono</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Nombre</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Tipo Doc</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Número</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Dirección</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Teléfono</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredClientes.map((cliente) => (
-                    <tr key={cliente._id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{cliente.tipoDoc}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-900">
+                    <tr
+                      key={cliente._id}
+                      className="hover:bg-gray-50 transition"
+                    >
+                      <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                        {cliente.nombre}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        {cliente.tipoDoc}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-700">
                         {cliente.tipoDoc === "RUC" ? cliente.ruc : cliente.numero}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{cliente.nombre}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{cliente.nombreComercial || '-'}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{cliente.telefono || '-'}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{cliente.email || '-'}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium space-x-2">
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {cliente.direccion || "No especificada"}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {cliente.telefono || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-sm space-x-2">
                         <button
                           onClick={() => handleEdit(cliente)}
-                          className="text-indigo-600 hover:text-indigo-900 flex items-center gap-1 text-xs"
+                          className="text-yellow-600 hover:text-yellow-700 font-medium text-xs"
                         >
-                          <FaEdit size={10} /> Editar
+                          <FaEdit className="inline-block mr-1" /> Editar
                         </button>
                         <button
                           onClick={() => handleDelete(cliente._id)}
-                          className="text-red-600 hover:text-red-900 flex items-center gap-1 text-xs"
+                          className="text-red-600 hover:text-red-700 font-medium text-xs"
                         >
-                          <FaTrash size={10} /> Eliminar
+                          <FaTrash className="inline-block mr-1" /> Eliminar
                         </button>
                       </td>
                     </tr>
@@ -181,16 +229,19 @@ const ClienteList = () => {
         </div>
       )}
 
-      {/* Modal para Form */}
       {showForm && (
-        <Modal onClose={() => { setShowForm(false); setClienteEdit(null); }}>
-          <div className="max-h-[90vh] overflow-y-auto p-4 md:p-0">
-            <ClienteForm
-              onClienteCreado={handleClienteCreado}
-              onClose={() => { setShowForm(false); setClienteEdit(null); }}
-              clienteEdit={clienteEdit}
-            />
-          </div>
+        <Modal
+          title={clienteEdit ? "Editar Cliente" : "Nuevo Cliente"}
+          onClose={() => {
+            setShowForm(false);
+            setClienteEdit(null);
+          }}
+        >
+          <ClienteForm
+            clienteEdit={clienteEdit}
+            onClienteCreado={handleClienteCreado}
+            onClose={() => setShowForm(false)}
+          />
         </Modal>
       )}
     </div>

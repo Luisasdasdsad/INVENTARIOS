@@ -3,10 +3,11 @@ import { useLocation } from "react-router-dom";
 import api from "../../services/api";
 import ClienteForm from "../clientes/ClienteForm";
 import generarReporteCotizacion from "../../utils/generarReporteCotización";
+import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 
 const Cotización = () => {
   const location = useLocation();
-  const cotizacionEdit = location.state?.cotizacion; // Para edición
+  const cotizacionEdit = location.state?.cotizacion;
 
   const [clientes, setClientes] = useState([]);
   const [clienteSeleccionado, setClienteSeleccionado] = useState("");
@@ -15,7 +16,7 @@ const Cotización = () => {
   ]);
   const [productosDB, setProductosDB] = useState([]);
   const [moneda, setMoneda] = useState("SOLES");
-  const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
+  const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]);
   const [modalCliente, setModalCliente] = useState(false);
   const [clienteEdit, setClienteEdit] = useState(null);
   const [observacionesCot, setObservacionesCot] = useState("");
@@ -23,7 +24,7 @@ const Cotización = () => {
   const [descuento, setDescuento] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
 
-  // 🔹 Cargar clientes y productos, y manejar edición
+  // === Cargar clientes y productos ===
   useEffect(() => {
     const fetchClientes = async () => {
       try {
@@ -46,28 +47,29 @@ const Cotización = () => {
     fetchClientes();
     fetchProductos();
 
-    // Si hay una cotización para editar
     if (cotizacionEdit) {
       setIsEditing(true);
       setClienteSeleccionado(cotizacionEdit.cliente._id);
-      setProductos(cotizacionEdit.productos.map(p => ({
-        cantidad: p.cantidad,
-        unidad: p.unidad || "",
-        descripcion: p.descripcion,
-        vUnit: p.vUnit || 0,
-        igv: p.igv || 0,
-        pUnit: p.precioUnitario,
-        total: p.total,
-      })));
+      setProductos(
+        cotizacionEdit.productos.map((p) => ({
+          cantidad: p.cantidad,
+          unidad: p.unidad || "",
+          descripcion: p.descripcion,
+          vUnit: p.vUnit || 0,
+          igv: p.igv || 0,
+          pUnit: p.precioUnitario,
+          total: p.total,
+        }))
+      );
       setMoneda(cotizacionEdit.moneda || "SOLES");
-      setFecha(new Date(cotizacionEdit.fecha).toISOString().split('T')[0]);
+      setFecha(new Date(cotizacionEdit.fecha).toISOString().split("T")[0]);
       setObservacionesCot(cotizacionEdit.observaciones || "");
       setNumeroCotizacion(cotizacionEdit.numeroCotizacion);
       setDescuento(cotizacionEdit.descuento || 0);
     }
   }, [cotizacionEdit]);
 
-  // 🔹 Manejo de productos
+  // === Manejo de productos ===
   const handleProductoChange = (index, campo, valor) => {
     const nuevos = [...productos];
     nuevos[index][campo] = valor;
@@ -92,18 +94,17 @@ const Cotización = () => {
     }
   };
 
-  // 🔹 Totales
+  // === Totales ===
   const calcularTotales = () => {
-    let subtotal = 0;
-    productos.forEach((p) => (subtotal += p.total));
-    const descuentoAmount = descuento; // Ahora es un monto directo, no porcentaje
+    let subtotal = productos.reduce((acc, p) => acc + p.total, 0);
+    const descuentoAmount = descuento;
     const discountedSubtotal = subtotal - descuentoAmount;
-    const igv = 0; // IGV ya está incluido en los totales de productos
-    const total = discountedSubtotal; // El total es el subtotal con descuento (IGV ya incluido)
+    const igv = 0;
+    const total = discountedSubtotal;
     return { subtotal, descuentoAmount, discountedSubtotal, igv, total };
   };
 
-  // 🔹 Guardar cotización en BD
+  // === Guardar cotización ===
   const guardarCotizacion = async () => {
     if (!clienteSeleccionado || !numeroCotizacion) {
       alert("Selecciona un cliente y asigna un número de cotización");
@@ -113,7 +114,7 @@ const Cotización = () => {
     const { discountedSubtotal } = calcularTotales();
     const cotizacionData = {
       cliente: clienteSeleccionado,
-      productos: productos.map(p => ({
+      productos: productos.map((p) => ({
         descripcion: p.descripcion,
         cantidad: p.cantidad,
         unidad: p.unidad,
@@ -150,18 +151,13 @@ const Cotización = () => {
     }
   };
 
-  // 🔹 Generar PDF
+  // === Generar PDF ===
   const generarPDF = async () => {
-    // Guardar la cotización automáticamente antes de generar el PDF
     const guardadoExitoso = await guardarCotizacion();
-
-    // Solo generar PDF si el guardado fue exitoso
-    if (!guardadoExitoso) {
-      return;
-    }
+    if (!guardadoExitoso) return;
 
     const cliente = clientes.find((c) => c._id === clienteSeleccionado);
-    const { subtotal, descuentoAmount, discountedSubtotal, igv, total } = calcularTotales();
+    const { subtotal, descuentoAmount, discountedSubtotal, igv } = calcularTotales();
 
     await generarReporteCotizacion({
       cliente: {
@@ -170,13 +166,13 @@ const Cotización = () => {
         direccion: cliente?.direccion || "#N/A",
         telefono: cliente?.telefono || "#N/A",
       },
-      productos: productos.map(p => ({
+      productos: productos.map((p) => ({
         cantidad: p.cantidad,
         unidad: p.unidad,
         descripcion: p.descripcion,
         precioUnit: parseFloat(p.pUnit) || 0,
       })),
-      subtotal: subtotal,
+      subtotal,
       descuento: descuentoAmount,
       igv,
       total: discountedSubtotal,
@@ -189,6 +185,7 @@ const Cotización = () => {
     });
   };
 
+  // === Cliente nuevo o editado ===
   const handleClienteCreado = (nuevoCliente) => {
     setClientes([...clientes, nuevoCliente]);
     setClienteSeleccionado(nuevoCliente._id);
@@ -202,15 +199,19 @@ const Cotización = () => {
     }
   };
 
+  // === Render principal ===
   return (
-    <div className="p-2 md:p-4 lg:p-6 max-w-7xl w-full mx-auto">
-      <h1 className="text-lg md:text-xl lg:text-2xl font-bold mb-4 md:mb-6 text-gray-800">Generar Cotización</h1>
+    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+      <h1 className="text-2xl font-bold text-gray-800 border-b pb-2 mb-6">
+        Generar Cotización
+      </h1>
 
-      {/* Selección de Cliente */}
-      <div className="mb-4 md:mb-6 flex flex-col sm:flex-row gap-2 items-start sm:items-center">
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+      {/* --- Cliente --- */}
+      <section className="bg-white border rounded-xl shadow-sm p-4 mb-6">
+        <h2 className="font-semibold text-gray-700 mb-3 text-lg">Cliente</h2>
+        <div className="flex flex-col sm:flex-row gap-3">
           <select
-            className="border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64 text-sm md:text-base"
+            className="border border-gray-300 p-2 rounded-md flex-1 focus:ring-2 focus:ring-blue-500"
             value={clienteSeleccionado}
             onChange={(e) => setClienteSeleccionado(e.target.value)}
           >
@@ -221,162 +222,239 @@ const Cotización = () => {
               </option>
             ))}
           </select>
-          <button
-            onClick={() => {
-              setClienteEdit(null);
-              setModalCliente(true);
-            }}
-            className="bg-blue-600 text-white px-3 py-2 md:px-4 md:py-2 rounded-md hover:bg-blue-700 transition-colors min-h-[44px] w-full sm:w-auto text-xs md:text-sm"
-          >
-            + Nuevo Cliente
-          </button>
-          {clienteSeleccionado && (
+          <div className="flex gap-2">
             <button
-              onClick={handleEditarCliente}
-              className="bg-yellow-600 text-white px-3 py-2 md:px-4 md:py-2 rounded-md hover:bg-yellow-700 transition-colors min-h-[44px] w-full sm:w-auto text-xs md:text-sm"
+              onClick={() => {
+                setClienteEdit(null);
+                setModalCliente(true);
+              }}
+              className="flex items-center justify-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-black font-medium px-4 py-2 rounded-lg shadow-sm transition-colors text-sm"
             >
-              Editar Cliente
+              <FaPlus size={14} /> Nuevo
             </button>
-          )}
+            {clienteSeleccionado && (
+              <button
+                onClick={handleEditarCliente}
+                className="flex items-center justify-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-black font-medium px-4 py-2 rounded-lg shadow-sm transition-colors text-sm"
+              >
+                <FaEdit size={14} /> Editar
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Información de Cotización */}
-      <div className="mb-4 md:mb-6 bg-white p-4 md:p-6 rounded-lg shadow-sm border">
-        <h2 className="text-base md:text-lg font-semibold mb-4 text-gray-800">Información de Cotización</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* --- Datos de Cotización --- */}
+      <section className="bg-white border rounded-xl shadow-sm p-4 mb-6">
+        <h2 className="font-semibold text-gray-700 mb-3 text-lg">Información</h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Emisión</label>
+            <label className="text-sm text-gray-600">Fecha</label>
             <input
               type="date"
               value={fecha}
               onChange={(e) => setFecha(e.target.value)}
-              className="border border-gray-300 p-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
+              placeholder="Seleccione una fecha"
+              className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Moneda</label>
-            <select
-              value={moneda}
-              onChange={(e) => setMoneda(e.target.value)}
-              className="border border-gray-300 p-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
-            >
-              <option value="SOLES">SOLES</option>
-              <option value="DOLARES">DOLARES</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Número de Cotización</label>
+            <label className="text-sm text-gray-600">N° Cotización</label>
             <input
               type="text"
               value={numeroCotizacion}
               onChange={(e) => setNumeroCotizacion(e.target.value)}
-              placeholder="001"
-              className="border border-gray-300 p-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
+              placeholder="Ej. 001"
+              className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Descuento (monto)</label>
+            <label className="text-sm text-gray-600">Moneda</label>
+            <select
+              value={moneda}
+              onChange={(e) => setMoneda(e.target.value)}
+              className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="SOLES">SOLES</option>
+              <option value="DOLARES">DÓLARES</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-sm text-gray-600">Descuento (S/)</label>
             <input
               type="number"
               min="0"
               value={descuento}
               onChange={(e) => setDescuento(parseFloat(e.target.value) || 0)}
-              className="border border-gray-300 p-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
-            />
-          </div>
-          <div className="md:col-span-2 lg:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
-            <textarea
-              value={observacionesCot}
-              onChange={(e) => setObservacionesCot(e.target.value)}
-              className="border border-gray-300 p-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
-              rows="8"
+              placeholder="0.00"
+              className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
-      </div>
 
-      {/* Productos */}
-      <div className="mb-4 md:mb-6 bg-white rounded-lg shadow-sm border overflow-x-auto">
-        <h2 className="text-base md:text-lg font-semibold p-4 md:p-6 pb-0 text-gray-800">Productos</h2>
-        <div className="p-4 md:p-6 pt-0">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="p-2 md:p-3 border border-gray-300 text-left text-xs md:text-sm font-medium text-gray-700 w-20">Cant</th>
-                  <th className="p-2 md:p-3 border border-gray-300 text-left text-xs md:text-sm font-medium text-gray-700 w-24">Und</th>
-                  <th className="p-2 md:p-3 border border-gray-300 text-left text-xs md:text-sm font-medium text-gray-700">Descripción</th>
-                  <th className="p-2 md:p-3 border border-gray-300 text-left text-xs md:text-sm font-medium text-gray-700 w-20">P. Unit</th>
-                  <th className="p-2 md:p-3 border border-gray-300 text-left text-xs md:text-sm font-medium text-gray-700 w-16">IGV</th>
-                  <th className="p-2 md:p-3 border border-gray-300 text-left text-xs md:text-sm font-medium text-gray-700 w-20">V. Unit</th>
-                  <th className="p-2 md:p-3 border border-gray-300 text-left text-xs md:text-sm font-medium text-gray-700 w-20">Total</th>
-                  <th className="p-2 md:p-3 border border-gray-300 text-left text-xs md:text-sm font-medium text-gray-700 w-24">Acciones</th>
+        <div className="mt-4">
+          <label className="text-sm text-gray-600">Observaciones</label>
+          <textarea
+            rows="4"
+            value={observacionesCot}
+            onChange={(e) => setObservacionesCot(e.target.value)}
+            placeholder="Ingrese observaciones adicionales si es necesario"
+            className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </section>
+
+      {/* --- Productos --- */}
+      <section className="bg-white border rounded-xl shadow-sm p-4 mb-6">
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="font-semibold text-gray-700 text-lg">Productos</h2>
+        </div>
+
+        {/* Móvil - Tarjetas */}
+        <div className="md:hidden space-y-3">
+          {productos.map((p, i) => (
+            <div key={i} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Cant</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={p.cantidad}
+                      onChange={(e) => handleProductoChange(i, "cantidad", e.target.value)}
+                      className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Und</label>
+                    <input
+                      value={p.unidad}
+                      onChange={(e) => handleProductoChange(i, "unidad", e.target.value)}
+                      className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500 text-sm"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Descripción</label>
+                  <textarea
+                    rows="2"
+                    value={p.descripcion}
+                    onChange={(e) => handleProductoChange(i, "descripcion", e.target.value)}
+                    className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500 text-sm resize-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">P. Unit</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={p.pUnit}
+                      onChange={(e) => handleProductoChange(i, "pUnit", e.target.value)}
+                      className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Total</label>
+                    <input
+                      type="text"
+                      value={p.total.toFixed(2)}
+                      readOnly
+                      className="w-full border border-gray-300 p-2 rounded-md bg-gray-100 text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => eliminarProducto(i)}
+                    className="flex items-center justify-center gap-1 bg-red-600 text-white px-3 py-2 rounded-md hover:bg-red-700 text-xs font-medium"
+                    disabled={productos.length === 1}
+                  >
+                    <FaTrash size={12} /> Eliminar
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Escritorio - Tabla */}
+        <div className="hidden md:block overflow-x-auto rounded-lg border border-gray-200">
+          <table className="w-full text-sm">
+            <thead className="bg-yellow-100 text-gray-800">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Cant</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Und</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Descripción</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">P. Unit</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">IGV</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">V. Unit</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Total</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Acción</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {productos.map((p, i) => (
+                <tr key={i} className="hover:bg-gray-50 transition">
+                  <td className="px-4 py-3 text-sm">
+                    <input
+                      type="number"
+                      min="1"
+                      value={p.cantidad}
+                      onChange={(e) => handleProductoChange(i, "cantidad", e.target.value)}
+                      className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
+                    />
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    <input
+                      value={p.unidad}
+                      onChange={(e) => handleProductoChange(i, "unidad", e.target.value)}
+                      className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
+                    />
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    <textarea
+                      rows="3"
+                      value={p.descripcion}
+                      onChange={(e) => handleProductoChange(i, "descripcion", e.target.value)}
+                      className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500 resize-none"
+                    />
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    <input
+                      type="number"
+                      min="0"
+                      value={p.pUnit}
+                      onChange={(e) => handleProductoChange(i, "pUnit", e.target.value)}
+                      className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
+                    />
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-700 text-right">{p.igv.toFixed(2)}</td>
+                  <td className="px-4 py-3 text-sm text-gray-700 text-right">{p.vUnit.toFixed(2)}</td>
+                  <td className="px-4 py-3 text-sm text-gray-700 text-right">{p.total.toFixed(2)}</td>
+                  <td className="px-4 py-3 text-sm">
+                    <button
+                      onClick={() => eliminarProducto(i)}
+                      className="text-red-600 hover:text-red-700 font-medium text-xs"
+                      disabled={productos.length === 1}
+                    >
+                      <FaTrash className="inline-block mr-1" /> Eliminar
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {productos.map((p, i) => (
-                  <tr key={i} className="hover:bg-gray-50">
-                    <td className="border border-gray-300 p-2">
-                      <input
-                        type="number"
-                        min="1"
-                        value={p.cantidad}
-                        onChange={(e) => handleProductoChange(i, "cantidad", e.target.value)}
-                        className="w-full border border-gray-300 p-1 md:p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
-                      />
-                    </td>
-                    <td className="border border-gray-300 p-2">
-                      <input
-                        value={p.unidad}
-                        onChange={(e) => handleProductoChange(i, "unidad", e.target.value)}
-                        className="w-full border border-gray-300 p-1 md:p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
-                      />
-                    </td>
-                    <td className="border border-gray-300 p-2">
-                      <textarea
-                        value={p.descripcion}
-                        onChange={(e) => handleProductoChange(i, "descripcion", e.target.value)}
-                        className="w-full border border-gray-300 p-1 md:p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base resize-none"
-                        rows="5"
-                        placeholder="Descripción del producto"
-                      />
-                    </td>
-                    <td className="border border-gray-300 p-2">
-                      <input
-                        type="number"
-                        min="0"
-                        value={p.pUnit}
-                        onChange={(e) => handleProductoChange(i, "pUnit", e.target.value)}
-                        className="w-full border border-gray-300 p-1 md:p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
-                      />
-                    </td>
-                    <td className="border border-gray-300 p-2 text-right text-sm md:text-base">{p.igv.toFixed(2)}</td>
-                    <td className="border border-gray-300 p-2 text-right text-sm md:text-base">{p.vUnit.toFixed(2)}</td>
-                    <td className="border border-gray-300 p-2 text-right text-sm md:text-base">{p.total.toFixed(2)}</td>
-                    <td className="border border-gray-300 p-2">
-                      <button
-                        onClick={() => eliminarProducto(i)}
-                        className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700 text-xs"
-                        disabled={productos.length === 1}
-                      >
-                        Eliminar
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </div>
+      </section>
 
-      <div className="flex flex-col sm:flex-row gap-2 mb-4 md:mb-6">
+      {/* --- Acciones --- */}
+      <div className="flex flex-wrap gap-3 justify-end">
         <select
-          className="border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto text-sm md:text-base"
+          className="border p-2 rounded-md focus:ring-2 focus:ring-blue-500"
           onChange={(e) => {
-            const prod = productosDB.find(p => p._id === e.target.value);
+            const prod = productosDB.find((p) => p._id === e.target.value);
             if (prod) {
               const pUnit = prod.precioUnitario || 0;
               const cantidad = 1;
@@ -385,61 +463,56 @@ const Cotización = () => {
               const total = pUnit * cantidad;
               setProductos([
                 ...productos,
-                {
-                  cantidad,
-                  unidad: prod.unidad || "",
-                  descripcion: prod.nombre || "",
-                  vUnit,
-                  igv,
-                  pUnit,
-                  total
-                },
+                { cantidad, unidad: prod.unidad || "", descripcion: prod.nombre || "", vUnit, igv, pUnit, total },
               ]);
             }
             e.target.value = "";
           }}
         >
-          <option value="">Seleccionar Producto de BD</option>
+          <option value="">Seleccionar Producto</option>
           {productosDB.map((p) => (
             <option key={p._id} value={p._id}>
               {p.nombre} - S/ {p.precioUnitario}
             </option>
           ))}
         </select>
+
         <button
           onClick={agregarProducto}
-          className="bg-green-600 text-white px-3 py-2 md:px-4 md:py-2 rounded-md hover:bg-green-700 transition-colors min-h-[44px] w-full sm:w-auto text-xs md:text-sm"
+          className="flex items-center justify-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-black font-medium px-4 py-2 rounded-lg shadow-sm transition-colors text-sm"
         >
-          + Producto Manual
+          <FaPlus size={14} /> Producto Manual
         </button>
+
         <button
           onClick={guardarCotizacion}
           disabled={!clienteSeleccionado}
-          className={`px-3 py-2 md:px-4 md:py-2 rounded-md transition-colors min-h-[44px] w-full sm:w-auto text-xs md:text-sm ${
+          className={`px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors ${
             clienteSeleccionado
-              ? "bg-green-600 text-white hover:bg-green-700"
-              : "bg-gray-400 text-gray-700 cursor-not-allowed"
+              ? "bg-yellow-500 hover:bg-yellow-600 text-black"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
         >
           {isEditing ? "Actualizar Cotización" : "Guardar Cotización"}
         </button>
+
         <button
           onClick={generarPDF}
           disabled={!clienteSeleccionado || !numeroCotizacion || productos.length === 0}
-          className={`px-3 py-2 md:px-4 md:py-2 rounded-md transition-colors min-h-[44px] w-full sm:w-auto text-xs md:text-sm ${
+          className={`px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors ${
             clienteSeleccionado && numeroCotizacion && productos.length > 0
-              ? "bg-indigo-600 text-white hover:bg-indigo-700"
-              : "bg-gray-400 text-gray-700 cursor-not-allowed"
+              ? "bg-yellow-500 hover:bg-yellow-600 text-black"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
         >
           Generar PDF
         </button>
       </div>
 
-      {/* Modal Cliente */}
+      {/* --- Modal Cliente --- */}
       {modalCliente && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <div className="bg-white p-4 md:p-6 rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white rounded-xl p-6 shadow-lg w-full max-w-2xl">
             <ClienteForm
               clienteEdit={clienteEdit}
               onClienteCreado={handleClienteCreado}

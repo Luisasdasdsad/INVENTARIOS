@@ -1,70 +1,127 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { FaTools, FaSignInAlt } from 'react-icons/fa';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
     try {
       await login({ email, password });
       // Redirección manejada por AuthContext
     } catch (err) {
       setError(err.response?.data?.message || 'Error al iniciar sesión');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="bg-white p-8 rounded-lg shadow-md">
-      <h2 className="text-3xl font-extrabold text-gray-900 text-center mb-6">
-        Iniciar Sesión
-      </h2>
-      <form className="space-y-6" onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-            Correo Electrónico
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-secondary-50 to-primary-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo y Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full mb-4 shadow-soft">
+            <FaTools className="text-white text-2xl" />
+          </div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent mb-2">
+            Inventario
+          </h1>
+          <p className="text-secondary-600">Sistema de Gestión</p>
         </div>
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-            Contraseña
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+
+        {/* Login Form */}
+        <div className="bg-white rounded-2xl shadow-large p-8 border border-secondary-200">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-secondary-900 mb-2">Iniciar Sesión</h2>
+            <p className="text-secondary-600">Ingresa tus credenciales para continuar</p>
+          </div>
+
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-secondary-700 mb-2">
+                Correo Electrónico
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                className="input-field"
+                placeholder="tu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-secondary-700 mb-2">
+                Contraseña
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                className="input-field"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+
+            {error && (
+              <div className="bg-accent-50 border border-accent-200 rounded-lg p-3">
+                <p className="text-accent-700 text-sm text-center">{error}</p>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <>
+                  <div className="loading-spinner"></div>
+                  <span>Iniciando sesión...</span>
+                </>
+              ) : (
+                <>
+                  <FaSignInAlt size={16} />
+                  <span>Iniciar Sesión</span>
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Footer */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-secondary-500">
+              ¿Necesitas ayuda? Contacta al administrador del sistema
+            </p>
+          </div>
         </div>
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-        <div>
-          <button
-            type="submit"
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            Iniciar Sesión
-          </button>
+
+        {/* Footer Branding */}
+        <div className="text-center mt-8">
+          <p className="text-secondary-500 text-sm">
+            © 2024 Sistema de Inventario. Todos los derechos reservados.
+          </p>
         </div>
-      </form>
+      </div>
     </div>
   );
 }
