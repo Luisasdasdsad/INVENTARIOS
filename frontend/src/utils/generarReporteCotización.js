@@ -2,27 +2,40 @@ import html2pdf from "html2pdf.js";
 import LogoBCP from "../assets/LogoBCP.png";
 import LogoInterbank from "../assets/LogoInterbank.png";
 
-// Función para convertir número a palabras en español (simple)
+// Función para convertir número a palabras en español
 const numeroAPalabras = (num) => {
   const unidades = ["", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve"];
   const decenas = ["", "", "veinte", "treinta", "cuarenta", "cincuenta", "sesenta", "setenta", "ochenta", "noventa"];
   const centenas = ["", "ciento", "doscientos", "trescientos", "cuatrocientos", "quinientos", "seiscientos", "setecientos", "ochocientos", "novecientos"];
+  const miles = ["", "mil", "dos mil", "tres mil", "cuatro mil", "cinco mil", "seis mil", "siete mil", "ocho mil", "nueve mil"];
 
   if (num === 0) return "cero";
   if (num < 10) return unidades[num];
-  if (num < 20) return ["diez", "once", "doce", "trece", "catorce", "quince", "dieciseis", "diecisiete", "dieciocho", "diecinueve"][num - 10];
+  if (num < 20) return ["diez", "once", "doce", "trece", "catorce", "quince", "dieciséis", "diecisiete", "dieciocho", "diecinueve"][num - 10];
   if (num < 100) {
     const d = Math.floor(num / 10);
     const u = num % 10;
+    if (d === 2 && u > 0) return "veinti" + unidades[u];
     return decenas[d] + (u > 0 ? " y " + unidades[u] : "");
   }
   if (num < 1000) {
     const c = Math.floor(num / 100);
     const r = num % 100;
+    if (num === 100) return "cien";
     return centenas[c] + (r > 0 ? " " + numeroAPalabras(r) : "");
   }
-  // Para números mayores, simplificar
-  return num.toString(); // Placeholder para números grandes
+  if (num < 10000) {
+    const m = Math.floor(num / 1000);
+    const r = num % 1000;
+    return miles[m] + (r > 0 ? " " + numeroAPalabras(r) : "");
+  }
+  if (num < 100000) {
+    const dm = Math.floor(num / 1000);
+    const r = num % 1000;
+    return numeroAPalabras(dm) + " mil" + (r > 0 ? " " + numeroAPalabras(r) : "");
+  }
+  // Para números mayores a 99999
+  return num.toString();
 };
 
 const generarReporteCotizacion = async (cotizacion) => {
@@ -99,13 +112,13 @@ const generarReporteCotizacion = async (cotizacion) => {
         <table style="width: 100%; border-collapse: collapse; font-size: 9px; border: 1px solid #ddd;">
           <thead>
             <tr style="background: #fff3cd; color: #333;">
-              <th style="border: 2px solid #ffc107; padding: 3px; text-align: center; width: 5%;">N°</th>
-              <th style="border: 2px solid #ffc107; padding: 3px; text-align: center; width: 7%;">CANT.</th>
-              <th style="border: 2px solid #ffc107; padding: 3px; text-align: center; width: 5%;">UND</th>
-              <th style="border: 2px solid #ffc107; padding: 3px; text-align: left; width: 43%;">DESCRIPCIÓN</th>
-              <th style="border: 2px solid #ffc107; padding: 3px; text-align: center; width: 10%;">V. UNIT</th>
-              <th style="border: 2px solid #ffc107; padding: 3px; text-align: center; width: 10%;">IGV</th>
-              <th style="border: 2px solid #ffc107; padding: 3px; text-align: center; width: 10%;">P. UNIT</th>
+              <th style="border: 2px solid #ffc107; padding: 3px; text-align: center; width: 4%;">N°</th>
+              <th style="border: 2px solid #ffc107; padding: 3px; text-align: center; width: 6%;">CANT.</th>
+              <th style="border: 2px solid #ffc107; padding: 3px; text-align: center; width: 4%;">UND</th>
+              <th style="border: 2px solid #ffc107; padding: 3px; text-align: left; width: 52%;">DESCRIPCIÓN</th>
+              <th style="border: 2px solid #ffc107; padding: 3px; text-align: center; width: 8%;">V. UNIT</th>
+              <th style="border: 2px solid #ffc107; padding: 3px; text-align: center; width: 8%;">IGV</th>
+              <th style="border: 2px solid #ffc107; padding: 3px; text-align: center; width: 8%;">P. UNIT</th>
               <th style="border: 2px solid #ffc107; padding: 3px; text-align: center; width: 10%;">TOTAL</th>
             </tr>
           </thead>
@@ -121,7 +134,7 @@ const generarReporteCotizacion = async (cotizacion) => {
                   <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${index + 1}</td>
                   <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${p.cantidad}</td>
                   <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">UND</td>
-                  <td style="border-right: 1px solid #ddd; padding: 2px; text-align: left;">${p.descripcion}</td>
+                  <td style="border-right: 1px solid #ddd; padding: 6px; text-align: left; white-space: pre-line; line-height: 1.4;">${p.descripcion}</td>
                   <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${vUnit.toFixed(2)}</td>
                   <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${igvUnit.toFixed(2)}</td>
                   <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${pUnit.toFixed(2)}</td>

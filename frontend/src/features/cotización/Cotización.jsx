@@ -186,9 +186,17 @@ const Cotización = () => {
   };
 
   // === Cliente nuevo o editado ===
-  const handleClienteCreado = (nuevoCliente) => {
-    setClientes([...clientes, nuevoCliente]);
-    setClienteSeleccionado(nuevoCliente._id);
+  const handleClienteCreado = (clienteActualizado) => {
+    if (clienteEdit) {
+      // Si estamos editando, actualizamos el cliente en la lista
+      setClientes(clientes.map(c => 
+        c._id === clienteActualizado._id ? clienteActualizado : c
+      ));
+    } else {
+      // Si es nuevo, lo agregamos a la lista
+      setClientes([...clientes, clienteActualizado]);
+    }
+    setClienteSeleccionado(clienteActualizado._id);
   };
 
   const handleEditarCliente = () => {
@@ -413,12 +421,12 @@ const Cotización = () => {
                       className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
                     />
                   </td>
-                  <td className="px-4 py-3 text-sm">
+                  <td className="px-4 py-3 text-sm w-[40%]">
                     <textarea
-                      rows="3"
+                      rows="6"
                       value={p.descripcion}
                       onChange={(e) => handleProductoChange(i, "descripcion", e.target.value)}
-                      className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500 resize-none"
+                      className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500 resize-vertical min-h-[120px]"
                     />
                   </td>
                   <td className="px-4 py-3 text-sm">
