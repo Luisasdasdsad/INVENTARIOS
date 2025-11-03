@@ -1,6 +1,4 @@
 import html2pdf from "html2pdf.js";
-import LogoBCP from "../assets/LogoBCP.png";
-import LogoInterbank from "../assets/LogoInterbank.png";
 
 // Función para convertir número a palabras en español
 const numeroAPalabras = (num) => {
@@ -82,16 +80,16 @@ const generarReporteCotizacion = async (cotizacion) => {
 
       <!-- INFORMACIÓN PRINCIPAL -->
       <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-        <div style="width: 48%; border: 2px solid #ffc107; border-radius: 8px; padding: 10px;">
-          <h4 style="margin-top: 0; color: #444;">Emisor</h4>
+        <div style="width: 48%; border: 2px solid #ffc107; border-radius: 8px; padding: 5px;">
+          <h4 style="margin-top: 0; color: #444; text-align: center;"><Stong>Emisor</Strong></h4>
           <p><b>Razón Social:</b> TEAMGAS SOCIEDAD ANÓNIMA CERRADA</p>
           <p><b>RUC:</b> 20604956499</p>
           <p><b>EMAIL:</b> teamgas.fulltec@gmail.com</p>
           <p><b>Teléfono:</b> 997030802 - 919289085</p>
         </div>
 
-        <div style="width: 48%; border: 2px solid #ffc107; border-radius: 8px; padding: 10px;">
-          <h4 style="margin-top: 0; color: #444;">Cliente</h4>
+        <div style="width: 48%; border: 2px solid #ffc107; border-radius: 8px; padding: 5px;">
+          <h4 style="margin-top: 0; color: #444; text-align: center;"><Strong>Cliente</Strong></h4>
           <p><b>Nombre:</b> ${cliente.nombre}</p>
           <p><b>Documento:</b> ${cliente.documento}</p>
           <p><b>Dirección:</b> ${cliente.direccion}</p>
@@ -100,11 +98,18 @@ const generarReporteCotizacion = async (cotizacion) => {
       </div>
 
       <!-- DATOS DE COTIZACIÓN -->
-      <div style="border: 2px solid #ffc107; border-radius: 8px; padding: 10px; margin-bottom: 20px;">
-        <h4 style="margin-top: 0; color: #444;">Datos de Cotización</h4>
-        <p><b>Condición de Pago:</b> ${condicionPago}</p>
-        <p><b>Validez de Oferta:</b> ${validez}</p>
-        <p><b>Moneda:</b> ${moneda}</p>
+      <div style="border: 2px solid #ffc107; border-radius: 8px; padding: 2px; margin-bottom: 5px;">
+        <h4 style="margin-top: 0; margin-bottom: 10p; color: #444;">Datos de Cotización</h4>
+        <div style="display: flex; justify-content: space-between;">
+          <div style="width: 48%;">
+            <p style="margin: 4px 0;"><b>Condición de Pago:</b> ${condicionPago}</p>
+            <p style="margin: 4px 0;"><b>Moneda:</b> ${moneda}</p>
+          </div>
+          <div style="width: 48%;">
+            <p style="margin: 4px 0;"><b>Fecha de Emisión:</b> ${fecha}</p>
+            <p style="margin: 4px 0;"><b>Validez de Oferta:</b> ${validez}</p>
+            </div>
+          </div>
       </div>
 
       <!-- TABLA DE PRODUCTOS -->
@@ -112,14 +117,14 @@ const generarReporteCotizacion = async (cotizacion) => {
         <table style="width: 100%; border-collapse: collapse; font-size: 9px; border: 1px solid #ddd;">
           <thead>
             <tr style="background: #fff3cd; color: #333;">
-              <th style="border: 2px solid #ffc107; padding: 3px; text-align: center; width: 4%;">N°</th>
-              <th style="border: 2px solid #ffc107; padding: 3px; text-align: center; width: 6%;">CANT.</th>
-              <th style="border: 2px solid #ffc107; padding: 3px; text-align: center; width: 4%;">UND</th>
-              <th style="border: 2px solid #ffc107; padding: 3px; text-align: left; width: 52%;">DESCRIPCIÓN</th>
-              <th style="border: 2px solid #ffc107; padding: 3px; text-align: center; width: 8%;">V. UNIT</th>
-              <th style="border: 2px solid #ffc107; padding: 3px; text-align: center; width: 8%;">IGV</th>
-              <th style="border: 2px solid #ffc107; padding: 3px; text-align: center; width: 8%;">P. UNIT</th>
-              <th style="border: 2px solid #ffc107; padding: 3px; text-align: center; width: 10%;">TOTAL</th>
+              <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">N°</th>
+              <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">CANT.</th>
+              <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">UND</th>
+              <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">DESCRIPCIÓN</th>
+              <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">V. UNIT</th>
+              <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">IGV</th>
+              <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">P. UNIT</th>
+              <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">TOTAL</th>
             </tr>
           </thead>
           <tbody>
@@ -129,6 +134,7 @@ const generarReporteCotizacion = async (cotizacion) => {
                   const igvUnit = pUnit * 0.18;        // IGV es el 18% del precio
                   const vUnit = pUnit - igvUnit;       // Valor sin IGV
                   const totalItem = p.cantidad * pUnit; // Total con IGV
+                  // Para el cálculo: vUnit es el valor sin IGV
                   return `
                 <tr>
                   <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${index + 1}</td>
@@ -172,12 +178,12 @@ const generarReporteCotizacion = async (cotizacion) => {
       <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
         <div style="width: 30%; border: 1px solid #ffc107; padding: 8px; font-size: 9px;">
           <div style="margin-bottom: 8px;">
-            <img src="${LogoBCP}" alt="Logo BCP" style="height: 10px; display: block; margin-bottom: 4px;">
+            <p style="margin: 0 0 4px 0; font-weight: bold; color: #002A8D; font-size: 11px;">Banco de Crédito del Perú</p>
             <p style="margin: 2px 0;"><b>CTA:</b> 191-1234567-0-00</p>
             <p style="margin: 2px 0;"><b>CCI:</b> 00219100123456789000</p>
           </div>
           <div>
-            <img src="${LogoInterbank}" alt="Logo Interbank" style="height: 30px; display: block; margin-bottom: 4px;">
+            <p style="margin: 0 0 4px 0; font-weight: bold; color: #00A651; font-size: 11px;">Interbank</p>
             <p style="margin: 2px 0;"><b>Cuenta corriente en dólares:</b> 123-45678901</p>
             <p style="margin: 2px 0;"><b>Titular:</b> TEAM GAS SAC</p>
           </div>

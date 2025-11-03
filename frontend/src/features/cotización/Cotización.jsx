@@ -96,12 +96,14 @@ const Cotización = () => {
 
   // === Totales ===
   const calcularTotales = () => {
-    let subtotal = productos.reduce((acc, p) => acc + p.total, 0);
+    // Cálculo del subtotal (suma de valores unitarios * cantidad)
+    const subtotal = productos.reduce((acc, p) => acc + (p.vUnit * p.cantidad), 0);
     const descuentoAmount = descuento;
-    const discountedSubtotal = subtotal - descuentoAmount;
-    const igv = 0;
-    const total = discountedSubtotal;
-    return { subtotal, descuentoAmount, discountedSubtotal, igv, total };
+    // Cálculo del IGV total (suma de IGV * cantidad de cada producto)
+    const igv = productos.reduce((acc, p) => acc + (p.igv * p.cantidad), 0);
+    // El total es: subtotal - descuento + IGV
+    const total = subtotal - descuentoAmount + igv;
+    return { subtotal, descuentoAmount, igv, total };
   };
 
   // === Guardar cotización ===
@@ -111,7 +113,7 @@ const Cotización = () => {
       return false;
     }
 
-    const { discountedSubtotal } = calcularTotales();
+    const { total } = calcularTotales();
     const cotizacionData = {
       cliente: clienteSeleccionado,
       productos: productos.map((p) => ({
@@ -124,7 +126,7 @@ const Cotización = () => {
         total: p.total,
       })),
       fecha,
-      totalGeneral: discountedSubtotal,
+      totalGeneral: total,
       descuento,
       moneda,
       observaciones: observacionesCot,
@@ -157,7 +159,7 @@ const Cotización = () => {
     if (!guardadoExitoso) return;
 
     const cliente = clientes.find((c) => c._id === clienteSeleccionado);
-    const { subtotal, descuentoAmount, discountedSubtotal, igv } = calcularTotales();
+    const { subtotal, descuentoAmount, igv, total } = calcularTotales();
 
     await generarReporteCotizacion({
       cliente: {
@@ -175,7 +177,7 @@ const Cotización = () => {
       subtotal,
       descuento: descuentoAmount,
       igv,
-      total: discountedSubtotal,
+      total,
       fecha,
       moneda,
       numeroCotizacion: numeroCotizacion || "001",
