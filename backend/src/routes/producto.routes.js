@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import { auth } from "../middlewares/auth.js";
+import { auth, requireRole } from "../middlewares/auth.js";
 import {
   crearProducto,
   listarProductos,
@@ -23,8 +23,9 @@ const upload = multer({ storage });
 router.get("/imagen-barcode/:barcode", generarImagenCodigoBarrasProducto);
 router.get("/imagen-qr/:qrCode", generarImagenQRProducto);
 
-// ✅ A PARTIR DE AQUÍ, TODAS LAS RUTAS REQUIEREN AUTENTICACIÓN
+// ✅ A PARTIR DE AQUÍ, TODAS LAS RUTAS REQUIEREN AUTENTICACIÓN Y ROL ADMIN
 router.use(auth);
+router.use(requireRole(['admin']));
 
 // CRUD productos
 router.post("/", upload.single("foto"), crearProducto);

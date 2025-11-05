@@ -163,10 +163,10 @@ const Cotización = () => {
 
     await generarReporteCotizacion({
       cliente: {
-        nombre: cliente?.nombre || "#N/A",
-        documento: cliente?.ruc || cliente?.documento || "#N/A",
-        direccion: cliente?.direccion || "#N/A",
-        telefono: cliente?.telefono || "#N/A",
+        nombre: cliente?.nombre || "",
+        documento: cliente?.ruc || cliente?.documento || "",
+        direccion: cliente?.direccion || "",
+        telefono: cliente?.telefono || "",
       },
       productos: productos.map((p) => ({
         cantidad: p.cantidad,

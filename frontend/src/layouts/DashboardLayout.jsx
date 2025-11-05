@@ -126,38 +126,42 @@ export default function DashboardLayout() {
             )}
             {isSidebarOpen && <span className="font-medium">Movimientos</span>}
           </Link>
-          <Link
-            to="/productos"
-            onClick={handleNavClick}
-            className={`flex items-center gap-3 hover:bg-primary-50 hover:text-primary-700 transition-all duration-200 rounded-xl ${
+          {user && user.rol === 'admin' && (
+            <Link
+              to="/productos"
+              onClick={handleNavClick}
+              className={`flex items-center gap-3 hover:bg-primary-50 hover:text-primary-700 transition-all duration-200 rounded-xl ${
+                !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
+              }`}
+            >
+              {isSidebarOpen ? (
+                <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
+                  <FaClipboardList size={16} className="text-primary-600" />
+                </div>
+              ) : (
+                <FaClipboardList size={18} className="text-primary-600" />
+              )}
+              {isSidebarOpen && <span className="font-medium">Productos</span>}
+            </Link>
+          )}
+          {user && user.rol === 'admin' && (
+            <Link
+              to="/cotización"
+              onClick={handleNavClick}
+              className={`flex items-center gap-3 hover:bg-primary-50 hover:text-primary-700 transition-all duration-200 rounded-xl ${
               !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
-            }`}
-          >
-            {isSidebarOpen ? (
-              <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
-                <FaClipboardList size={16} className="text-primary-600" />
-              </div>
-            ) : (
-              <FaClipboardList size={18} className="text-primary-600" />
-            )}
-            {isSidebarOpen && <span className="font-medium">Productos</span>}
-          </Link>
-          <Link
-            to="/cotización"
-            onClick={handleNavClick}
-            className={`flex items-center gap-3 hover:bg-primary-50 hover:text-primary-700 transition-all duration-200 rounded-xl ${
-            !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
-            }`}
-          >
-            {isSidebarOpen ? (
-              <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
-                <FaClipboardList size={16} className="text-primary-600" />
-              </div>
-            ) : (
-              <FaClipboardList size={18} className="text-primary-600" />
-            )}
-            {isSidebarOpen && <span className="font-medium">Nueva Cotización</span>}
-          </Link>
+              }`}
+            >
+              {isSidebarOpen ? (
+                <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
+                  <FaClipboardList size={16} className="text-primary-600" />
+                </div>
+              ) : (
+                <FaClipboardList size={18} className="text-primary-600" />
+              )}
+              {isSidebarOpen && <span className="font-medium">Nueva Cotización</span>}
+            </Link>
+          )}
           <Link
             to="/cotizaciones"
             onClick={handleNavClick}
@@ -174,22 +178,24 @@ export default function DashboardLayout() {
             )}
             {isSidebarOpen && <span className="font-medium">Ver Cotizaciones</span>}
           </Link>
-          <Link
-            to="/clientes"
-            onClick={handleNavClick}
-            className={`flex items-center gap-3 hover:bg-primary-50 hover:text-primary-700 transition-all duration-200 rounded-xl ${
-            !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
-            }`}
-          >
-            {isSidebarOpen ? (
-              <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
-                <FaUsers size={16} className="text-primary-600" />
-              </div>
-            ) : (
-              <FaUsers size={18} className="text-primary-600" />
-            )}
-            {isSidebarOpen && <span className="font-medium">Clientes</span>}
-          </Link>
+          {user && user.rol === 'admin' && (
+            <Link
+              to="/clientes"
+              onClick={handleNavClick}
+              className={`flex items-center gap-3 hover:bg-primary-50 hover:text-primary-700 transition-all duration-200 rounded-xl ${
+              !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
+              }`}
+            >
+              {isSidebarOpen ? (
+                <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
+                  <FaUsers size={16} className="text-primary-600" />
+                </div>
+              ) : (
+                <FaUsers size={18} className="text-primary-600" />
+              )}
+              {isSidebarOpen && <span className="font-medium">Clientes</span>}
+            </Link>
+          )}
         </nav>
         
         {/* Sección de usuario y logout */}

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import api from "../../services/api";
-import { FaUser, FaBuilding, FaSave, FaTimes, FaIdCard, FaMapMarkerAlt, FaInfoCircle } from "react-icons/fa";
+import { FaUser, FaBuilding, FaSave, FaTimes, FaIdCard, FaMapMarkerAlt, FaInfoCircle, FaSearch } from "react-icons/fa";
 
 const ClienteForm = ({ onClienteCreado, onClose, clienteEdit }) => {
   const [cliente, setCliente] = useState(clienteEdit || {
@@ -23,13 +23,54 @@ const ClienteForm = ({ onClienteCreado, onClose, clienteEdit }) => {
   const [activeTab, setActiveTab] = useState("datos");
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isConsultingRUC, setIsConsultingRUC] = useState(false);
 
-  const handleChange = (e) => {
+  const handleChange = async (e) => {
     const { name, value } = e.target;
     setCliente({ ...cliente, [name]: value });
     // Limpiar error del campo
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: "" }));
+    }
+
+    // Consulta automática de RUC cuando se completa el campo
+    if (name === "ruc" && value.length === 11 && /^\d{11}$/.test(value) && cliente.tipoDoc === "RUC") {
+      await consultarRUC(value);
+    }
+  };
+
+  const consultarRUC = async (ruc) => {
+    setIsConsultingRUC(true);
+    try {
+      const response = await api.get(`/clientes/consultar-ruc/${ruc}`);
+      const data = response.data;
+
+      // Actualizar campos con datos de SUNAT
+      setCliente(prev => ({
+        ...prev,
+        nombre: data.nombre || prev.nombre,
+        nombreComercial: data.nombreComercial || prev.nombreComercial,
+        direccion: data.direccion || prev.direccion,
+        ubigeo: data.ubigeo || prev.ubigeo,
+      }));
+
+      // Limpiar errores relacionados
+      setErrors(prev => ({
+        ...prev,
+        ruc: "",
+        nombre: "",
+      }));
+    } catch (error) {
+      console.error("Error al consultar RUC:", error);
+      if (error.response?.status === 404) {
+        setErrors(prev => ({ ...prev, ruc: "RUC no encontrado o inactivo" }));
+      } else if (error.response?.status === 400) {
+        setErrors(prev => ({ ...prev, ruc: "RUC inválido" }));
+      } else {
+        setErrors(prev => ({ ...prev, ruc: "Error al consultar SUNAT" }));
+      }
+    } finally {
+      setIsConsultingRUC(false);
     }
   };
 
@@ -173,15 +214,22 @@ const ClienteForm = ({ onClienteCreado, onClose, clienteEdit }) => {
                     <label className="block text-sm font-semibold text-secondary-700 mb-2">
                       RUC *
                     </label>
-                    <input
-                      type="text"
-                      name="ruc"
-                      className={`input-field ${errors.ruc ? 'input-field-error' : ''}`}
-                      value={cliente.ruc}
-                      onChange={handleChange}
-                      maxLength="11"
-                      placeholder="12345678901"
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        name="ruc"
+                        className={`input-field ${errors.ruc ? 'input-field-error' : ''}`}
+                        value={cliente.ruc}
+                        onChange={handleChange}
+                        maxLength="11"
+                        placeholder="12345678901"
+                      />
+                      {isConsultingRUC && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <div className="loading-spinner w-4 h-4"></div>
+                        </div>
+                      )}
+                    </div>
                     {errors.ruc && <p className="mt-1 text-sm text-accent-600">{errors.ruc}</p>}
                   </div>
                 )}

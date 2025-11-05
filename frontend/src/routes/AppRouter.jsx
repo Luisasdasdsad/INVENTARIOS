@@ -33,10 +33,12 @@ export default function AppRouter() {
             <Route path="movimientos/registrar" element={<RegistrarMovimientoPage />} />
             <Route path="cotizaciones" element={<CotizaciónList />} />
             <Route path="cotización" element={<Cotización />} />
+          </Route>
+
+          {/* Rutas Protegidas con Roles Específicos */}
+          <Route path="/" element={<PrivateRoute allowedRoles={['admin']} />}>
             <Route path="productos" element={<ProductoList />} />
             <Route path="clientes" element={<ClienteList />} />
-
-            {/* Aquí puedes añadir más rutas protegidas si las necesitas */}
           </Route>
 
           {/* Ruta para 404 */}

@@ -130,17 +130,18 @@ const generarReporteCotizacion = async (cotizacion) => {
           <tbody>
             ${[...productos, ...Array(Math.max(0, 8 - productos.length)).fill(null)].map((p, index) => {
                 if (p) {
-                  const pUnit = p.precioUnit;          // Precio con IGV
+                  const pUnit = isNaN(parseFloat(p.precioUnit)) ? 0 : parseFloat(p.precioUnit);          // Precio con IGV
+                  const cantidad = isNaN(parseFloat(p.cantidad)) ? 0 : parseFloat(p.cantidad);
                   const igvUnit = pUnit * 0.18;        // IGV es el 18% del precio
                   const vUnit = pUnit - igvUnit;       // Valor sin IGV
-                  const totalItem = p.cantidad * pUnit; // Total con IGV
+                  const totalItem = cantidad * pUnit; // Total con IGV
                   // Para el cálculo: vUnit es el valor sin IGV
                   return `
                 <tr>
                   <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${index + 1}</td>
-                  <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${p.cantidad}</td>
+                  <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${cantidad}</td>
                   <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">UND</td>
-                  <td style="border-right: 1px solid #ddd; padding: 6px; text-align: left; white-space: pre-line; line-height: 1.4;">${p.descripcion}</td>
+                  <td style="border-right: 1px solid #ddd; padding: 6px; text-align: left; white-space: pre-line; line-height: 1.4;">${p.descripcion || ''}</td>
                   <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${vUnit.toFixed(2)}</td>
                   <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${igvUnit.toFixed(2)}</td>
                   <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${pUnit.toFixed(2)}</td>
@@ -166,7 +167,7 @@ const generarReporteCotizacion = async (cotizacion) => {
 
       <!-- TOTAL EN LETRAS -->
       <div style="border: 1px solid #ffc107; padding: 5px; margin-bottom: 10px; width: 100%;">
-        <p style="margin: 0; text-transform: uppercase;">SON: ${numeroAPalabras(Math.floor(total)).toUpperCase()} ${moneda.toUpperCase()}</p>
+        <p style="margin: 0; text-transform: uppercase;">SON: ${numeroAPalabras(Math.floor(parseFloat(total) || 0)).toUpperCase()} ${moneda.toUpperCase()}</p>
       </div>
 
       <!-- OBSERVACIONES -->
@@ -197,10 +198,10 @@ const generarReporteCotizacion = async (cotizacion) => {
 
         <div style="width: 30%;">
           <table style="border-collapse: collapse; width: 100%;">
-            <tr><td style="padding: 4px;">Subtotal</td><td style="text-align: right; padding-left: 15px;">${subtotal.toFixed(2)}</td></tr>
-            <tr><td style="padding: 4px;">Descuento</td><td style="text-align: right; padding-left: 15px;">-${descuento.toFixed(2)}</td></tr>
-            <tr><td style="padding: 4px;">IGV (18%)</td><td style="text-align: right; padding-left: 15px;">${igv.toFixed(2)}</td></tr>
-            <tr style="background: #fff3cd; font-weight: bold;"><td style="padding: 4px;">TOTAL</td><td style="text-align: right; padding-left: 15px;">${total.toFixed(2)}</td></tr>
+            <tr><td style="padding: 4px;">Subtotal</td><td style="text-align: right; padding-left: 15px;">${(parseFloat(subtotal) || 0).toFixed(2)}</td></tr>
+            <tr><td style="padding: 4px;">Descuento</td><td style="text-align: right; padding-left: 15px;">-${(parseFloat(descuento) || 0).toFixed(2)}</td></tr>
+            <tr><td style="padding: 4px;">IGV (18%)</td><td style="text-align: right; padding-left: 15px;">${(parseFloat(igv) || 0).toFixed(2)}</td></tr>
+            <tr style="background: #fff3cd; font-weight: bold;"><td style="padding: 4px;">TOTAL</td><td style="text-align: right; padding-left: 15px;">${(parseFloat(total) || 0).toFixed(2)}</td></tr>
           </table>
         </div>
       </div>

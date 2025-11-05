@@ -1,21 +1,25 @@
 import express from "express";
 import { createCotizacion, getCotizaciones, getCotizacionById, updateCotizacion, deleteCotizacion } from "../controllers/cotizacion.controller.js";
+import { auth, requireRole } from "../middlewares/auth.js";
 
 const router = express.Router();
 
-// Crear cotización
-router.post("/", createCotizacion);
+// Todas las rutas requieren autenticación
+router.use(auth);
 
-// Obtener todas las cotizaciones
+// Crear cotización (solo admin)
+router.post("/", requireRole(['admin']), createCotizacion);
+
+// Obtener todas las cotizaciones (admin y trabajador pueden ver)
 router.get("/", getCotizaciones);
 
-// Obtener cotización por ID
+// Obtener cotización por ID (admin y trabajador pueden ver)
 router.get("/:id", getCotizacionById);
 
-// Actualizar cotización
-router.put("/:id", updateCotizacion);
+// Actualizar cotización (solo admin)
+router.put("/:id", requireRole(['admin']), updateCotizacion);
 
-// Eliminar cotización
-router.delete("/:id", deleteCotizacion);
+// Eliminar cotización (solo admin)
+router.delete("/:id", requireRole(['admin']), deleteCotizacion);
 
 export default router;

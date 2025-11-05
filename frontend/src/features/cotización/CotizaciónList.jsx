@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import { FaEdit, FaTrash, FaPlus, FaSearch, FaFilePdf } from "react-icons/fa";
+import generarReporteCotizacion from "../../utils/generarReporteCotización";
 
 const CotizaciónList = () => {
   const [cotizaciones, setCotizaciones] = useState([]);
@@ -51,6 +52,61 @@ const CotizaciónList = () => {
 
   const handleNuevaCotizacion = () => {
     navigate("/cotización");
+  };
+
+  const handleImprimir = async (cotizacion) => {
+    try {
+      // Calcular totales basados en productos
+      const subtotal = cotizacion.productos.reduce((acc, p) => {
+        const precioUnit = parseFloat(p.precioUnitario) || 0;
+        const cantidad = parseFloat(p.cantidad) || 0;
+        const igvUnit = precioUnit * 0.18;
+        const vUnit = precioUnit - igvUnit;
+        return acc + (vUnit * cantidad);
+      }, 0);
+      const descuentoAmount = parseFloat(cotizacion.descuento) || 0;
+      const igv = cotizacion.productos.reduce((acc, p) => {
+        const precioUnit = parseFloat(p.precioUnitario) || 0;
+        const cantidad = parseFloat(p.cantidad) || 0;
+        const igvUnit = precioUnit * 0.18;
+        return acc + (igvUnit * cantidad);
+      }, 0);
+      const total = subtotal - descuentoAmount + igv;
+
+      // Formatear fecha
+      const fechaFormateada = new Date(cotizacion.fecha).toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+
+      await generarReporteCotizacion({
+        cliente: {
+          nombre: cotizacion.cliente?.nombre || "",
+          documento: cotizacion.cliente?.ruc || cotizacion.cliente?.numero || "",
+          direccion: cotizacion.cliente?.direccion || "",
+          telefono: cotizacion.cliente?.telefono || "#",
+        },
+        productos: cotizacion.productos.map((p) => ({
+          cantidad: p.cantidad,
+          unidad: p.unidad || 'UND',
+          descripcion: p.descripcion,
+          precioUnit: parseFloat(p.precioUnitario) || 0,
+        })),
+        subtotal,
+        descuento: descuentoAmount,
+        igv,
+        total,
+        fecha: fechaFormateada,
+        moneda: cotizacion.moneda,
+        numeroCotizacion: cotizacion.numeroCotizacion,
+        condicionPago: "CONTADO", // Valor por defecto
+        validez: "15 días", // Valor por defecto
+        observaciones: cotizacion.observaciones || "",
+      });
+    } catch (error) {
+      console.error("Error al generar el reporte:", error);
+    }
   };
 
   if (loading)
@@ -135,6 +191,12 @@ const CotizaciónList = () => {
 
                 <div className="flex gap-2 pt-4">
                   <button
+                    onClick={() => handleImprimir(cotizacion)}
+                    className="flex-1 bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 text-xs font-medium"
+                  >
+                    <FaFilePdf className="inline-block mr-1" /> Imprimir
+                  </button>
+                  <button
                     onClick={() => handleEdit(cotizacion)}
                     className="flex-1 bg-yellow-500 text-black py-2 rounded-md hover:bg-yellow-600 text-xs font-medium"
                   >
@@ -191,6 +253,12 @@ const CotizaciónList = () => {
                         {cotizacion.productos?.length || 0}
                       </td>
                       <td className="px-4 py-3 text-sm space-x-2">
+                        <button
+                          onClick={() => handleImprimir(cotizacion)}
+                          className="text-blue-600 hover:text-blue-700 font-medium text-xs"
+                        >
+                          <FaFilePdf className="inline-block mr-1" /> Imprimir
+                        </button>
                         <button
                           onClick={() => handleEdit(cotizacion)}
                           className="text-yellow-600 hover:text-yellow-700 font-medium text-xs"
