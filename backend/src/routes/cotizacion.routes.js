@@ -1,5 +1,12 @@
 import express from "express";
-import { createCotizacion, getCotizaciones, getCotizacionById, updateCotizacion, deleteCotizacion } from "../controllers/cotizacion.controller.js";
+import { 
+  createCotizacion, 
+  getCotizaciones, 
+  getMisCotizaciones, 
+  getCotizacionById, 
+  updateCotizacion, 
+  deleteCotizacion 
+} from "../controllers/cotizacion.controller.js";
 import { auth, requireRole } from "../middlewares/auth.js";
 
 const router = express.Router();
@@ -7,19 +14,22 @@ const router = express.Router();
 // Todas las rutas requieren autenticación
 router.use(auth);
 
-// Crear cotización (solo admin)
-router.post("/", requireRole(['admin']), createCotizacion);
+// 🆕 Obtener MIS cotizaciones (las que yo creé) - todos pueden
+router.get("/mis-cotizaciones", getMisCotizaciones);
 
-// Obtener todas las cotizaciones (admin y trabajador pueden ver)
-router.get("/", getCotizaciones);
+// Obtener TODAS las cotizaciones (historial) - todos pueden ver, pero trabajadores solo ven las suyas
+router.get("/historial", getCotizaciones);
 
-// Obtener cotización por ID (admin y trabajador pueden ver)
+// Crear cotización - todos los usuarios autenticados pueden crear
+router.post("/", createCotizacion);
+
+// Obtener cotización por ID - verifica permisos en el controlador
 router.get("/:id", getCotizacionById);
 
-// Actualizar cotización (solo admin)
-router.put("/:id", requireRole(['admin']), updateCotizacion);
+// Actualizar cotización - verifica permisos en el controlador
+router.put("/:id", updateCotizacion);
 
-// Eliminar cotización (solo admin)
-router.delete("/:id", requireRole(['admin']), deleteCotizacion);
+// Eliminar cotización - verifica permisos en el controlador
+router.delete("/:id", deleteCotizacion);
 
 export default router;

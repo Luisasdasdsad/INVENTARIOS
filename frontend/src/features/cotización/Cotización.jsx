@@ -4,10 +4,12 @@ import api from "../../services/api";
 import ClienteForm from "../clientes/ClienteForm";
 import generarReporteCotizacion from "../../utils/generarReporteCotización";
 import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
+import { useAuth } from "../../contexts/AuthContext";
 
 const Cotización = () => {
   const location = useLocation();
   const cotizacionEdit = location.state?.cotizacion;
+  const { user } = useAuth();
 
   const [clientes, setClientes] = useState([]);
   const [clienteSeleccionado, setClienteSeleccionado] = useState("");
@@ -15,6 +17,7 @@ const Cotización = () => {
     { cantidad: 1, unidad: "", descripcion: "", vUnit: 0, igv: 0, pUnit: 0, total: 0 },
   ]);
   const [productosDB, setProductosDB] = useState([]);
+  const [herramientasDB, setHerramientasDB] = useState([]);
   const [moneda, setMoneda] = useState("SOLES");
   const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]);
   const [modalCliente, setModalCliente] = useState(false);
@@ -44,8 +47,18 @@ const Cotización = () => {
       }
     };
 
+    const fetchHerramientas = async () => {
+      try {
+        const res = await api.get("/herramientas");
+        setHerramientasDB(res.data);
+      } catch (error) {
+        console.error("Error al obtener herramientas:", error);
+      }
+    };
+
     fetchClientes();
     fetchProductos();
+    fetchHerramientas();
 
     if (cotizacionEdit) {
       setIsEditing(true);
@@ -108,8 +121,8 @@ const Cotización = () => {
 
   // === Guardar cotización ===
   const guardarCotizacion = async () => {
-    if (!clienteSeleccionado || !numeroCotizacion) {
-      alert("Selecciona un cliente y asigna un número de cotización");
+    if (!clienteSeleccionado) {
+      alert("Selecciona un cliente");
       return false;
     }
 
@@ -130,15 +143,22 @@ const Cotización = () => {
       descuento,
       moneda,
       observaciones: observacionesCot,
-      numeroCotizacion,
     };
 
+    // Solo incluir numeroCotizacion en edición
+    if (isEditing) {
+      cotizacionData.numeroCotizacion = numeroCotizacion;
+    }
+
     try {
+      let response;
       if (isEditing && cotizacionEdit) {
-        await api.put(`/cotizaciones/${cotizacionEdit._id}`, cotizacionData);
+        response = await api.put(`/cotizaciones/${cotizacionEdit._id}`, cotizacionData);
         alert("Cotización actualizada exitosamente");
       } else {
-        await api.post("/cotizaciones", cotizacionData);
+        response = await api.post("/cotizaciones", cotizacionData);
+        // Actualizar el estado con el número generado
+        setNumeroCotizacion(response.data.numeroCotizacion);
         alert("Cotización guardada exitosamente");
       }
       return true;
@@ -160,6 +180,7 @@ const Cotización = () => {
 
     const cliente = clientes.find((c) => c._id === clienteSeleccionado);
     const { subtotal, descuentoAmount, igv, total } = calcularTotales();
+    const responsable = isEditing && cotizacionEdit ? cotizacionEdit.usuario.nombre : user.nombre;
 
     await generarReporteCotizacion({
       cliente: {
@@ -184,6 +205,7 @@ const Cotización = () => {
       condicionPago: "CONTADO",
       validez: "15 días",
       observaciones: observacionesCot,
+      responsable,
     });
   };
 
@@ -268,16 +290,17 @@ const Cotización = () => {
               className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <div>
-            <label className="text-sm text-gray-600">N° Cotización</label>
-            <input
-              type="text"
-              value={numeroCotizacion}
-              onChange={(e) => setNumeroCotizacion(e.target.value)}
-              placeholder="Ej. 001"
-              className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+          {isEditing && (
+            <div>
+              <label className="text-sm text-gray-600">N° Cotización</label>
+              <input
+                type="text"
+                value={numeroCotizacion}
+                readOnly
+                className="w-full border border-gray-300 p-2 rounded-md bg-gray-100"
+              />
+            </div>
+          )}
           <div>
             <label className="text-sm text-gray-600">Moneda</label>
             <select
@@ -300,17 +323,6 @@ const Cotización = () => {
               className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
             />
           </div>
-        </div>
-
-        <div className="mt-4">
-          <label className="text-sm text-gray-600">Observaciones</label>
-          <textarea
-            rows="4"
-            value={observacionesCot}
-            onChange={(e) => setObservacionesCot(e.target.value)}
-            placeholder="Ingrese observaciones adicionales si es necesario"
-            className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
-          />
         </div>
       </section>
 
@@ -459,6 +471,17 @@ const Cotización = () => {
         </div>
       </section>
 
+      <section className="bg-white border rounded-xl shadow-sm p-4 mb-6">
+        <h2 className="font-semibold text-gray-700 mb-3 text-lg">Observaciones</h2>
+        <textarea
+          rows="4"
+          value={observacionesCot}
+          onChange={(e) => setObservacionesCot(e.target.value)}
+          placeholder="Ingrese olvervaciones adicionales si es necesario"
+          className="w-full border border-gray-300 p-2 rounded-md focus:ring-blue-500"
+        />
+      </section>
+
       {/* --- Acciones --- */}
       <div className="flex flex-wrap gap-3 justify-end">
         <select
@@ -483,6 +506,33 @@ const Cotización = () => {
           {productosDB.map((p) => (
             <option key={p._id} value={p._id}>
               {p.nombre} - S/ {p.precioUnitario}
+            </option>
+          ))}
+        </select>
+
+        <select
+          className="border p-2 rounded-md focus:ring-2 focus:ring-blue-500"
+          onChange={(e) => {
+            const herramienta = herramientasDB.find((h) => h._id === e.target.value);
+            if (herramienta) {
+              const pUnit = herramienta.precio || 0;
+              const cantidad = 1;
+              const igv = pUnit * 0.18;
+              const vUnit = pUnit - igv;
+              const total = pUnit * cantidad;
+              const descripcion = `${herramienta.nombre} - ${herramienta.marca} ${herramienta.modelo}`;
+              setProductos([
+                ...productos,
+                { cantidad, unidad: herramienta.unidad || "", descripcion, vUnit, igv, pUnit, total },
+              ]);
+            }
+            e.target.value = "";
+          }}
+        >
+          <option value="">Seleccionar Herramienta</option>
+          {herramientasDB.map((h) => (
+            <option key={h._id} value={h._id}>
+              {h.nombre} - {h.marca} {h.modelo} - S/ {h.precio}
             </option>
           ))}
         </select>

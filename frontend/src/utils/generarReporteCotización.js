@@ -50,11 +50,12 @@ const generarReporteCotizacion = async (cotizacion) => {
     condicionPago,
     validez,
     observaciones,
+    responsable,
   } = cotizacion;
 
   const element = document.createElement("div");
   element.innerHTML = `
-    <div style="font-family: 'Arial', sans-serif; font-size: 12px; padding: 20px; border-radius: 12px; background: #fff; width: 210mm; min-height: 297mm; box-sizing: border-box;">
+    <div style="font-family: 'Arial', sans-serif; font-size: 12px; padding: 20px; border-radius: 12px; background: #fff; width: 210mm; height: 297mm; box-sizing: border-box; page-break-inside: avoid;">
       
       <!-- ENCABEZADO -->
       <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #ffc107; padding-bottom: 10px; margin-bottom: 20px;">
@@ -84,8 +85,9 @@ const generarReporteCotizacion = async (cotizacion) => {
           <h4 style="margin-top: 0; color: #444; text-align: center;"><Stong>Emisor</Strong></h4>
           <p><b>Razón Social:</b> TEAMGAS SOCIEDAD ANÓNIMA CERRADA</p>
           <p><b>RUC:</b> 20604956499</p>
-          <p><b>EMAIL:</b> teamgas.fulltec@gmail.com</p>
+          <p><b>EMAIL:</b> info@teamgas.pe</p>
           <p><b>Teléfono:</b> 997030802 - 919289085</p>
+          <p><b>Responsable:</b> ${responsable || "N/A"}</p>
         </div>
 
         <div style="width: 48%; border: 2px solid #ffc107; border-radius: 8px; padding: 5px;">
@@ -220,6 +222,7 @@ const generarReporteCotizacion = async (cotizacion) => {
     image: { type: "jpeg", quality: 1 },
     html2canvas: { scale: 2 },
     jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+    pagebreak: { mode: 'avoid-all', before: '.pagebreak', after: '.pagebreak', avoid: '.no-break' },
   };
 
   html2pdf().set(opt).from(element).save();

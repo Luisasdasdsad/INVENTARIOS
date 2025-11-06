@@ -37,6 +37,11 @@ const ClienteForm = ({ onClienteCreado, onClose, clienteEdit }) => {
     if (name === "ruc" && value.length === 11 && /^\d{11}$/.test(value) && cliente.tipoDoc === "RUC") {
       await consultarRUC(value);
     }
+
+    // Consulta automática de DNI cuando se completa el campo
+    if (name === "numero" && value.length === 8 && /^\d{8}$/.test(value) && cliente.tipoDoc === "DNI") {
+      await consultarDNI(value);
+    }
   };
 
   const consultarRUC = async (ruc) => {
@@ -68,6 +73,39 @@ const ClienteForm = ({ onClienteCreado, onClose, clienteEdit }) => {
         setErrors(prev => ({ ...prev, ruc: "RUC inválido" }));
       } else {
         setErrors(prev => ({ ...prev, ruc: "Error al consultar SUNAT" }));
+      }
+    } finally {
+      setIsConsultingRUC(false);
+    }
+  };
+
+  const consultarDNI = async (dni) => {
+    setIsConsultingRUC(true); // Usar el mismo estado para DNI
+    try {
+      const response = await api.get(`/clientes/consultar-dni/${dni}`);
+      const data = response.data;
+
+      // Actualizar campos con datos de RENIEC
+      setCliente(prev => ({
+        ...prev,
+        nombre: data.nombre || prev.nombre,
+        nombreApellido: data.nombreApellido || prev.nombreApellido,
+      }));
+
+      // Limpiar errores relacionados
+      setErrors(prev => ({
+        ...prev,
+        numero: "",
+        nombre: "",
+      }));
+    } catch (error) {
+      console.error("Error al consultar DNI:", error);
+      if (error.response?.status === 404) {
+        setErrors(prev => ({ ...prev, numero: "DNI no encontrado" }));
+      } else if (error.response?.status === 400) {
+        setErrors(prev => ({ ...prev, numero: "DNI inválido" }));
+      } else {
+        setErrors(prev => ({ ...prev, numero: "Error al consultar RENIEC" }));
       }
     } finally {
       setIsConsultingRUC(false);
@@ -239,15 +277,22 @@ const ClienteForm = ({ onClienteCreado, onClose, clienteEdit }) => {
                     <label className="block text-sm font-semibold text-secondary-700 mb-2">
                       Número *
                     </label>
-                    <input
-                      type="text"
-                      name="numero"
-                      className={`input-field ${errors.numero ? 'input-field-error' : ''}`}
-                      value={cliente.numero}
-                      onChange={handleChange}
-                      maxLength={cliente.tipoDoc === "DNI" ? "8" : "20"}
-                      placeholder={cliente.tipoDoc === "DNI" ? "12345678" : "Número de documento"}
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        name="numero"
+                        className={`input-field ${errors.numero ? 'input-field-error' : ''}`}
+                        value={cliente.numero}
+                        onChange={handleChange}
+                        maxLength={cliente.tipoDoc === "DNI" ? "8" : "20"}
+                        placeholder={cliente.tipoDoc === "DNI" ? "12345678" : "Número de documento"}
+                      />
+                      {isConsultingRUC && cliente.tipoDoc === "DNI" && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <div className="loading-spinner w-4 h-4"></div>
+                        </div>
+                      )}
+                    </div>
                     {errors.numero && <p className="mt-1 text-sm text-accent-600">{errors.numero}</p>}
                   </div>
                 )}

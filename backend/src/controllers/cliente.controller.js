@@ -96,3 +96,53 @@ export const consultarRUC = async (req, res) => {
     }
   }
 };
+
+export const consultarDNI = async (req, res) => {
+  try {
+    const { dni } = req.params;
+
+    // Validar que el DNI tenga 8 dígitos
+    if (!/^\d{8}$/.test(dni)) {
+      return res.status(400).json({ msg: "DNI inválido. Debe tener 8 dígitos." });
+    }
+
+    // Consultar API de RENIEC (usando apis.net.pe como ejemplo)
+    const response = await axios.get(`https://api.apis.net.pe/v1/dni?numero=${dni}`, {
+      headers: {
+        'Accept': 'application/json',
+      }
+    });
+
+    const data = response.data;
+
+    // Verificar si la consulta fue exitosa
+    if (!data || !data.nombre) {
+      return res.status(404).json({ msg: "DNI no encontrado." });
+    }
+
+    // Mapear respuesta a formato del cliente
+    const clienteData = {
+      nombre: data.nombre,
+      nombreApellido: data.nombre,
+      // Otros campos pueden estar vacíos para DNI
+    };
+
+    res.json(clienteData);
+  } catch (error) {
+    console.error("Error al consultar DNI:", error);
+
+    if (error.response) {
+      // Error de la API externa
+      return res.status(error.response.status).json({
+        msg: "Error al consultar RENIEC",
+        error: error.response.data?.message || "Error desconocido"
+      });
+    } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+      // Error de conexión
+      return res.status(503).json({ msg: "Servicio de consulta RENIEC no disponible" });
+    } else {
+      // Error interno
+      res.status(500).json({ msg: "Error interno del servidor", error: error.message });
+    }
+  }
+};

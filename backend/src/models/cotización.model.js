@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const cotizacionSchema = new mongoose.Schema({
   cliente: { type: mongoose.Schema.Types.ObjectId, ref: "Cliente", required: true },
+  usuario: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
   productos: [
     {
       descripcion: String,

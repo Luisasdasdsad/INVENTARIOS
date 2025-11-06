@@ -10,29 +10,33 @@ import { AuthProvider } from "../contexts/AuthContext";
 import { PrivateRoute } from "../components/PrivateRoute";
 import Cotización from "../features/cotización/Cotización";
 import CotizaciónList from "../features/cotización/CotizaciónList";
+import CotizaciónHistorial from "../features/cotización/CotizaciónHistorial"; // 🆕 NUEVO
 import ProductoList from "../features/productos/ProductoList";
 import ClienteList from "../features/clientes/ClienteList";
 
 export default function AppRouter() {
   return (
     <BrowserRouter>
-      <AuthProvider> {/* Envuelve toda la aplicación con el proveedor de autenticación */}
+      <AuthProvider>
         <Routes>
           {/* Rutas de Autenticación */}
           <Route path="/" element={<AuthLayout />}>
-            <Route index element={<Navigate to="/login" />} /> {/* Redirige la raíz a login */}
+            <Route index element={<Navigate to="/login" />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="register" element={<RegisterPage />} />
           </Route>
 
           {/* Rutas Protegidas (Dashboard) */}
           <Route path="/" element={<PrivateRoute />}>
-            <Route path="home" element={<Home />} /> {/* Ruta para el componente Home */}
+            <Route path="home" element={<Home />} />
             <Route path="herramientas" element={<HerramientasList />} />
             <Route path="movimientos" element={<MovimientosList />} />
             <Route path="movimientos/registrar" element={<RegistrarMovimientoPage />} />
-            <Route path="cotizaciones" element={<CotizaciónList />} />
-            <Route path="cotización" element={<Cotización />} />
+            
+            {/* 🔄 Cotizaciones separadas en dos rutas */}
+            <Route path="cotizaciones" element={<CotizaciónList />} /> {/* Mis cotizaciones editables */}
+            <Route path="cotización" element={<Cotización />} /> {/* Crear/Editar cotización */}
+            <Route path="historial-cotizaciones" element={<CotizaciónHistorial />} /> {/* 🆕 Historial solo lectura */}
           </Route>
 
           {/* Rutas Protegidas con Roles Específicos */}

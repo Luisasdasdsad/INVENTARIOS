@@ -1,5 +1,5 @@
 import express from "express";
-import { createCliente, getClientes, updateCliente, deleteCliente, consultarRUC } from "../controllers/cliente.controller.js";
+import { createCliente, getClientes, updateCliente, deleteCliente, consultarRUC, consultarDNI } from "../controllers/cliente.controller.js";
 import { auth, requireRole } from "../middlewares/auth.js";
 
 const router = express.Router();
@@ -22,5 +22,8 @@ router.delete("/:id", deleteCliente);
 
 // Consultar RUC en SUNAT
 router.get("/consultar-ruc/:ruc", consultarRUC);
+
+// Consultar DNI en RENIEC
+router.get("/consultar-dni/:dni", consultarDNI);
 
 export default router;

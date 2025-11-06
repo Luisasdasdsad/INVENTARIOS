@@ -19,7 +19,8 @@ const CotizaciónList = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get("/cotizaciones");
+      // 🔄 CAMBIO: Usar la ruta de MIS cotizaciones
+      const res = await api.get("/cotizaciones/mis-cotizaciones");
       setCotizaciones(res.data);
     } catch (err) {
       setError("Error al cargar cotizaciones");
@@ -46,6 +47,7 @@ const CotizaciónList = () => {
         setCotizaciones(cotizaciones.filter((c) => c._id !== id));
       } catch (err) {
         console.error("Error al eliminar cotización:", err);
+        alert(err.response?.data?.msg || "Error al eliminar la cotización");
       }
     }
   };
@@ -100,9 +102,10 @@ const CotizaciónList = () => {
         fecha: fechaFormateada,
         moneda: cotizacion.moneda,
         numeroCotizacion: cotizacion.numeroCotizacion,
-        condicionPago: "CONTADO", // Valor por defecto
-        validez: "15 días", // Valor por defecto
+        condicionPago: "CONTADO",
+        validez: "15 días",
         observaciones: cotizacion.observaciones || "",
+        responsable: cotizacion.usuario?.nombre || "N/A",
       });
     } catch (error) {
       console.error("Error al generar el reporte:", error);
@@ -127,7 +130,7 @@ const CotizaciónList = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
         <h2 className="text-2xl font-bold text-gray-800 tracking-tight">
-          Cotizaciones
+          Mis Cotizaciones
         </h2>
 
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
@@ -156,7 +159,7 @@ const CotizaciónList = () => {
         <div className="text-center py-10 text-gray-600 text-sm md:text-base bg-gray-50 rounded-lg">
           {searchTerm
             ? "No se encontraron cotizaciones que coincidan con la búsqueda."
-            : "No hay cotizaciones registradas aún."}
+            : "No has creado cotizaciones aún."}
         </div>
       ) : (
         <div className="space-y-3 md:space-y-4">

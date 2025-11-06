@@ -1,5 +1,5 @@
-  import { Outlet, Link } from "react-router-dom";
-import { FaTools, FaClipboardList, FaExchangeAlt, FaHome, FaSignOutAlt, FaBars, FaTimes, FaUsers } from "react-icons/fa";
+import { Outlet, Link } from "react-router-dom";
+import { FaTools, FaClipboardList, FaExchangeAlt, FaHome, FaSignOutAlt, FaBars, FaTimes, FaUsers, FaFileAlt, FaHistory, FaPlus } from "react-icons/fa";
 import { useAuth } from "../contexts/AuthContext";
 import { useState, useEffect } from "react";
 
@@ -76,6 +76,7 @@ export default function DashboardLayout() {
         </div>
         
         <nav className="space-y-2">
+          {/* Inicio */}
           <Link
             to="/home"
             onClick={handleNavClick}
@@ -92,6 +93,8 @@ export default function DashboardLayout() {
             )}
             {isSidebarOpen && <span className="font-medium">Inicio</span>}
           </Link>
+
+          {/* Inventario - Solo Admin */}
           {user && user.rol === 'admin' && (
             <Link
               to="/herramientas"
@@ -110,6 +113,8 @@ export default function DashboardLayout() {
               {isSidebarOpen && <span className="font-medium">Inventario</span>}
             </Link>
           )}
+
+          {/* Movimientos */}
           <Link
             to="/movimientos"
             onClick={handleNavClick}
@@ -126,6 +131,8 @@ export default function DashboardLayout() {
             )}
             {isSidebarOpen && <span className="font-medium">Movimientos</span>}
           </Link>
+
+          {/* Productos - Solo Admin */}
           {user && user.rol === 'admin' && (
             <Link
               to="/productos"
@@ -144,46 +151,84 @@ export default function DashboardLayout() {
               {isSidebarOpen && <span className="font-medium">Productos</span>}
             </Link>
           )}
+
+          {/* Separador de Cotizaciones */}
+          {isSidebarOpen && (
+            <div className="pt-4 pb-2">
+              <p className="text-xs font-semibold text-secondary-500 uppercase tracking-wider px-3">
+                Cotizaciones
+              </p>
+            </div>
+          )}
+
+          {/* Nueva Cotización - Solo Admin */}
           {user && user.rol === 'admin' && (
             <Link
               to="/cotización"
               onClick={handleNavClick}
-              className={`flex items-center gap-3 hover:bg-primary-50 hover:text-primary-700 transition-all duration-200 rounded-xl ${
-              !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
+              className={`flex items-center gap-3 hover:bg-green-50 hover:text-green-700 transition-all duration-200 rounded-xl ${
+                !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
               }`}
             >
               {isSidebarOpen ? (
-                <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
-                  <FaClipboardList size={16} className="text-primary-600" />
+                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                  <FaPlus size={16} className="text-green-600" />
                 </div>
               ) : (
-                <FaClipboardList size={18} className="text-primary-600" />
+                <FaPlus size={18} className="text-green-600" />
               )}
               {isSidebarOpen && <span className="font-medium">Nueva Cotización</span>}
             </Link>
           )}
+
+          {/* Mis Cotizaciones - Todos los usuarios */}
           <Link
             to="/cotizaciones"
             onClick={handleNavClick}
-            className={`flex items-center gap-3 hover:bg-primary-50 hover:text-primary-700 transition-all duration-200 rounded-xl ${
-            !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
+            className={`flex items-center gap-3 hover:bg-yellow-50 hover:text-yellow-700 transition-all duration-200 rounded-xl ${
+              !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
             }`}
           >
             {isSidebarOpen ? (
-              <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
-                <FaClipboardList size={16} className="text-primary-600" />
+              <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <FaFileAlt size={16} className="text-yellow-600" />
               </div>
             ) : (
-              <FaClipboardList size={18} className="text-primary-600" />
+              <FaFileAlt size={18} className="text-yellow-600" />
             )}
-            {isSidebarOpen && <span className="font-medium">Ver Cotizaciones</span>}
+            {isSidebarOpen && <span className="font-medium">Mis Cotizaciones</span>}
           </Link>
+
+          {/* 🆕 Historial de Cotizaciones - Todos los usuarios */}
+          <Link
+            to="/historial-cotizaciones"
+            onClick={handleNavClick}
+            className={`flex items-center gap-3 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 rounded-xl ${
+              !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
+            }`}
+          >
+            {isSidebarOpen ? (
+              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                <FaHistory size={16} className="text-blue-600" />
+              </div>
+            ) : (
+              <FaHistory size={18} className="text-blue-600" />
+            )}
+            {isSidebarOpen && (
+              <div className="flex flex-col">
+                <span className="font-medium">Historial</span>
+                <span className="text-xs text-secondary-500">Solo lectura</span>
+              </div>
+            )}
+          </Link>
+
+          {/* Clientes - Solo Admin */}
           {user && user.rol === 'admin' && (
             <Link
               to="/clientes"
               onClick={handleNavClick}
               className={`flex items-center gap-3 hover:bg-primary-50 hover:text-primary-700 transition-all duration-200 rounded-xl ${
-              !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
+                !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
               }`}
             >
               {isSidebarOpen ? (
@@ -206,6 +251,9 @@ export default function DashboardLayout() {
                 Bienvenido,
               </p>
               <p className="font-semibold text-secondary-800">{user.nombre}</p>
+              <p className="text-xs text-secondary-500 mt-1">
+                {user.rol === 'admin' ? '👑 Administrador' : '👤 Usuario'}
+              </p>
             </div>
           )}
           <button
