@@ -53,120 +53,144 @@ const generarReporteCotizacion = async (cotizacion) => {
     responsable,
   } = cotizacion;
 
-  const element = document.createElement("div");
-  element.innerHTML = `
-    <div style="font-family: 'Arial', sans-serif; font-size: 12px; padding: 20px; border-radius: 12px; background: #fff; width: 210mm; height: 297mm; box-sizing: border-box; page-break-inside: avoid;">
-      
-      <!-- ENCABEZADO -->
-      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #ffc107; padding-bottom: 10px; margin-bottom: 20px;">
-        <div style="display: flex; align-items: center;">
-          <img src="/fondocotizacion.png" alt="Logo" style="height: 70px;">
-          <div style="margin-left: 15px;">
-            <h3 style="margin: 0; color: #333; font-size: 16px;">TEAMGAS</h3>
-            <p style="margin: 2px 0; font-size: 12px;">Email: teamgas.fulltec@gmail.com</p>
-            <p style="margin: 2px 0; font-size: 12px;">Web: www.teamgas.pe</p>
-          </div>
-        </div>
-        <div style="text-align: right;">
-          <h2 style="margin: 0; color: #333;">COTIZACIÓN N° ${numeroCotizacion}</h2>
-          <p style="margin: 0;">Fecha: ${fecha}</p>
+  const maxFirstPage = 21;
+  const firstProducts = productos.slice(0, maxFirstPage);
+  const remainingProducts = productos.slice(maxFirstPage);
+  const hasMultiplePages = remainingProducts.length > 0;
+
+  const headerWithDetails = `
+    <!-- ENCABEZADO -->
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #ffc107; padding-bottom: 10px; margin-bottom: 20px;">
+      <div style="display: flex; align-items: center;">
+        <img src="/fondocotizacion.png" alt="Logo" style="height: 70px;">
+        <div style="margin-left: 15px;">
+          <h3 style="margin: 0; color: #333; font-size: 16px;">TEAMGAS</h3>
+          <p style="margin: 2px 0; font-size: 12px;">Email: teamgas.fulltec@gmail.com</p>
+          <p style="margin: 2px 0; font-size: 12px;">Web: www.teamgas.pe</p>
         </div>
       </div>
-
-      <!-- TÍTULO DE LA EMPRESA -->
-      <div style="text-align: left; margin-bottom: 10px;">
-        <h2 style="margin: 0 0 2px 0; color: #333; font-size: 16px; text-transform: uppercase;">Teamgas Sociedad Anónima Cerrada</h2>
-        <p style="margin: 0; color: #444; font-size: 14px;">Jr. Coronel Guerra Nro. 152 (Plaza Principal) Junín - Chupaca - Chupaca</p>
+      <div style="text-align: right;">
+        <h2 style="margin: 0; color: #333;">COTIZACIÓN N° ${numeroCotizacion}</h2>
+        <p style="margin: 0;">Fecha: ${fecha}</p>
       </div>
+    </div>
+  `;
 
-      <!-- INFORMACIÓN PRINCIPAL -->
-      <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-        <div style="width: 48%; border: 2px solid #ffc107; border-radius: 8px; padding: 5px;">
-          <h4 style="margin-top: 0; color: #444; text-align: center;"><Stong>Emisor</Strong></h4>
-          <p><b>Razón Social:</b> TEAMGAS SOCIEDAD ANÓNIMA CERRADA</p>
-          <p><b>RUC:</b> 20604956499</p>
-          <p><b>EMAIL:</b> info@teamgas.pe</p>
-          <p><b>Teléfono:</b> 997030802 - 919289085</p>
-          <p><b>Responsable:</b> ${responsable || "N/A"}</p>
-        </div>
-
-        <div style="width: 48%; border: 2px solid #ffc107; border-radius: 8px; padding: 5px;">
-          <h4 style="margin-top: 0; color: #444; text-align: center;"><Strong>Cliente</Strong></h4>
-          <p><b>Nombre:</b> ${cliente.nombre}</p>
-          <p><b>Documento:</b> ${cliente.documento}</p>
-          <p><b>Dirección:</b> ${cliente.direccion}</p>
-          <p><b>Teléfono:</b> ${cliente.telefono}</p>
+  const headerWithoutDetails = `
+    <!-- ENCABEZADO -->
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #ffc107; padding-bottom: 10px; margin-bottom: 20px;">
+      <div style="display: flex; align-items: center;">
+        <img src="/fondocotizacion.png" alt="Logo" style="height: 70px;">
+        <div style="margin-left: 15px;">
+          <h3 style="margin: 0; color: #333; font-size: 16px;">TEAMGAS</h3>
+          <p style="margin: 2px 0; font-size: 12px;">Email: teamgas.fulltec@gmail.com</p>
+          <p style="margin: 2px 0; font-size: 12px;">Web: www.teamgas.pe</p>
         </div>
       </div>
+    </div>
+  `;
 
-      <!-- DATOS DE COTIZACIÓN -->
-      <div style="border: 2px solid #ffc107; border-radius: 8px; padding: 2px; margin-bottom: 5px;">
-        <h4 style="margin-top: 0; margin-bottom: 10p; color: #444;">Datos de Cotización</h4>
-        <div style="display: flex; justify-content: space-between;">
-          <div style="width: 48%;">
-            <p style="margin: 4px 0;"><b>Condición de Pago:</b> ${condicionPago}</p>
-            <p style="margin: 4px 0;"><b>Moneda:</b> ${moneda}</p>
-          </div>
-          <div style="width: 48%;">
-            <p style="margin: 4px 0;"><b>Fecha de Emisión:</b> ${fecha}</p>
-            <p style="margin: 4px 0;"><b>Validez de Oferta:</b> ${validez}</p>
-            </div>
-          </div>
+  const companyTitle = `
+    <!-- TÍTULO DE LA EMPRESA -->
+    <div style="text-align: left; margin-bottom: 10px;">
+      <h2 style="margin: 0 0 2px 0; color: #333; font-size: 16px; text-transform: uppercase;">Teamgas Sociedad Anónima Cerrada</h2>
+      <p style="margin: 0; color: #444; font-size: 14px;">Jr. Coronel Guerra Nro. 152 (Plaza Principal) Junín - Chupaca - Chupaca</p>
+    </div>
+  `;
+
+  const infoSection = `
+    <!-- INFORMACIÓN PRINCIPAL -->
+    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+      <div style="width: 48%; border: 2px solid #ffc107; border-radius: 8px; padding: 5px;">
+        <h4 style="margin-top: 0; color: #444; text-align: center;"><Strong>Emisor</Strong></h4>
+        <p><b>Razón Social:</b> TEAMGAS SOCIEDAD ANÓNIMA CERRADA</p>
+        <p><b>RUC:</b> 20604956499</p>
+        <p><b>EMAIL:</b> info@teamgas.pe</p>
+        <p><b>Teléfono:</b> 997030802 - 919289085</p>
+        <p><b>Responsable:</b> ${responsable || "N/A"}</p>
       </div>
 
-      <!-- TABLA DE PRODUCTOS -->
-      <div style="margin-bottom: 20px;">
-        <table style="width: 100%; border-collapse: collapse; font-size: 9px; border: 1px solid #ddd;">
-          <thead>
-            <tr style="background: #fff3cd; color: #333;">
-              <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">N°</th>
-              <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">CANT.</th>
-              <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">UND</th>
-              <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">DESCRIPCIÓN</th>
-              <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">V. UNIT</th>
-              <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">IGV</th>
-              <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">P. UNIT</th>
-              <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">TOTAL</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${[...productos, ...Array(Math.max(0, 8 - productos.length)).fill(null)].map((p, index) => {
-                if (p) {
-                  const pUnit = isNaN(parseFloat(p.precioUnit)) ? 0 : parseFloat(p.precioUnit);          // Precio con IGV
-                  const cantidad = isNaN(parseFloat(p.cantidad)) ? 0 : parseFloat(p.cantidad);
-                  const igvUnit = pUnit * 0.18;        // IGV es el 18% del precio
-                  const vUnit = pUnit - igvUnit;       // Valor sin IGV
-                  const totalItem = cantidad * pUnit; // Total con IGV
-                  // Para el cálculo: vUnit es el valor sin IGV
-                  return `
-                <tr>
-                  <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${index + 1}</td>
-                  <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${cantidad}</td>
-                  <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">UND</td>
-                  <td style="border-right: 1px solid #ddd; padding: 6px; text-align: left; white-space: pre-line; line-height: 1.4;">${p.descripcion || ''}</td>
-                  <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${vUnit.toFixed(2)}</td>
-                  <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${igvUnit.toFixed(2)}</td>
-                  <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${pUnit.toFixed(2)}</td>
-                  <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${totalItem.toFixed(2)}</td>
-                </tr>`;
-                } else {
-                  return `
-                <tr>
-                  <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">&nbsp;</td>
-                  <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">&nbsp;</td>
-                  <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">&nbsp;</td>
-                  <td style="border-right: 1px solid #ddd; padding: 2px; text-align: left;">&nbsp;</td>
-                  <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">&nbsp;</td>
-                  <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">&nbsp;</td>
-                  <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">&nbsp;</td>
-                  <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">&nbsp;</td>
-                </tr>`;
-                }
-              }).join("")}
-          </tbody>
-        </table>
+      <div style="width: 48%; border: 2px solid #ffc107; border-radius: 8px; padding: 5px;">
+        <h4 style="margin-top: 0; color: #444; text-align: center;"><Strong>Cliente</Strong></h4>
+        <p><b>Nombre:</b> ${cliente.nombre}</p>
+        <p><b>Documento:</b> ${cliente.documento}</p>
+        <p><b>Dirección:</b> ${cliente.direccion}</p>
+        <p><b>Teléfono:</b> ${cliente.telefono}</p>
       </div>
+    </div>
 
+    <!-- DATOS DE COTIZACIÓN -->
+    <div style="border: 2px solid #ffc107; border-radius: 8px; padding: 2px; margin-bottom: 5px;">
+      <h4 style="margin-top: 0; margin-bottom: 10px; color: #444;">Datos de Cotización</h4>
+      <div style="display: flex; justify-content: space-between;">
+        <div style="width: 48%;">
+          <p style="margin: 4px 0;"><b>Condición de Pago:</b> ${condicionPago}</p>
+          <p style="margin: 4px 0;"><b>Moneda:</b> ${moneda}</p>
+        </div>
+        <div style="width: 48%;">
+          <p style="margin: 4px 0;"><b>Fecha de Emisión:</b> ${fecha}</p>
+          <p style="margin: 4px 0;"><b>Validez de Oferta:</b> ${validez}</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const tableHeader = `
+    <table style="width: 100%; border-collapse: collapse; font-size: 9px; border: 1px solid #ddd;">
+      <thead>
+        <tr style="background: #fff3cd; color: #333;">
+          <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">N°</th>
+          <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">CANT.</th>
+          <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">UND</th>
+          <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">DESCRIPCIÓN</th>
+          <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">V. UNIT</th>
+          <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">IGV</th>
+          <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">P. UNIT</th>
+          <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold;">TOTAL</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  const generateTableRows = (prods, startIndex = 0, padTo8 = false) => {
+    const rows = prods.map((p, idx) => {
+      const index = startIndex + idx + 1;
+      const pUnit = isNaN(parseFloat(p.precioUnit)) ? 0 : parseFloat(p.precioUnit);
+      const cantidad = isNaN(parseFloat(p.cantidad)) ? 0 : parseFloat(p.cantidad);
+      const igvUnit = pUnit * 0.18;
+      const vUnit = pUnit - igvUnit;
+      const totalItem = cantidad * pUnit;
+      return `
+        <tr>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${index}</td>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${cantidad}</td>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">UND</td>
+          <td style="border-right: 1px solid #ddd; padding: 6px; text-align: left; white-space: pre-line; line-height: 1.4;">${p.descripcion || ''}</td>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${vUnit.toFixed(2)}</td>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${igvUnit.toFixed(2)}</td>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${pUnit.toFixed(2)}</td>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${totalItem.toFixed(2)}</td>
+        </tr>`;
+    });
+    if (padTo8 && rows.length < 8) {
+      const emptyRows = Array(8 - rows.length).fill().map(() => `
+        <tr>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">&nbsp;</td>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">&nbsp;</td>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">&nbsp;</td>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: left;">&nbsp;</td>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">&nbsp;</td>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">&nbsp;</td>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">&nbsp;</td>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">&nbsp;</td>
+        </tr>`);
+      rows.push(...emptyRows);
+    }
+    return rows.join("");
+  };
+
+  const footerSection = `
+    <div style="page-break-inside: avoid;">
       <!-- TOTAL EN LETRAS -->
       <div style="border: 1px solid #ffc107; padding: 5px; margin-bottom: 10px; width: 100%;">
         <p style="margin: 0; text-transform: uppercase;">SON: ${numeroAPalabras(Math.floor(parseFloat(total) || 0)).toUpperCase()} ${moneda.toUpperCase()}</p>
@@ -178,7 +202,7 @@ const generarReporteCotizacion = async (cotizacion) => {
       </div>
 
       <!-- TOTALES Y CUENTAS BANCARIAS -->
-      <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+      <div class="no-break" style="page-break-inside: avoid; display: flex; justify-content: space-between; margin-bottom: 20px;">
         <div style="width: 30%; border: 1px solid #ffc107; padding: 8px; font-size: 9px;">
           <div style="margin-bottom: 8px;">
             <p style="margin: 0 0 4px 0; font-weight: bold; color: #002A8D; font-size: 11px;">Banco de Crédito del Perú</p>
@@ -209,11 +233,57 @@ const generarReporteCotizacion = async (cotizacion) => {
       </div>
 
       <!-- PIE -->
-      <div style="border-top: 3px solid #ffc107; padding-top: 10px; text-align: center; font-size: 12px; color: #666;">
-        <p>Gracias por su preferencia</p>
+      <div style="text-align: center; font-size: 12px; color: #666;">
+        <p style="margin: 0;">Gracias por su preferencia</p>
       </div>
     </div>
   `;
+
+  let htmlContent = '';
+
+  if (!hasMultiplePages) {
+    // Single page
+    htmlContent = `
+      <div class="no-break" style="font-family: 'Arial', sans-serif; font-size: 12px; padding: 20px; border-radius: 12px; background: #fff; width: 210mm; box-sizing: border-box; page-break-inside: avoid;">
+        ${headerWithDetails}
+        ${companyTitle}
+        ${infoSection}
+        <div style="margin-bottom: 20px;">
+          ${tableHeader}
+          ${generateTableRows(firstProducts, 0, true)}
+          </tbody></table>
+        </div>
+        ${footerSection}
+      </div>
+    `;
+  } else {
+    // Multiple pages
+    htmlContent = `
+      <div style="font-family: 'Arial', sans-serif; font-size: 12px; padding: 20px; border-radius: 12px; background: #fff; width: 210mm; box-sizing: border-box;">
+        ${headerWithDetails}
+        ${companyTitle}
+        ${infoSection}
+        <div style="margin-bottom: 20px;">
+          ${tableHeader}
+          ${generateTableRows(firstProducts, 0, true)}
+          </tbody></table>
+        </div>
+        <div style="page-break-after: always;"></div>
+      </div>
+      <div style="font-family: 'Arial', sans-serif; font-size: 12px; padding: 20px; border-radius: 12px; background: #fff; width: 210mm; box-sizing: border-box;">
+        ${headerWithoutDetails}
+        <div style="margin-bottom: 20px;">
+          ${tableHeader}
+          ${generateTableRows(remainingProducts, firstProducts.length, false)}
+          </tbody></table>
+        </div>
+        ${footerSection}
+      </div>
+    `;
+  }
+
+  const element = document.createElement("div");
+  element.innerHTML = htmlContent;
 
   // === Generar PDF ===
   const opt = {
@@ -222,7 +292,7 @@ const generarReporteCotizacion = async (cotizacion) => {
     image: { type: "jpeg", quality: 1 },
     html2canvas: { scale: 2 },
     jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-    pagebreak: { mode: 'avoid-all', before: '.pagebreak', after: '.pagebreak', avoid: '.no-break' },
+    pagebreak: { mode: 'css', before: '.pagebreak', after: '.pagebreak', avoid: '.no-break' },
   };
 
   html2pdf().set(opt).from(element).save();
