@@ -92,7 +92,7 @@ export default function ProductoList() {
   const handleGenerateQR = async (producto) => {
     setGeneratingQR(true);
     try {
-      const res = await api.post(`/productos/generar-qr/${producto._id}`);
+      const res = await api.post(`/qr/producto/${producto._id}`);
       alert(`Código QR generado exitosamente: ${res.data.qrCode}`);
       fetchProductos();
       if (selectedProducto?._id === producto._id) {
@@ -134,7 +134,7 @@ export default function ProductoList() {
     }
     setGeneratingQR(true);
     try {
-      const res = await api.post('/productos/generar-qr-masivo');
+      const res = await api.post('/qr/masivo/productos');
       alert(`Códigos QR generados para ${res.data.productos.length} productos`);
       fetchProductos();
     } catch (err) {

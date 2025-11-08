@@ -92,7 +92,7 @@ export default function HerramientasList() {
   const handleGenerateQR = async (herramienta) => {
     setGeneratingQR(true);
     try {
-      const res = await api.post(`/barcode/generar-qr/${herramienta._id}`);
+      const res = await api.post(`/qr/herramienta/${herramienta._id}`);
       alert(`Código QR generado exitosamente: ${res.data.qrCode}`);
       fetchHerramientas();
       if (selectedHerramienta?._id === herramienta._id) {
@@ -134,7 +134,7 @@ export default function HerramientasList() {
     }
     setGeneratingQR(true);
     try {
-      const res = await api.post('/barcode/generar-qr-masivo');
+      const res = await api.post('/qr/masivo/herramientas');
       alert(`Códigos QR generados para ${res.data.herramientas.length} herramientas`);
       fetchHerramientas();
     } catch (err) {
