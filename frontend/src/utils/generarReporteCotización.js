@@ -65,7 +65,7 @@ const generarReporteCotizacion = async (cotizacion) => {
         <img src="/fondocotizacion.png" alt="Logo" style="height: 70px;">
         <div style="margin-left: 15px;">
           <h3 style="margin: 0; color: #333; font-size: 16px;">TEAMGAS</h3>
-          <p style="margin: 2px 0; font-size: 12px;">Email: teamgas.fulltec@gmail.com</p>
+          <p style="margin: 2px 0; font-size: 12px;">Email: info@teamgas.pe</p>
           <p style="margin: 2px 0; font-size: 12px;">Web: www.teamgas.pe</p>
         </div>
       </div>
