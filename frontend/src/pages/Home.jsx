@@ -1,4 +1,4 @@
-import { FaTools, FaExchangeAlt, FaClipboardList, FaUsers, FaChartLine, FaPlus } from "react-icons/fa";
+import { FaTools, FaExchangeAlt, FaClipboardList, FaUsers, FaChartLine, FaPlus, FaUser } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -40,6 +40,13 @@ export default function Home() {
       icon: FaExchangeAlt,
       path: "/movimientos",
       color: "accent"
+    },
+    {
+      title: "Mi Perfil",
+      description: "Gestionar mi cuenta y contraseña",
+      icon: FaUser,
+      path: "/perfil",
+      color: "info"
     }
   ];
 

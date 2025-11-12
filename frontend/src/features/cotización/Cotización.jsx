@@ -175,8 +175,11 @@ const Cotización = () => {
 
   // === Generar PDF ===
   const generarPDF = async () => {
-    const guardadoExitoso = await guardarCotizacion();
-    if (!guardadoExitoso) return;
+    // Verificar si ya está guardada la cotización
+    if (!numeroCotizacion) {
+      alert("Debe guardar la cotización antes de generar el PDF");
+      return;
+    }
 
     const cliente = clientes.find((c) => c._id === clienteSeleccionado);
     const { subtotal, descuentoAmount, igv, total } = calcularTotales();

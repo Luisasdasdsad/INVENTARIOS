@@ -12,13 +12,18 @@ export const subirFoto = async (req, res) => {
 
     console.log('Foto recibida:', req.file.originalname, 'Tamaño:', req.file.size, 'bytes'); //Log para debug
 
+    // Determinar el tipo basado en el nombre del archivo (ej: herramienta-foto-... o movimiento-foto-...)
+    const filename = req.file.originalname;
+    const prefix = filename.split('-')[0]; // "herramienta" o "movimiento"
+    const folder = prefix === 'herramienta' ? 'inventario/herramientas' : 'inventario/fotos';
+
     // Subir a Cloudinary
     const result = await new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           resource_type: 'image',
-          folder: 'inventario/fotos',
-          public_id: `movimiento-${Date.now()}`,
+          folder: folder,
+          public_id: `${prefix}-${Date.now()}`,
           transformation: [
             {
             width: 800,

@@ -13,6 +13,7 @@ import CotizaciónList from "../features/cotización/CotizaciónList";
 import CotizaciónHistorial from "../features/cotización/CotizaciónHistorial"; // 🆕 NUEVO
 import ProductoList from "../features/productos/ProductoList";
 import ClienteList from "../features/clientes/ClienteList";
+import PerfilForm from "../features/perfil/PerfilForm";
 
 export default function AppRouter() {
   return (
@@ -32,7 +33,8 @@ export default function AppRouter() {
             <Route path="herramientas" element={<HerramientasList />} />
             <Route path="movimientos" element={<MovimientosList />} />
             <Route path="movimientos/registrar" element={<RegistrarMovimientoPage />} />
-            
+            <Route path="perfil" element={<PerfilForm />} />
+
             {/* 🔄 Cotizaciones separadas en dos rutas */}
             <Route path="cotizaciones" element={<CotizaciónList />} /> {/* Mis cotizaciones editables */}
             <Route path="cotización" element={<Cotización />} /> {/* Crear/Editar cotización */}

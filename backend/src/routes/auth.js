@@ -1,5 +1,5 @@
 import express from 'express';
-import { register, login, validate } from '../controllers/auth.controller.js';
+import { register, login, validate, changePassword, updateProfile } from '../controllers/auth.controller.js';
 import { auth } from '../middlewares/auth.js';
 import Usuario from '../models/usuario.model.js';
 
@@ -22,5 +22,7 @@ const conditionalAuth = async (req, res, next) => {
 router.post('/register', conditionalAuth, register);
 router.post('/login', login);
 router.get('/validate', auth, validate);
+router.put('/change-password', auth, changePassword);
+router.put('/update-profile', auth, updateProfile);
 
 export default router;

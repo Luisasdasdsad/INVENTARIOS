@@ -61,3 +61,61 @@ export const validate = async (req, res) => {
         res.status(500).json({ msg: 'Error en servidor', error });
     }
 };
+
+export const changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const userId = req.user.id;
+
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ msg: 'Usuario no encontrado' });
+
+        // Verificar contraseña actual
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) return res.status(400).json({ msg: 'Contraseña actual incorrecta' });
+
+        // Validar nueva contraseña
+        if (newPassword.length < 6) {
+            return res.status(400).json({ msg: 'La nueva contraseña debe tener al menos 6 caracteres' });
+        }
+
+        // Encriptar nueva contraseña
+        const salt = await bcrypt.genSalt(10);
+        const hashed = await bcrypt.hash(newPassword, salt);
+
+        // Actualizar contraseña
+        user.password = hashed;
+        await user.save();
+
+        res.json({ msg: 'Contraseña actualizada exitosamente' });
+    } catch (error) {
+        res.status(500).json({ msg: 'Error en servidor', error });
+    }
+};
+
+export const updateProfile = async (req, res) => {
+    try {
+        const { nombre, email } = req.body;
+        const userId = req.user.id;
+
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ msg: 'Usuario no encontrado' });
+
+        // Verificar si el email ya existe en otro usuario
+        if (email !== user.email) {
+            const existingUser = await User.findOne({ email });
+            if (existingUser) return res.status(400).json({ msg: 'El email ya está en uso' });
+        }
+
+        user.nombre = nombre;
+        user.email = email;
+        await user.save();
+
+        res.json({
+            msg: 'Perfil actualizado exitosamente',
+            user: { id: user._id, nombre: user.nombre, email: user.email, rol: user.rol }
+        });
+    } catch (error) {
+        res.status(500).json({ msg: 'Error en servidor', error });
+    }
+};
