@@ -15,9 +15,9 @@ export const register = async (req, res) => {
             return res.status(400).json({ msg: 'El primer usuario debe ser administrador' });
         }
     } else {
-        // Solo admin puede crear usuarios con rol admin
-        if (rol === 'admin' && req.user.rol !== 'admin') {
-            return res.status(403).json({ msg: 'Solo administradores pueden crear usuarios administradores' });
+        // Solo admin puede crear usuarios con cualquier rol
+        if (req.user.rol !== 'admin') {
+            return res.status(403).json({ msg: 'Solo administradores pueden crear usuarios' });
         }
     }
 

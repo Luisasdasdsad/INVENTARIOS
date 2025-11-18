@@ -53,6 +53,17 @@ const generarReporteCotizacion = async (cotizacion) => {
     responsable,
   } = cotizacion;
 
+  // Helper para formatear montos según la moneda
+  const formatCurrencyAbs = (value) => {
+    const amt = (Number(value) || 0).toFixed(2);
+    if ((moneda || "").toUpperCase().includes("DOL")) return `${amt} $`;
+    return `S/. ${amt}`;
+  };
+  const formattedSubtotal = formatCurrencyAbs(subtotal);
+  const formattedDescuento = `-${formatCurrencyAbs(descuento)}`;
+  const formattedIGV = formatCurrencyAbs(igv);
+  const formattedTotal = formatCurrencyAbs(total);
+
   const maxFirstPage = 21;
   const firstProducts = productos.slice(0, maxFirstPage);
   const remainingProducts = productos.slice(maxFirstPage);
@@ -113,7 +124,7 @@ const generarReporteCotizacion = async (cotizacion) => {
       <div style="width: 48%; border: 2px solid #ffc107; border-radius: 8px; padding: 5px;">
         <h4 style="margin-top: 0; color: #444; text-align: center;"><Strong>Cliente</Strong></h4>
         <p><b>Nombre:</b> ${cliente.nombre}</p>
-        <p><b>Documento:</b> ${cliente.documento}</p>
+        <p><b>${cliente.tipoDoc === "RUC" ? "RUC" : "DNI"}:</b> ${cliente.documento}</p>
         <p><b>Dirección:</b> ${cliente.direccion}</p>
         <p><b>Teléfono:</b> ${cliente.telefono}</p>
       </div>
@@ -121,7 +132,7 @@ const generarReporteCotizacion = async (cotizacion) => {
 
     <!-- DATOS DE COTIZACIÓN -->
     <div style="border: 2px solid #ffc107; border-radius: 8px; padding: 2px; margin-bottom: 5px;">
-      <h4 style="margin-top: 0; margin-bottom: 10px; color: #444;">Datos de Cotización</h4>
+      <h4 style="margin-top: 0; margin-bottom: 10px; color: #444; text-align: center;">Datos de Cotización</h4>
       <div style="display: flex; justify-content: space-between;">
         <div style="width: 48%;">
           <p style="margin: 4px 0;"><b>Condición de Pago:</b> ${condicionPago}</p>
@@ -193,7 +204,10 @@ const generarReporteCotizacion = async (cotizacion) => {
     <div style="page-break-inside: avoid;">
       <!-- TOTAL EN LETRAS -->
       <div style="border: 1px solid #ffc107; padding: 5px; margin-bottom: 10px; width: 100%;">
-        <p style="margin: 0; text-transform: uppercase;">SON: ${numeroAPalabras(Math.floor(parseFloat(total) || 0)).toUpperCase()} ${moneda.toUpperCase()}</p>
+        <p style="margin: 0; text-transform: uppercase;">SON: ${numeroAPalabras(Math.floor(parseFloat(total) || 0)).toUpperCase()} ${moneda.toUpperCase()}${(() => {
+          const centimos = Math.round(((parseFloat(total) || 0) % 1) * 100);
+          return centimos > 0 ? ` CON ${centimos} CÉNTIMOS` : '';
+        })()}</p>
       </div>
 
       <!-- OBSERVACIONES -->
@@ -203,7 +217,7 @@ const generarReporteCotizacion = async (cotizacion) => {
 
       <!-- TOTALES Y CUENTAS BANCARIAS -->
       <div class="no-break" style="page-break-inside: avoid; display: flex; justify-content: space-between; margin-bottom: 20px;">
-        <div style="width: 30%; border: 1px solid #ffc107; padding: 8px; font-size: 9px;">
+        <div style="width: 35%; padding: 10px; font-size: 11px;">
           <div style="margin-bottom: 8px;">
             <p style="margin: 0 0 4px 0; font-weight: bold; color: #002A8D; font-size: 11px;">Banco de Crédito del Perú</p>
             <p style="margin: 2px 0;"><b>CTA:</b> 191-1234567-0-00</p>
@@ -224,10 +238,10 @@ const generarReporteCotizacion = async (cotizacion) => {
 
         <div style="width: 30%;">
           <table style="border-collapse: collapse; width: 100%;">
-            <tr><td style="padding: 4px;">Subtotal</td><td style="text-align: right; padding-left: 15px;">${(parseFloat(subtotal) || 0).toFixed(2)}</td></tr>
-            <tr><td style="padding: 4px;">Descuento</td><td style="text-align: right; padding-left: 15px;">-${(parseFloat(descuento) || 0).toFixed(2)}</td></tr>
-            <tr><td style="padding: 4px;">IGV (18%)</td><td style="text-align: right; padding-left: 15px;">${(parseFloat(igv) || 0).toFixed(2)}</td></tr>
-            <tr style="background: #fff3cd; font-weight: bold;"><td style="padding: 4px;">TOTAL</td><td style="text-align: right; padding-left: 15px;">${(parseFloat(total) || 0).toFixed(2)}</td></tr>
+            <tr><td style="padding: 4px;">Subtotal</td><td style="text-align: right; padding-left: 15px;">${formattedSubtotal}</td></tr>
+            <tr><td style="padding: 4px;">Descuento</td><td style="text-align: right; padding-left: 15px;">${formattedDescuento}</td></tr>
+            <tr><td style="padding: 4px;">IGV (18%)</td><td style="text-align: right; padding-left: 15px;">${formattedIGV}</td></tr>
+            <tr style="background: #fff3cd; font-weight: bold;"><td style="padding: 4px;">TOTAL</td><td style="text-align: right; padding-left: 15px;">${formattedTotal}</td></tr>
           </table>
         </div>
       </div>

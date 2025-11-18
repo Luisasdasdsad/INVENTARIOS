@@ -68,7 +68,7 @@ export const registrarMovimiento = async (req, res) => {
       usuario: req.user.id, // Asociar al usuario logueado
       nota,
       obra,
-      foto,
+      foto: foto || null, // Solo almacenar si se proporciona
       qrCode: herramientas.find(h => h.qrCode)?.qrCode || null, // Almacenar QR si se usó
     });
     await movimiento.save();
@@ -89,8 +89,8 @@ export const registrarMovimiento = async (req, res) => {
 
 export const listarMovimientos = async (req, res) => {
   try {
-    // Si el usuario no es admin, solo mostrar sus propios movimientos
-    const filtro = req.user.rol !== 'admin' ? { usuario: req.user.id } : {};
+    // Si no es admin ni responsable_inventario, solo mostrar sus propios movimientos
+    const filtro = (req.user.rol !== 'admin' && req.user.rol !== 'responsable_inventario') ? { usuario: req.user.id } : {};
 
     const movimientos = await Movimiento.find(filtro)
       .populate({

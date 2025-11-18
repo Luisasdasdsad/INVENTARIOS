@@ -48,11 +48,12 @@ const CotizaciónHistorial = () => {
     }
   };
 
+  const q = searchTerm.toLowerCase();
   const filteredCotizaciones = cotizaciones.filter((cotizacion) =>
-    cotizacion.numeroCotizacion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cotizacion.cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cotizacion.usuario?.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cotizacion.observaciones?.toLowerCase().includes(searchTerm.toLowerCase())
+    (cotizacion.numeroCotizacion || "").toLowerCase().includes(q) ||
+    (cotizacion.cliente?.nombre || "").toLowerCase().includes(q) ||
+    (cotizacion.usuario?.nombre || "").toLowerCase().includes(q) ||
+    (cotizacion.observaciones || "").toLowerCase().includes(q)
   );
 
   const handleImprimir = async (cotizacion) => {
@@ -100,7 +101,7 @@ const CotizaciónHistorial = () => {
         moneda: cotizacion.moneda,
         numeroCotizacion: cotizacion.numeroCotizacion,
         condicionPago: "CONTADO",
-        validez: "15 días",
+        validez: cotizacion.validez,
         observaciones: cotizacion.observaciones || "",
         responsable: cotizacion.usuario?.nombre || "N/A",
       });
@@ -248,7 +249,7 @@ const CotizaciónHistorial = () => {
                   <div className="text-sm text-gray-600 space-y-1">
                     <p>
                       <span className="font-semibold">Cliente:</span>{" "}
-                      {cotizacion.cliente.nombre}
+                      {cotizacion.cliente?.nombre || '-'}
                     </p>
                     <p>
                       <span className="font-semibold">Usuario:</span>{" "}
@@ -259,8 +260,10 @@ const CotizaciónHistorial = () => {
                       {new Date(cotizacion.fecha).toLocaleDateString()}
                     </p>
                     <p>
-                      <span className="font-semibold">Total:</span> S/{" "}
-                      {cotizacion.totalGeneral?.toFixed(2) || "0.00"}
+                      <span className="font-semibold">Total:</span>{" "}
+                      {cotizacion.moneda === "SOLES"
+                        ? `S/ ${cotizacion.totalGeneral?.toFixed(2) || "0.00"}`
+                        : `${Math.round(cotizacion.totalGeneral || 0)} $`}
                     </p>
                   </div>
 
@@ -301,7 +304,7 @@ const CotizaciónHistorial = () => {
                           #{cotizacion.numeroCotizacion}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-700">
-                          {cotizacion.cliente.nombre}
+                          {cotizacion.cliente?.nombre || '-'}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600">
                           {cotizacion.usuario?.nombre || "N/A"}

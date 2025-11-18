@@ -4,7 +4,7 @@ import Modal from "../../components/Modal/Modal";
 import HerramientaForm from "./HerramientaForm";
 import BarcodeDisplay from "../../components/BarcodeDisplay/BarcodeDisplay";
 import QRDisplay from "../../components/BarcodeDisplay/QRDisplay.jsx";
-import { FaEdit, FaTrash, FaBarcode, FaQrcode, FaPlus, FaEye, FaFilePdf } from "react-icons/fa";
+import { FaEdit, FaTrash, FaBarcode, FaQrcode, FaPlus, FaEye, FaFilePdf, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { generarReporteInventario } from "../../utils/generarReporteInventario.js";
 
 export default function HerramientasList() {
@@ -19,6 +19,8 @@ export default function HerramientasList() {
   const [generatingQR, setGeneratingQR] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [tipoFilter, setTipoFilter] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const fetchHerramientas = async () => {
     setLoading(true);
@@ -42,6 +44,17 @@ export default function HerramientasList() {
     h.nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
     (tipoFilter === '' || h.tipo === tipoFilter)
   );
+
+  // Paginación
+  const totalPages = Math.ceil(filteredHerramientas.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentHerramientas = filteredHerramientas.slice(startIndex, endIndex);
+
+  // Resetear página cuando cambie el filtro
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, tipoFilter]);
 
   const handleAddHerramienta = () => {
     setEditingHerramienta(null);
@@ -145,6 +158,85 @@ export default function HerramientasList() {
     }
   };
 
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+
+    const pages = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    return (
+      <div className="flex items-center justify-center mt-6 space-x-1">
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <FaChevronLeft size={12} />
+        </button>
+
+        {startPage > 1 && (
+          <>
+            <button
+              onClick={() => handlePageChange(1)}
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50"
+            >
+              1
+            </button>
+            {startPage > 2 && <span className="px-2 py-2 text-sm text-gray-500">...</span>}
+          </>
+        )}
+
+        {pages.map((page) => (
+          <button
+            key={page}
+            onClick={() => handlePageChange(page)}
+            className={`px-3 py-2 text-sm font-medium border ${
+              page === currentPage
+                ? 'text-blue-600 bg-blue-50 border-blue-500'
+                : 'text-gray-500 bg-white border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+
+        {endPage < totalPages && (
+          <>
+            {endPage < totalPages - 1 && <span className="px-2 py-2 text-sm text-gray-500">...</span>}
+            <button
+              onClick={() => handlePageChange(totalPages)}
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50"
+            >
+              {totalPages}
+            </button>
+          </>
+        )}
+
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <FaChevronRight size={12} />
+        </button>
+      </div>
+    );
+  };
+
   if (loading) return <div className="text-center p-4 md:p-8 text-gray-600">Cargando herramientas...</div>;
   if (error) return <div className="text-center p-4 md:p-8 text-red-500 bg-red-50 rounded-md m-2 md:m-4">Error: {error}</div>;
 
@@ -216,7 +308,7 @@ export default function HerramientasList() {
         <div className="space-y-3 md:space-y-4">
           {/* Mobile: Cards Mejoradas */}
           <div className="md:hidden space-y-3">
-            {filteredHerramientas.map((h) => (
+            {currentHerramientas.map((h) => (
               <div key={h._id} className="bg-white p-3 rounded-lg shadow-sm border divide-y divide-gray-200">
                 <div className="space-y-2 mb-3">
                   <h3 className="text-base font-semibold text-gray-900">{h.nombre}</h3>
@@ -322,7 +414,7 @@ export default function HerramientasList() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredHerramientas.map((h) => (
+                  {currentHerramientas.map((h) => (
                     <tr key={h._id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 whitespace-nowrap font-medium text-gray-900 text-sm">{h.nombre}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm">{h.marca || '-'}</td>
@@ -414,6 +506,9 @@ export default function HerramientasList() {
           </div>
         </div>
       )}
+
+      {/* Paginación */}
+      {renderPagination()}
 
       {/* Modal para Form */}
       {showModal && (

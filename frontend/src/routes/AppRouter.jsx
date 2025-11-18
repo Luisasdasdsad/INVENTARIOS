@@ -10,7 +10,8 @@ import { AuthProvider } from "../contexts/AuthContext";
 import { PrivateRoute } from "../components/PrivateRoute";
 import Cotización from "../features/cotización/Cotización";
 import CotizaciónList from "../features/cotización/CotizaciónList";
-import CotizaciónHistorial from "../features/cotización/CotizaciónHistorial"; // 🆕 NUEVO
+import CotizaciónHistorial from "../features/cotización/CotizaciónHistorial"; 
+import OrdenTrabajoList from "../features/ordenTrabajo/OrdenTrabajoList"; 
 import ProductoList from "../features/productos/ProductoList";
 import ClienteList from "../features/clientes/ClienteList";
 import PerfilForm from "../features/perfil/PerfilForm";
@@ -39,6 +40,7 @@ export default function AppRouter() {
             <Route path="cotizaciones" element={<CotizaciónList />} /> {/* Mis cotizaciones editables */}
             <Route path="cotización" element={<Cotización />} /> {/* Crear/Editar cotización */}
             <Route path="historial-cotizaciones" element={<CotizaciónHistorial />} /> {/* 🆕 Historial solo lectura */}
+            <Route path="ordenes-trabajo" element={<OrdenTrabajoList />} /> {/* 🆕 Órdenes de Trabajo */}
           </Route>
 
           {/* Rutas Protegidas con Roles Específicos */}

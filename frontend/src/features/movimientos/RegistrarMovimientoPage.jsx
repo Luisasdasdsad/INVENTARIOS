@@ -735,10 +735,11 @@ const handleBarcodeManualChange = e => {
           name="obra"
           value={formData.obra}
           onChange={handleChange}
-          placeholder="Obra (opcional, ej. Grifo Pucara)"
+          placeholder="Obra (requerida, ej. Grifo Pucara)"
           className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500"
           maxLength="200"
           disabled={loading}
+          required
         />
         {fieldErrors.obra && <p className="text-red-600 text-sm">{fieldErrors.obra}</p>}
 

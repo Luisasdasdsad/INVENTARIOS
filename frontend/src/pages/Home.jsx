@@ -1,9 +1,52 @@
 import { FaTools, FaExchangeAlt, FaClipboardList, FaUsers, FaChartLine, FaPlus, FaUser } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useState, useEffect } from "react";
+import api from "../services/api";
 
 export default function Home() {
   const { user } = useAuth();
+  const [stats, setStats] = useState({
+    cotizaciones: 0,
+    herramientas: 0,
+    movimientos: 0
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+        // Obtener herramientas
+        const herramientasRes = await api.get('/herramientas');
+        const herramientasCount = herramientasRes.data.length;
+
+        // Obtener total de cotizaciones
+        const cotizacionesRes = await api.get('/cotizaciones/historial');
+        const cotizacionesCount = cotizacionesRes.data.total;
+
+        // Obtener movimientos del mes
+        const movimientosRes = await api.get('/movimientos');
+        const movimientosThisMonth = movimientosRes.data.filter(mov => {
+          const movDate = new Date(mov.createdAt);
+          return movDate >= startOfMonth && movDate <= endOfMonth;
+        });
+        const movimientosCount = movimientosThisMonth.length;
+
+        setStats({
+          cotizaciones: cotizacionesCount,
+          herramientas: herramientasCount,
+          movimientos: movimientosCount
+        });
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   const quickActions = [
     {
@@ -96,8 +139,8 @@ export default function Home() {
             <FaClipboardList className="text-primary-600 text-xl" />
           </div>
           <h3 className="font-semibold text-secondary-900 mb-1">Cotizaciones</h3>
-          <p className="text-2xl font-bold text-primary-600">--</p>
-          <p className="text-sm text-secondary-500">Activas este mes</p>
+          <p className="text-2xl font-bold text-primary-600">{stats.cotizaciones}</p>
+          <p className="text-sm text-secondary-500">Total</p>
         </div>
 
         <div className="card text-center">
@@ -105,7 +148,7 @@ export default function Home() {
             <FaTools className="text-success-600 text-xl" />
           </div>
           <h3 className="font-semibold text-secondary-900 mb-1">Herramientas</h3>
-          <p className="text-2xl font-bold text-success-600">--</p>
+          <p className="text-2xl font-bold text-success-600">{stats.herramientas}</p>
           <p className="text-sm text-secondary-500">En inventario</p>
         </div>
 
@@ -114,7 +157,7 @@ export default function Home() {
             <FaExchangeAlt className="text-warning-600 text-xl" />
           </div>
           <h3 className="font-semibold text-secondary-900 mb-1">Movimientos</h3>
-          <p className="text-2xl font-bold text-warning-600">--</p>
+          <p className="text-2xl font-bold text-warning-600">{stats.movimientos}</p>
           <p className="text-sm text-secondary-500">Este mes</p>
         </div>
       </div>

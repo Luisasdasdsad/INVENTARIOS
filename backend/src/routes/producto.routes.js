@@ -25,7 +25,7 @@ router.get("/imagen-qr/:qrCode", generarImagenQRProducto);
 
 // ✅ A PARTIR DE AQUÍ, TODAS LAS RUTAS REQUIEREN AUTENTICACIÓN Y ROL ADMIN
 router.use(auth);
-router.use(requireRole(['admin']));
+router.use(requireRole(['admin', 'responsable_inventario']));
 
 // CRUD productos
 router.post("/", upload.single("foto"), crearProducto);

@@ -90,9 +90,10 @@ export const movimientoCreateValidator = [
     .isLength({ max: 500 })
     .withMessage('Nota no puede exceder 500 caracteres'),
 
-  // Obra: Opcional
+  // Obra: Requerida
   body('obra')
-    .optional({ nullable: true })
+    .notEmpty()
+    .withMessage('Obra es requerida')
     .isString()
     .trim()
     .isLength({ max: 200 })

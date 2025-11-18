@@ -1,5 +1,5 @@
 import { Outlet, Link } from "react-router-dom";
-import { FaTools, FaClipboardList, FaExchangeAlt, FaHome, FaSignOutAlt, FaBars, FaTimes, FaUsers, FaFileAlt, FaHistory, FaPlus } from "react-icons/fa";
+import { FaTools, FaClipboardList, FaExchangeAlt, FaHome, FaSignOutAlt, FaBars, FaTimes, FaUsers, FaFileAlt, FaHistory, FaPlus, FaUser } from "react-icons/fa";
 import { useAuth } from "../contexts/AuthContext";
 import { useState, useEffect } from "react";
 
@@ -132,8 +132,8 @@ export default function DashboardLayout() {
             {isSidebarOpen && <span className="font-medium">Movimientos</span>}
           </Link>
 
-          {/* Productos - Solo Admin */}
-          {user && user.rol === 'admin' && (
+          {/* Productos - Admin y Responsable de Inventario */}
+          {user && (user.rol === 'admin' || user.rol === 'responsable_inventario') && (
             <Link
               to="/productos"
               onClick={handleNavClick}
@@ -222,6 +222,24 @@ export default function DashboardLayout() {
             )}
           </Link>
 
+          {/* 🆕 Órdenes de Trabajo - Todos los usuarios */}
+          <Link
+            to="/ordenes-trabajo"
+            onClick={handleNavClick}
+            className={`flex items-center gap-3 hover:bg-indigo-50 hover:text-indigo-700 transition-all duration-200 rounded-xl ${
+              !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
+            }`}
+          >
+            {isSidebarOpen ? (
+              <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <FaClipboardList size={16} className="text-indigo-600" />
+              </div>
+            ) : (
+              <FaClipboardList size={18} className="text-indigo-600" />
+            )}
+            {isSidebarOpen && <span className="font-medium">Órdenes de Trabajo</span>}
+          </Link>
+
           {/* Clientes - Solo Admin */}
           {user && user.rol === 'admin' && (
             <Link
@@ -241,6 +259,24 @@ export default function DashboardLayout() {
               {isSidebarOpen && <span className="font-medium">Clientes</span>}
             </Link>
           )}
+
+          {/* Perfil - Todos los usuarios */}
+          <Link
+            to="/perfil"
+            onClick={handleNavClick}
+            className={`flex items-center gap-3 hover:bg-purple-50 hover:text-purple-700 transition-all duration-200 rounded-xl ${
+              !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
+            }`}
+          >
+            {isSidebarOpen ? (
+              <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                <FaUser size={16} className="text-purple-600" />
+              </div>
+            ) : (
+              <FaUser size={18} className="text-purple-600" />
+            )}
+            {isSidebarOpen && <span className="font-medium">Mi Perfil</span>}
+          </Link>
         </nav>
         
         {/* Sección de usuario y logout */}
@@ -252,7 +288,7 @@ export default function DashboardLayout() {
               </p>
               <p className="font-semibold text-secondary-800">{user.nombre}</p>
               <p className="text-xs text-secondary-500 mt-1">
-                {user.rol === 'admin' ? '👑 Administrador' : '👤 Usuario'}
+                {user.rol === 'admin' ? '👑 Administrador' : user.rol === 'responsable_inventario' ? '📦 Resp. Inventario' : '🔧 Técnico'}
               </p>
             </div>
           )}

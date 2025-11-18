@@ -15,7 +15,7 @@ export const subirFoto = async (req, res) => {
     // Determinar el tipo basado en el nombre del archivo (ej: herramienta-foto-... o movimiento-foto-...)
     const filename = req.file.originalname;
     const prefix = filename.split('-')[0]; // "herramienta" o "movimiento"
-    const folder = prefix === 'herramienta' ? 'inventario/herramientas' : 'inventario/fotos';
+    const folder = prefix === 'herramienta' ? 'inventario/herramientas' : prefix === 'movimiento' ? 'inventario/movimientos' : 'inventario/fotos';
 
     // Subir a Cloudinary
     const result = await new Promise((resolve, reject) => {

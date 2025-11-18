@@ -25,6 +25,7 @@ const Cotización = () => {
   const [observacionesCot, setObservacionesCot] = useState("");
   const [numeroCotizacion, setNumeroCotizacion] = useState("");
   const [descuento, setDescuento] = useState(0);
+  const [validez, setValidez] = useState("15 días");
   const [isEditing, setIsEditing] = useState(false);
 
   // === Cargar clientes y productos ===
@@ -79,6 +80,7 @@ const Cotización = () => {
       setObservacionesCot(cotizacionEdit.observaciones || "");
       setNumeroCotizacion(cotizacionEdit.numeroCotizacion);
       setDescuento(cotizacionEdit.descuento || 0);
+      setValidez(cotizacionEdit.validez);
     }
   }, [cotizacionEdit]);
 
@@ -143,6 +145,7 @@ const Cotización = () => {
       descuento,
       moneda,
       observaciones: observacionesCot,
+      validez,
     };
 
     // Solo incluir numeroCotizacion en edición
@@ -188,7 +191,8 @@ const Cotización = () => {
     await generarReporteCotizacion({
       cliente: {
         nombre: cliente?.nombre || "",
-        documento: cliente?.ruc || cliente?.documento || "",
+        documento: cliente?.tipoDoc === "RUC" ? cliente?.ruc : cliente?.numero || "",
+        tipoDoc: cliente?.tipoDoc || "",
         direccion: cliente?.direccion || "",
         telefono: cliente?.telefono || "",
       },
@@ -206,7 +210,7 @@ const Cotización = () => {
       moneda,
       numeroCotizacion: numeroCotizacion || "001",
       condicionPago: "CONTADO",
-      validez: "15 días",
+      validez,
       observaciones: observacionesCot,
       responsable,
     });
@@ -326,6 +330,18 @@ const Cotización = () => {
               className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
             />
           </div>
+          <div>
+            <label className="text-sm text-gray-600">Validez (días)</label>
+            <input
+              type="number"
+              min="1"
+              max="365"
+              value={parseInt(validez) || 15}
+              onChange={(e) => setValidez(`${e.target.value} días`)}
+              placeholder="15"
+              className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
       </section>
 
@@ -375,7 +391,8 @@ const Cotización = () => {
                     <input
                       type="number"
                       min="0"
-                      value={p.pUnit}
+                      step="0.01"
+                      value={parseFloat(p.pUnit).toFixed(2)}
                       onChange={(e) => handleProductoChange(i, "pUnit", e.target.value)}
                       className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500 text-sm"
                     />
@@ -450,7 +467,8 @@ const Cotización = () => {
                     <input
                       type="number"
                       min="0"
-                      value={p.pUnit}
+                      step="0.01"
+                      value={parseFloat(p.pUnit).toFixed(2)}
                       onChange={(e) => handleProductoChange(i, "pUnit", e.target.value)}
                       className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
                     />

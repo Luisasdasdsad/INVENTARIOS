@@ -16,7 +16,7 @@ export const updateUsuario = async (req, res) => {
 
         // Solo admin puede actualizar usuarios
         if (req.user.rol !== 'admin') {
-            return res.status(403).json({ msg: 'Solo administradores pueden actualizar usuarios' });
+            return res.status(403).json({ msg: 'Solo administradores pueden gestionar usuarios' });
         }
 
         const usuario = await User.findByIdAndUpdate(

@@ -100,8 +100,8 @@ export const getCotizacionById = async (req, res) => {
       return res.status(404).json({ msg: "Cotización no encontrada" });
     }
 
-    // Verificar permisos: solo el dueño o admin pueden ver
-    if (req.user.rol !== 'admin' && cotizacion.usuario._id.toString() !== req.user._id.toString()) {
+    // Verificar permisos: solo el dueño, admin o responsable_inventario pueden ver
+    if (req.user.rol !== 'admin' && req.user.rol !== 'responsable_inventario' && cotizacion.usuario._id.toString() !== req.user._id.toString()) {
       return res.status(403).json({ msg: "No tienes permiso para ver esta cotización" });
     }
 
@@ -158,8 +158,8 @@ export const deleteCotizacion = async (req, res) => {
       return res.status(404).json({ msg: "Cotización no encontrada" });
     }
 
-    // Verificar permisos: solo el dueño o admin pueden eliminar
-    if (req.user.rol !== 'admin' && cotizacion.usuario.toString() !== req.user._id.toString()) {
+    // Verificar permisos: solo el dueño, admin o responsable_inventario pueden eliminar
+    if (req.user.rol !== 'admin' && req.user.rol !== 'responsable_inventario' && cotizacion.usuario.toString() !== req.user._id.toString()) {
       return res.status(403).json({ msg: "No tienes permiso para eliminar esta cotización" });
     }
 

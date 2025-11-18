@@ -32,7 +32,7 @@ const CotizaciónList = () => {
 
   const filteredCotizaciones = cotizaciones.filter((cotizacion) =>
     cotizacion.numeroCotizacion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cotizacion.cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    cotizacion.cliente?.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     cotizacion.observaciones?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -103,7 +103,7 @@ const CotizaciónList = () => {
         moneda: cotizacion.moneda,
         numeroCotizacion: cotizacion.numeroCotizacion,
         condicionPago: "CONTADO",
-        validez: "15 días",
+        validez: cotizacion.validez,
         observaciones: cotizacion.observaciones || "",
         responsable: cotizacion.usuario?.nombre || "N/A",
       });
@@ -176,15 +176,17 @@ const CotizaciónList = () => {
                 <div className="text-sm text-gray-600 space-y-1">
                   <p>
                     <span className="font-semibold">Cliente:</span>{" "}
-                    {cotizacion.cliente.nombre}
+                    {cotizacion.cliente?.nombre || '-'}
                   </p>
                   <p>
                     <span className="font-semibold">Fecha:</span>{" "}
                     {new Date(cotizacion.fecha).toLocaleDateString()}
                   </p>
                   <p>
-                    <span className="font-semibold">Total:</span> S/{" "}
-                    {cotizacion.totalGeneral?.toFixed(2) || "0.00"}
+                    <span className="font-semibold">Total:</span>{" "}
+                    {cotizacion.moneda === "SOLES"
+                      ? `S/ ${cotizacion.totalGeneral?.toFixed(2) || "0.00"}`
+                      : `${Math.round(cotizacion.totalGeneral || 0)} $`}
                   </p>
                   <p>
                     <span className="font-semibold">Productos:</span>{" "}
@@ -241,7 +243,7 @@ const CotizaciónList = () => {
                         #{cotizacion.numeroCotizacion}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">
-                        {cotizacion.cliente.nombre}
+                        {cotizacion.cliente?.nombre || '-'}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-500">
                         {new Date(cotizacion.fecha).toLocaleDateString()}
@@ -250,7 +252,9 @@ const CotizaciónList = () => {
                         {cotizacion.moneda}
                       </td>
                       <td className="px-4 py-3 text-sm font-semibold text-gray-900">
-                        S/ {cotizacion.totalGeneral?.toFixed(2) || "0.00"}
+                        {cotizacion.moneda === "SOLES"
+                          ? `S/ ${cotizacion.totalGeneral?.toFixed(2) || "0.00"}`
+                          : `${Math.round(cotizacion.totalGeneral || 0)} $`}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
                         {cotizacion.productos?.length || 0}

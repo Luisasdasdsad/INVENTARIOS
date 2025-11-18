@@ -37,7 +37,12 @@ export const crearHerramienta = async (req, res) => {
   try {
     let foto = '';
 
-    if(req.file) {
+    // Si se proporciona fotoUrl (ya subida a través de /fotos), úsala directamente
+    if (req.body.fotoUrl && req.body.fotoUrl.startsWith('http')) {
+      console.log('Usando foto ya subida:', req.body.fotoUrl);
+      foto = req.body.fotoUrl;
+    } else if (req.file) {
+      // Solo subir si no hay fotoUrl y hay archivo
       console.log('Subiendo foto para nueva herramienta');
       const result = await new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
@@ -93,7 +98,12 @@ export const actualizarHerramientas = async (req, res) => {
       dataActualizada.cantidad = parseCantidad(req.body.cantidad);
     }
 
-    if(req.file){
+    // Si se proporciona fotoUrl (ya subida a través de /fotos), úsala directamente
+    if (req.body.fotoUrl && req.body.fotoUrl.startsWith('http')) {
+      console.log('Usando foto ya subida para actualización:', req.body.fotoUrl);
+      dataActualizada.foto = req.body.fotoUrl;
+    } else if (req.file) {
+      // Solo subir si no hay fotoUrl y hay archivo
       const result = await new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
           {
