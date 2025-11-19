@@ -132,7 +132,7 @@ const generarReporteCotizacion = async (cotizacion) => {
 
     <!-- DATOS DE COTIZACIÓN -->
     <div style="border: 2px solid #ffc107; border-radius: 8px; padding: 2px; margin-bottom: 5px;">
-      <h4 style="margin-top: 0; margin-bottom: 10px; color: #444; text-align: center;">Datos de Cotización</h4>
+      <h4 style="margin-top: 0; margin-bottom: 10px; color: #444; text-align: center;"><Strong>Datos de Cotización</Strong></h4>
       <div style="display: flex; justify-content: space-between;">
         <div style="width: 48%;">
           <p style="margin: 4px 0;"><b>Condición de Pago:</b> ${condicionPago}</p>
@@ -206,7 +206,10 @@ const generarReporteCotizacion = async (cotizacion) => {
       <div style="border: 1px solid #ffc107; padding: 5px; margin-bottom: 10px; width: 100%;">
         <p style="margin: 0; text-transform: uppercase;">SON: ${numeroAPalabras(Math.floor(parseFloat(total) || 0)).toUpperCase()} ${moneda.toUpperCase()}${(() => {
           const centimos = Math.round(((parseFloat(total) || 0) % 1) * 100);
-          return centimos > 0 ? ` CON ${centimos} CÉNTIMOS` : '';
+          if (centimos <= 0) return '';
+          // Convert cents to words and handle singular/plural for "céntimo(s)"
+          const centPalabras = numeroAPalabras(centimos).toUpperCase();
+          return centimos === 1 ? ` CON ${centPalabras} CÉNTIMO` : ` CON ${centPalabras} CÉNTIMOS`;
         })()}</p>
       </div>
 

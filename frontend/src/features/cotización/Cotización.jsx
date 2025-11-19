@@ -25,7 +25,7 @@ const Cotización = () => {
   const [observacionesCot, setObservacionesCot] = useState("");
   const [numeroCotizacion, setNumeroCotizacion] = useState("");
   const [descuento, setDescuento] = useState(0);
-  const [validez, setValidez] = useState("15 días");
+  const [validez, setValidez] = useState(15);
   const [isEditing, setIsEditing] = useState(false);
 
   // === Cargar clientes y productos ===
@@ -80,7 +80,8 @@ const Cotización = () => {
       setObservacionesCot(cotizacionEdit.observaciones || "");
       setNumeroCotizacion(cotizacionEdit.numeroCotizacion);
       setDescuento(cotizacionEdit.descuento || 0);
-      setValidez(cotizacionEdit.validez);
+      // cotizacionEdit.validez may be stored as "N días" or a number; normalize to integer days
+      setValidez(parseInt(cotizacionEdit.validez) || 15);
     }
   }, [cotizacionEdit]);
 
@@ -145,7 +146,8 @@ const Cotización = () => {
       descuento,
       moneda,
       observaciones: observacionesCot,
-      validez,
+      // Store as string "N días" to keep backend compatibility
+      validez: `${validez} días`,
     };
 
     // Solo incluir numeroCotizacion en edición
@@ -210,7 +212,7 @@ const Cotización = () => {
       moneda,
       numeroCotizacion: numeroCotizacion || "001",
       condicionPago: "CONTADO",
-      validez,
+      validez: `${validez} días`,
       observaciones: observacionesCot,
       responsable,
     });
@@ -336,8 +338,9 @@ const Cotización = () => {
               type="number"
               min="1"
               max="365"
-              value={parseInt(validez) || 15}
-              onChange={(e) => setValidez(`${e.target.value} días`)}
+              step="1"
+              value={validez}
+              onChange={(e) => setValidez(Math.max(1, parseInt(e.target.value) || 1))}
               placeholder="15"
               className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
             />
