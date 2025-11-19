@@ -332,6 +332,9 @@ export default function ProductoForm({ producto, onSuccess, onCancel }) {
               onChange={handleChange}
               required
               min="0"
+              step="any"
+              inputMode="decimal"
+              placeholder="Ej. 5.5"
               className="w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
