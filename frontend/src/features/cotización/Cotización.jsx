@@ -88,7 +88,21 @@ const Cotización = () => {
   // === Manejo de productos ===
   const handleProductoChange = (index, campo, valor) => {
     const nuevos = [...productos];
-    nuevos[index][campo] = valor;
+    let nuevoValor = valor;
+    // Sanitize pUnit: allow digits and one dot, max 2 decimals
+    if (campo === "pUnit") {
+      nuevoValor = String(valor).replace(/,/g, ".").replace(/[^0-9.]/g, "");
+      const parts = nuevoValor.split(".");
+      if (parts.length > 2) {
+        nuevoValor = parts[0] + "." + parts.slice(1).join("");
+      }
+      if (parts[1]) {
+        parts[1] = parts[1].slice(0, 2);
+        nuevoValor = parts[0] + (parts[1] ? "." + parts[1] : "");
+      }
+    }
+
+    nuevos[index][campo] = nuevoValor;
     const pUnit = parseFloat(nuevos[index].pUnit) || 0;
     const cantidad = parseFloat(nuevos[index].cantidad) || 0;
     nuevos[index].igv = pUnit * 0.18;
@@ -395,7 +409,9 @@ const Cotización = () => {
                       type="number"
                       min="0"
                       step="0.01"
-                      value={parseFloat(p.pUnit).toFixed(2)}
+                      inputMode="decimal"
+                      pattern="\d*(\.\d{0,2})?"
+                      value={p.pUnit}
                       onChange={(e) => handleProductoChange(i, "pUnit", e.target.value)}
                       className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500 text-sm"
                     />
@@ -471,7 +487,9 @@ const Cotización = () => {
                       type="number"
                       min="0"
                       step="0.01"
-                      value={parseFloat(p.pUnit).toFixed(2)}
+                      inputMode="decimal"
+                      pattern="\d*(\.\d{0,2})?"
+                      value={p.pUnit}
                       onChange={(e) => handleProductoChange(i, "pUnit", e.target.value)}
                       className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
                     />
