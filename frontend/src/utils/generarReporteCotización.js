@@ -209,7 +209,10 @@ const generarReporteCotizacion = async (cotizacion) => {
           if (centimos <= 0) return '';
           // Convert cents to words and handle singular/plural for "céntimo(s)"
           const centPalabras = numeroAPalabras(centimos).toUpperCase();
-          return centimos === 1 ? ` CON ${centPalabras} CÉNTIMO` : ` CON ${centPalabras} CÉNTIMOS`;
+          const isDollar = (moneda || "").toUpperCase().includes("DOL");
+          const centSing = isDollar ? "CENTAVO" : "CÉNTIMO";
+          const centPlur = isDollar ? "CENTAVOS" : "CÉNTIMOS";
+          return centimos === 1 ? ` CON ${centPalabras} ${centSing}` : ` CON ${centPalabras} ${centPlur}`;
         })()}</p>
       </div>
 
