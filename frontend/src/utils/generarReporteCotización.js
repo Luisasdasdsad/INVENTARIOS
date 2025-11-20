@@ -226,12 +226,12 @@ const generarReporteCotizacion = async (cotizacion) => {
         <div style="width: 35%; padding: 10px; font-size: 11px;">
           <div style="margin-bottom: 8px;">
             <p style="margin: 0 0 4px 0; font-weight: bold; color: #002A8D; font-size: 11px;">Banco de Crédito del Perú</p>
-            <p style="margin: 2px 0;"><b>CTA:</b> 191-1234567-0-00</p>
-            <p style="margin: 2px 0;"><b>CCI:</b> 00219100123456789000</p>
+            <p style="margin: 2px 0;"><b>CTA:</b> 355-7891445-0-21</p>
+            <p style="margin: 2px 0;"><b>CCI:</b> 00235500789144502164</p>
           </div>
           <div>
             <p style="margin: 0 0 4px 0; font-weight: bold; color: #00A651; font-size: 11px;">Interbank</p>
-            <p style="margin: 2px 0;"><b>Cuenta corriente en dólares:</b> 123-45678901</p>
+            <p style="margin: 2px 0;"><b>Cuenta corriente en dólares:</b> 003-500-003004600486-64</p>
             <p style="margin: 2px 0;"><b>Titular:</b> TEAM GAS SAC</p>
           </div>
         </div>
