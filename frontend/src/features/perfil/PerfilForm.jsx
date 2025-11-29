@@ -80,9 +80,9 @@ export default function PerfilForm() {
 
   const getRolLabel = (rol) => {
     switch (rol) {
-      case 'admin': return 'Administrador';
-      case 'responsable_inventario': return 'Responsable de Inventario';
-      case 'tecnico': return 'Técnico';
+      case 'admin': return 'Administrador'; // Rol válido
+      case 'tecnico': return 'Técnico'; // Rol válido
+      case 'trabajador': return 'Trabajador'; // Rol válido
       default: return rol;
     }
   };
@@ -242,7 +242,7 @@ export default function PerfilForm() {
                 </label>
                 <input
                   type="text"
-                  value={user?.rol === 'admin' ? 'Administrador' : 'Trabajador'}
+                  value={getRolLabel(user?.rol)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
                   readOnly
                 />
@@ -396,9 +396,9 @@ export default function PerfilForm() {
                 onChange={(e) => setSelectedUsuario({...selectedUsuario, rol: e.target.value})}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
+                <option value="trabajador">Trabajador</option>
                 <option value="tecnico">Técnico</option>
-                <option value="responsable_inventario">Responsable de Inventario</option>
-                <option value="admin">Administrador</option>
+                <option value="admin">Admin</option>
               </select>
             </div>
             <div className="flex gap-2">

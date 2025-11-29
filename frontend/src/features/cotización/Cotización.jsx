@@ -23,6 +23,7 @@ const Cotización = () => {
   const [modalCliente, setModalCliente] = useState(false);
   const [clienteEdit, setClienteEdit] = useState(null);
   const [observacionesCot, setObservacionesCot] = useState("");
+  const [descripcionServicio, setDescripcionServicio] = useState("");
   const [numeroCotizacion, setNumeroCotizacion] = useState("");
   const [descuento, setDescuento] = useState(0);
   const [validez, setValidez] = useState(15);
@@ -61,6 +62,19 @@ const Cotización = () => {
     fetchProductos();
     fetchHerramientas();
 
+    // 🆕 Cargar el siguiente número de cotización si es una nueva
+    const fetchNextNumber = async () => {
+      if (!cotizacionEdit) {
+        try {
+          const res = await api.get("/cotizaciones/next-number");
+          setNumeroCotizacion(res.data.numeroCotizacion);
+        } catch (error) {
+          console.error("Error al obtener el siguiente número de cotización:", error);
+        }
+      }
+    };
+
+    fetchNextNumber();
     if (cotizacionEdit) {
       setIsEditing(true);
       setClienteSeleccionado(cotizacionEdit.cliente._id);
@@ -78,6 +92,7 @@ const Cotización = () => {
       setMoneda(cotizacionEdit.moneda || "SOLES");
       setFecha(new Date(cotizacionEdit.fecha).toISOString().split("T")[0]);
       setObservacionesCot(cotizacionEdit.observaciones || "");
+      setDescripcionServicio(cotizacionEdit.descripcionServicio || "");
       setNumeroCotizacion(cotizacionEdit.numeroCotizacion);
       setDescuento(cotizacionEdit.descuento || 0);
       // cotizacionEdit.validez may be stored as "N días" or a number; normalize to integer days
@@ -168,6 +183,7 @@ const Cotización = () => {
     if (isEditing) {
       cotizacionData.numeroCotizacion = numeroCotizacion;
     }
+    cotizacionData.descripcionServicio = descripcionServicio;
 
     try {
       let response;
@@ -313,12 +329,13 @@ const Cotización = () => {
               className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          {isEditing && (
+          {/* 💡 Siempre mostramos el campo. Si es nuevo, muestra "Cargando..." hasta que llegue el número. */}
+          {(isEditing || !cotizacionEdit) && (
             <div>
               <label className="text-sm text-gray-600">N° Cotización</label>
               <input
                 type="text"
-                value={numeroCotizacion}
+                value={numeroCotizacion || "Cargando..."}
                 readOnly
                 className="w-full border border-gray-300 p-2 rounded-md bg-gray-100"
               />
@@ -357,6 +374,16 @@ const Cotización = () => {
               onChange={(e) => setValidez(Math.max(1, parseInt(e.target.value) || 1))}
               placeholder="15"
               className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div className="col-span-4">
+            <label className="text-sm text-gray-600">Descripción del Servicio</label>
+            <textarea
+              rows="2"
+              value={descripcionServicio}
+              onChange={(e) => setDescripcionServicio(e.target.value)}
+              className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
+              placeholder="Descripción general del servicio o trabajo a realizar"
             />
           </div>
         </div>

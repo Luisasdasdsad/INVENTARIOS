@@ -6,8 +6,23 @@ const ordenTrabajoSchema = new mongoose.Schema({
 
     // Referencia a Cotización
     cotizacion: { type: mongoose.Schema.Types.ObjectId, ref: "Cotizacion" },
+    descripcionServicio: { type: String },
+    tareas: [
+        {
+            descripcion: String,
+            cantidad: Number
+        }
+    ],
+    herramientas: [
+        {
+            herramienta: { type: mongoose.Schema.Types.ObjectId, ref: 'Herramienta' },
+            cantidad: Number
+        }
+    ],
 
-    cliente: { type: String, required: true },
+    cliente: { type: mongoose.Schema.Types.ObjectId,
+    ref: "Cliente",
+    required: true },
 
     productos: [{
         producto: { type: mongoose.Schema.Types.ObjectId, ref: "Producto", required: true },
@@ -24,11 +39,14 @@ const ordenTrabajoSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId, 
         ref: "Usuario" 
     },
+    fechaAsignacion: { type: Date },
+    fechaEjecucion: { type: Date },
 
     fechaInicio: { type: Date },
     fechaFin: { type: Date },
 
-    observaciones: { type: String }
+    observaciones: { type: String },
+    instruccionesTecnico: { type: String }
 }, { timestamps: true });
 
 export default mongoose.model("OrdenTrabajo", ordenTrabajoSchema);

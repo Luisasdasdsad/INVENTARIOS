@@ -5,11 +5,15 @@ import {
   getMisCotizaciones, 
   getCotizacionById, 
   updateCotizacion, 
-  deleteCotizacion 
+  deleteCotizacion,
+  getNextCotizacionNumber 
 } from "../controllers/cotizacion.controller.js";
 import { auth, requireRole } from "../middlewares/auth.js";
 
 const router = express.Router();
+
+// 💡 RUTA PÚBLICA: Obtener el siguiente número de cotización. No requiere token.
+router.get("/next-number", getNextCotizacionNumber);
 
 // Todas las rutas requieren autenticación
 router.use(auth);

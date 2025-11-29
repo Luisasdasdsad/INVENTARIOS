@@ -12,6 +12,8 @@ import Cotización from "../features/cotización/Cotización";
 import CotizaciónList from "../features/cotización/CotizaciónList";
 import CotizaciónHistorial from "../features/cotización/CotizaciónHistorial"; 
 import OrdenTrabajoList from "../features/ordenTrabajo/OrdenTrabajoList"; 
+import CrearOrdenTrabajo from "../features/ordenTrabajo/CrearOrdenTrabajo";
+import CrearOrdenTrabajoManual from "../features/ordenTrabajo/CrearOrdenTrabajoManual";
 import ProductoList from "../features/productos/ProductoList";
 import ClienteList from "../features/clientes/ClienteList";
 import PerfilForm from "../features/perfil/PerfilForm";
@@ -41,12 +43,15 @@ export default function AppRouter() {
             <Route path="cotización" element={<Cotización />} /> {/* Crear/Editar cotización */}
             <Route path="historial-cotizaciones" element={<CotizaciónHistorial />} /> {/* 🆕 Historial solo lectura */}
             <Route path="ordenes-trabajo" element={<OrdenTrabajoList />} /> {/* 🆕 Órdenes de Trabajo */}
+            <Route path="ordenes-trabajo/crear" element={<CrearOrdenTrabajo />} />
+            <Route path="ordenes-trabajo/editar/:id" element={<CrearOrdenTrabajoManual />} />
           </Route>
 
           {/* Rutas Protegidas con Roles Específicos */}
           <Route path="/" element={<PrivateRoute allowedRoles={['admin']} />}>
             <Route path="productos" element={<ProductoList />} />
             <Route path="clientes" element={<ClienteList />} />
+            <Route path="cotizaciones" element={<Cotización />} />
           </Route>
 
           {/* Ruta para 404 */}

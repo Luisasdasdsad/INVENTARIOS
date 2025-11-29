@@ -19,6 +19,7 @@ const cotizacionSchema = new mongoose.Schema({
   descuento: { type: Number, default: 0 },
   moneda: { type: String, default: "SOLES" },
   observaciones: String,
+  descripcionServicio: String,
   numeroCotizacion: { type: String, required: true, unique: true },
   validez: { type: String, default: "15 días" },
 

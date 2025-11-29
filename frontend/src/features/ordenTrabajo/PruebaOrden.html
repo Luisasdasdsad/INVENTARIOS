@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vista Previa Orden de Trabajo - TEAMGAS</title>
+    <style>
+        body {
+            background-color: #525659; /* Fondo gris oscuro tipo visor de PDF */
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .page {
+            background-color: white;
+            width: 210mm; /* Ancho A4 */
+            min-height: 297mm; /* Alto A4 */
+            padding: 40px;
+            box-sizing: border-box;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        /* Estilos generales de tabla para PDF */
+        table { width: 100%; border-collapse: collapse; }
+        td, th { padding: 5px; }
+        
+        /* Utilidades */
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .text-bold { font-weight: bold; }
+        .text-small { font-size: 10px; color: #555; }
+        .blue-box { 
+            background-color: #f0f8ff; 
+            border: 1px solid #0056b3; 
+            border-radius: 6px; 
+            padding: 10px; 
+            color: #0056b3;
+        }
+        .header-title { color: #0056b3; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; margin: 0; }
+        .header-number { color: #333; font-size: 24px; margin: 5px 0; }
+        
+        .section-header {
+            background-color: #0056b3;
+            color: white;
+            padding: 5px 10px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .bordered-box {
+            border: 1px solid #ccc;
+            border-top: none;
+            padding: 10px;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page">
+        
+        <table style="margin-bottom: 20px; border-bottom: 2px solid #0056b3; padding-bottom: 15px;">
+            <tr>
+                <td style="width: 60%; vertical-align: top;">
+                    <div style="font-size: 24px; font-weight: 900; color: #333; font-style: italic;">
+                        <span style="color:#0056b3">TEAM</span>GAS
+                    </div>
+                    <div class="text-small" style="margin-top: 5px;">
+                        <strong>TEAMGAS SOCIEDAD ANÓNIMA CERRADA</strong><br>
+                        RUC: 20604956499<br>
+                        Jr. Coronel Guerra Nro. 152 (Plaza Principal)<br>
+                        Junín - Chupaca - Chupaca<br>
+                        Email: info@teamgas.pe | Web: www.teamgas.pe
+                    </div>
+                </td>
+                <td style="width: 40%; vertical-align: top;">
+                    <div class="blue-box text-right">
+                        <h3 class="header-title">Orden de Trabajo</h3>
+                        <h1 class="header-number">N° 0004</h1>
+                        <p style="margin:0; font-size: 10px; color: #333;">Fecha Emisión: 22 de noviembre de 2025</p>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table style="margin-bottom: 20px;">
+            <tr>
+                <td style="width: 48%; vertical-align: top; padding: 0;">
+                    <div class="section-header" style="background:#333; border-radius: 4px 4px 0 0;">DATOS DEL CLIENTE</div>
+                    <div class="bordered-box" style="border-radius: 0 0 4px 4px; height: 100px;">
+                        <div style="margin-bottom: 4px;"><strong>Cliente:</strong> MOVILGAS SRL</div>
+                        <div style="margin-bottom: 4px;"><strong>RUC:</strong> 20123456789</div>
+                        <div style="margin-bottom: 4px;"><strong>Dirección:</strong> CAR. RAMIRO PRIALE LOTE 4 FND. CHAPARRAL KM. 6.5</div>
+                        <div style="margin-top: 10px; border-top: 1px dashed #999; padding-top: 5px; color: #666;">
+                            <strong>Contacto en sitio:</strong> _______________________
+                        </div>
+                    </div>
+                </td>
+                <td style="width: 4%;"></td>
+                <td style="width: 48%; vertical-align: top; padding: 0;">
+                    <div class="section-header" style="border-radius: 4px 4px 0 0;">DETALLES DEL SERVICIO</div>
+                    <div class="bordered-box" style="border-color: #0056b3; border-radius: 0 0 4px 4px; height: 100px;">
+                        <table style="font-size: 11px;">
+                            <tr>
+                                <td><strong>Técnico:</strong></td>
+                                <td>Roque (roquetg@teamgas.com)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Fecha Prog.:</strong></td>
+                                <td>21 de noviembre de 2025</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Estado:</strong></td>
+                                <td><span style="background:#eee; padding:2px 5px; font-weight:bold;">PENDIENTE</span></td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" style="border-top: 1px dashed #aecce8; padding-top: 5px;">
+                                    <strong>Horas Reales:</strong> <br>Inicio: ______ Fin: ______
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <div style="margin-bottom: 30px;">
+            <h4 style="color: #0056b3; border-bottom: 1px solid #0056b3; margin-bottom: 10px; padding-bottom: 5px; text-transform: uppercase; font-size: 12px;">Items y Servicios Requeridos</h4>
+            <table style="width: 100%; border: 1px solid #ddd; font-size: 11px;">
+                <thead>
+                    <tr style="background-color: #f4f4f4; color: #333;">
+                        <th style="border-bottom: 2px solid #ddd; width: 5%;">N°</th>
+                        <th style="border-bottom: 2px solid #ddd; width: 10%;">CANT.</th>
+                        <th style="border-bottom: 2px solid #ddd; text-align: left;">DESCRIPCIÓN / PRODUCTO</th>
+                        <th style="border-bottom: 2px solid #ddd; width: 20%;">MODELO</th>
+                        <th style="border-bottom: 2px solid #ddd; width: 10%;">OK</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="text-center" style="border-bottom: 1px solid #eee;">1</td>
+                        <td class="text-center" style="border-bottom: 1px solid #eee;">2</td>
+                        <td style="border-bottom: 1px solid #eee;">Válvula de seguridad de alta presión</td>
+                        <td class="text-center" style="border-bottom: 1px solid #eee;">VS-200X</td>
+                        <td class="text-center" style="border-bottom: 1px solid #eee;">[ ]</td>
+                    </tr>
+                    <tr>
+                        <td class="text-center" style="border-bottom: 1px solid #eee;">2</td>
+                        <td class="text-center" style="border-bottom: 1px solid #eee;">10</td>
+                        <td style="border-bottom: 1px solid #eee;">Metros de manguera reforzada para gas</td>
+                        <td class="text-center" style="border-bottom: 1px solid #eee;">M-FLEX</td>
+                        <td class="text-center" style="border-bottom: 1px solid #eee;">[ ]</td>
+                    </tr>
+                    <tr>
+                        <td class="text-center" style="border-bottom: 1px solid #eee;">3</td>
+                        <td class="text-center" style="border-bottom: 1px solid #eee;">1</td>
+                        <td style="border-bottom: 1px solid #eee;">Servicio de Mantenimiento Preventivo</td>
+                        <td class="text-center" style="border-bottom: 1px solid #eee;">SERV-01</td>
+                        <td class="text-center" style="border-bottom: 1px solid #eee;">[ ]</td>
+                    </tr>
+                    <tr>
+                        <td class="text-center" style="padding: 15px;"></td>
+                        <td class="text-center" style="padding: 15px;"></td>
+                        <td style="color:#999; font-style: italic; padding: 15px;">(Espacio para item adicional...)</td>
+                        <td class="text-center" style="padding: 15px;"></td>
+                        <td class="text-center" style="border: 1px solid #eee;">[ ]</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <table style="margin-bottom: 40px;">
+            <tr>
+                <td style="width: 60%; vertical-align: top; padding-right: 20px;">
+                    <div style="font-size: 11px; font-weight: bold; margin-bottom: 5px;">OBSERVACIONES / REPORTE:</div>
+                    <div style="border: 1px solid #ccc; background: #fafafa; height: 80px; padding: 10px; font-size: 11px; color: #555;">
+                        Ninguna observación registrada al momento de la creación de la orden.
+                    </div>
+                </td>
+                <td style="width: 40%; vertical-align: top;">
+                    <div style="font-size: 11px; font-weight: bold; margin-bottom: 5px;">CHECKLIST DE CIERRE:</div>
+                    <div style="border: 1px solid #eee; padding: 10px; font-size: 11px;">
+                        <div style="margin-bottom: 5px;">[ &nbsp; ] Fugas revisadas (Gas)</div>
+                        <div style="margin-bottom: 5px;">[ &nbsp; ] Presión correcta</div>
+                        <div style="margin-bottom: 5px;">[ &nbsp; ] Área limpia</div>
+                        <div>[ &nbsp; ] Cliente instruido</div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <div style="border-top: 1px solid #eee; padding-top: 10px;">
+            <p style="font-size: 9px; color: #777; margin-bottom: 40px; text-align: justify;">
+                <strong>CONDICIONES:</strong> El cliente declara su conformidad con el servicio realizado y los productos recibidos listados anteriormente. TEAMGAS garantiza la mano de obra por un periodo de 30 días calendario. La empresa no se hace responsable por mal uso posterior a la entrega.
+            </p>
+
+            <table style="width: 100%;">
+                <tr>
+                    <td style="width: 40%; text-align: center;">
+                        <div style="border-bottom: 1px solid #000; width: 80%; height: 40px; margin: 0 auto 5px auto;"></div>
+                        <div class="text-bold" style="font-size: 11px;">ROQUE</div>
+                        <div style="font-size: 10px;">TÉCNICO RESPONSABLE</div>
+                    </td>
+                    <td style="width: 20%;"></td>
+                    <td style="width: 40%; text-align: center;">
+                        <div style="border-bottom: 1px solid #000; width: 80%; height: 40px; margin: 0 auto 5px auto;"></div>
+                        <div class="text-bold" style="font-size: 11px;">CONFORMIDAD CLIENTE</div>
+                        <div style="font-size: 10px;">DNI / Firma / Sello</div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+    </div>
+
+</body>
+</html>

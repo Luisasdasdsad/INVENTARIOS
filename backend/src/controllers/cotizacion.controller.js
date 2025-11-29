@@ -1,19 +1,50 @@
 import Cotizacion from "../models/cotización.model.js";
 
-// Crear cotización (asigna automáticamente al usuario autenticado)
-export const createCotizacion = async (req, res) => {
+// 💡 FUNCIÓN INTERNA REUTILIZABLE para obtener el siguiente número de cotización
+const getNextNumber = async () => {
   try {
-    // Generar automáticamente el número de cotización
     const maxCotizacion = await Cotizacion.aggregate([
+      // PASO 1: Intentar convertir 'numeroCotizacion' a número. Si falla, se vuelve null.
       {
-        $group: {
-          _id: null,
-          maxNum: { $max: { $toInt: "$numeroCotizacion" } }
+        $project: {
+          numero: { $toInt: "$numeroCotizacion" }
         }
+      },
+      // PASO 2: Filtrar solo los que se pudieron convertir (no son null).
+      {
+        $match: { numero: { $ne: null } }
+      },
+      // PASO 3: Agrupar para encontrar el máximo.
+      {
+        $group: { _id: null, maxNum: { $max: "$numero" } }
       }
     ]);
     const nextNum = maxCotizacion.length > 0 ? maxCotizacion[0].maxNum + 1 : 1;
-    const numeroCotizacion = nextNum.toString().padStart(4, '0');
+    return nextNum.toString().padStart(4, '0');
+  } catch (error) {
+    console.error("Error en getNextNumber:", error);
+    // Si la agregación falla por alguna razón, recurrimos a un método más simple
+    const lastCotizacion = await Cotizacion.findOne().sort({ numeroCotizacion: -1 });
+    const nextNum = lastCotizacion && !isNaN(lastCotizacion.numeroCotizacion) ? parseInt(lastCotizacion.numeroCotizacion) + 1 : 1;
+    return nextNum.toString().padStart(4, '0');
+  }
+};
+
+// 🆕 Obtener el siguiente número de cotización (Endpoint)
+export const getNextCotizacionNumber = async (req, res) => {
+  try {
+    const numeroCotizacion = await getNextNumber();
+    res.json({ numeroCotizacion });
+  } catch (error) {
+    res.status(500).json({ msg: "Error al obtener el siguiente número de cotización", error: error.message });
+  }
+};
+
+// Crear cotización (asigna automáticamente al usuario autenticado)
+export const createCotizacion = async (req, res) => {
+  try {
+    // 💡 Usar la función interna para obtener el número de cotización
+    const numeroCotizacion = await getNextNumber();
 
     // Asignar el número generado y el usuario responsable
     req.body.numeroCotizacion = numeroCotizacion;

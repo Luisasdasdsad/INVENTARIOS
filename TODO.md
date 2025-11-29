@@ -1,5 +1,0 @@
-- [ ] Agregar estado validez en Cotización.jsx
-- [ ] Agregar input para validez en la sección Información
-- [ ] Corregir lógica de cliente en generarPDF (documento y tipoDoc)
-- [ ] Centrar título "Datos de Cotización" en generarReporteCotización.js
-- [ ] Hacer label del documento dinámico en generarReporteCotización.js

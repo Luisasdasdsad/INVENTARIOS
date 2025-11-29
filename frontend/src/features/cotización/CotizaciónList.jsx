@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
-import { FaEdit, FaTrash, FaPlus, FaSearch, FaFilePdf } from "react-icons/fa";
+import { FaEdit, FaTrash, FaPlus, FaSearch, FaFilePdf, FaWhatsapp } from "react-icons/fa";
 import generarReporteCotizacion from "../../utils/generarReporteCotización";
 
 const CotizaciónList = () => {
@@ -174,10 +174,18 @@ const CotizaciónList = () => {
                   Cotización #{cotizacion.numeroCotizacion}
                 </h3>
                 <div className="text-sm text-gray-600 space-y-1">
-                  <p>
-                    <span className="font-semibold">Cliente:</span>{" "}
-                    {cotizacion.cliente?.nombre || '-'}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">Cliente:</span>
+                    <span>{cotizacion.cliente?.nombre || '-'}</span>
+                    {cotizacion.cliente?.telefono && (
+                      <a
+                        href={`https://wa.me/51${cotizacion.cliente.telefono.replace(/\s/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-green-500 hover:text-green-600"
+                      ><FaWhatsapp /></a>  
+                    )}
+                </div>
                   <p>
                     <span className="font-semibold">Fecha:</span>{" "}
                     {new Date(cotizacion.fecha).toLocaleDateString()}
@@ -243,7 +251,17 @@ const CotizaciónList = () => {
                         #{cotizacion.numeroCotizacion}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">
-                        {cotizacion.cliente?.nombre || '-'}
+                        <div className="flex items-center gap-2">
+                          <span>{cotizacion.cliente?.nombre || '-'}</span>
+                          {cotizacion.cliente?.telefono && (
+                            <a
+                              href={`https://wa.me/51${cotizacion.cliente.telefono.replace(/\s/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-green-500 hover:text-green-600"
+                            ><FaWhatsapp /></a>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-500">
                         {new Date(cotizacion.fecha).toLocaleDateString()}

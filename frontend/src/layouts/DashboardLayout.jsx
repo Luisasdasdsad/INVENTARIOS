@@ -93,7 +93,14 @@ export default function DashboardLayout() {
             )}
             {isSidebarOpen && <span className="font-medium">Inicio</span>}
           </Link>
-
+          {/* Separador de Inventario */}
+          {isSidebarOpen && (
+            <div className="pt-4 pb-2">
+              <p className="text-xs font-semibold text-secondary-500 uppercase tracking-wider px-3">
+                Inventario
+              </p>
+            </div>
+          )}
           {/* Inventario - Solo Admin */}
           {user && user.rol === 'admin' && (
             <Link
@@ -152,75 +159,96 @@ export default function DashboardLayout() {
             </Link>
           )}
 
-          {/* Separador de Cotizaciones */}
+          {/* --- SECCIÓN COTIZACIONES (Oculta para técnicos) --- */}
+          {user?.rol !== 'tecnico' && (
+            <>
+              {/* Separador de Cotizaciones */}
+              {isSidebarOpen && (
+                <div className="pt-4 pb-2">
+                  <p className="text-xs font-semibold text-secondary-500 uppercase tracking-wider px-3">
+                    Cotizaciones
+                  </p>
+                </div>
+              )}
+
+              {/* Nueva Cotización - Solo Admin */}
+              {user.rol === 'admin' && (
+                <Link
+                  to="/cotización"
+                  onClick={handleNavClick}
+                  className={`flex items-center gap-3 hover:bg-green-50 hover:text-green-700 transition-all duration-200 rounded-xl ${
+                    !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
+                  }`}
+                >
+                  {isSidebarOpen ? (
+                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                      <FaPlus size={16} className="text-green-600" />
+                    </div>
+                  ) : (
+                    <FaPlus size={18} className="text-green-600" />
+                  )}
+                  {isSidebarOpen && <span className="font-medium">Nueva Cotización</span>}
+                </Link>
+              )}
+
+              {/* Mis Cotizaciones */}
+              <Link
+                to="/cotizaciones"
+                onClick={handleNavClick}
+                className={`flex items-center gap-3 hover:bg-yellow-50 hover:text-yellow-700 transition-all duration-200 rounded-xl ${
+                  !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
+                }`}
+              >
+                {isSidebarOpen ? (
+                  <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <FaFileAlt size={16} className="text-yellow-600" />
+                  </div>
+                ) : (
+                  <FaFileAlt size={18} className="text-yellow-600" />
+                )}
+                {isSidebarOpen && <span className="font-medium">Mis Cotizaciones</span>}
+              </Link>
+
+              {/* Historial de Cotizaciones */}
+              <Link
+                to="/historial-cotizaciones"
+                onClick={handleNavClick}
+                className={`flex items-center gap-3 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 rounded-xl ${
+                  !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
+                }`}
+              >
+                {isSidebarOpen ? (
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <FaHistory size={16} className="text-blue-600" />
+                  </div>
+                ) : (
+                  <FaHistory size={18} className="text-blue-600" />
+                )}
+                {isSidebarOpen && (
+                  <div className="flex flex-col">
+                    <span className="font-medium">Historial</span>
+                    <span className="text-xs text-secondary-500">Solo lectura</span>
+                  </div>
+                )}
+              </Link>
+            </>
+          )}
+          {/* --- FIN SECCIÓN COTIZACIONES --- */}
+
+          {/*
+            CÓDIGO ORIGINAL ELIMINADO:
+            Se movieron los enlaces de cotizaciones dentro del bloque condicional de arriba
+            para agrupar toda la lógica y que se oculte la sección completa.
+          */}
+
+          {/* Separador de Orden de trabajo */}
           {isSidebarOpen && (
             <div className="pt-4 pb-2">
               <p className="text-xs font-semibold text-secondary-500 uppercase tracking-wider px-3">
-                Cotizaciones
+                Orden de trabajo
               </p>
             </div>
           )}
-
-          {/* Nueva Cotización - Solo Admin */}
-          {user && user.rol === 'admin' && (
-            <Link
-              to="/cotización"
-              onClick={handleNavClick}
-              className={`flex items-center gap-3 hover:bg-green-50 hover:text-green-700 transition-all duration-200 rounded-xl ${
-                !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
-              }`}
-            >
-              {isSidebarOpen ? (
-                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                  <FaPlus size={16} className="text-green-600" />
-                </div>
-              ) : (
-                <FaPlus size={18} className="text-green-600" />
-              )}
-              {isSidebarOpen && <span className="font-medium">Nueva Cotización</span>}
-            </Link>
-          )}
-
-          {/* Mis Cotizaciones - Todos los usuarios */}
-          <Link
-            to="/cotizaciones"
-            onClick={handleNavClick}
-            className={`flex items-center gap-3 hover:bg-yellow-50 hover:text-yellow-700 transition-all duration-200 rounded-xl ${
-              !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
-            }`}
-          >
-            {isSidebarOpen ? (
-              <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <FaFileAlt size={16} className="text-yellow-600" />
-              </div>
-            ) : (
-              <FaFileAlt size={18} className="text-yellow-600" />
-            )}
-            {isSidebarOpen && <span className="font-medium">Mis Cotizaciones</span>}
-          </Link>
-
-          {/* 🆕 Historial de Cotizaciones - Todos los usuarios */}
-          <Link
-            to="/historial-cotizaciones"
-            onClick={handleNavClick}
-            className={`flex items-center gap-3 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 rounded-xl ${
-              !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
-            }`}
-          >
-            {isSidebarOpen ? (
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                <FaHistory size={16} className="text-blue-600" />
-              </div>
-            ) : (
-              <FaHistory size={18} className="text-blue-600" />
-            )}
-            {isSidebarOpen && (
-              <div className="flex flex-col">
-                <span className="font-medium">Historial</span>
-                <span className="text-xs text-secondary-500">Solo lectura</span>
-              </div>
-            )}
-          </Link>
 
           {/* 🆕 Órdenes de Trabajo - Todos los usuarios */}
           <Link
@@ -239,6 +267,8 @@ export default function DashboardLayout() {
             )}
             {isSidebarOpen && <span className="font-medium">Órdenes de Trabajo</span>}
           </Link>
+
+          {/* Asignar OT eliminado: las OTs se asignan al crear */}
 
           {/* Clientes - Solo Admin */}
           {user && user.rol === 'admin' && (

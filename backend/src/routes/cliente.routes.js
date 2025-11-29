@@ -4,8 +4,9 @@ import { auth, requireRole } from "../middlewares/auth.js";
 
 const router = express.Router();
 
-// Todas las rutas requieren autenticación (admin y responsable_inventario pueden acceder)
+// Todas las rutas de este archivo requieren autenticación
 router.use(auth);
+// Y además, requieren que el usuario tenga el rol de 'admin'
 router.use(requireRole(['admin']));
 
 // Crear cliente

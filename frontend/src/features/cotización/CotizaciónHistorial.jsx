@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
-import { FaFilePdf, FaSearch, FaFilter } from "react-icons/fa";
+import { FaFilePdf, FaSearch, FaFilter, FaWhatsapp } from "react-icons/fa";
 import generarReporteCotizacion from "../../utils/generarReporteCotización";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -85,7 +85,7 @@ const CotizaciónHistorial = () => {
           nombre: cotizacion.cliente?.nombre || "",
           documento: cotizacion.cliente?.ruc || cotizacion.cliente?.numero || "",
           direccion: cotizacion.cliente?.direccion || "",
-          telefono: cotizacion.cliente?.telefono || "#",
+          telefono: cotizacion.cliente?.telefono || "",
         },
         productos: cotizacion.productos.map((p) => ({
           cantidad: p.cantidad,
@@ -247,10 +247,18 @@ const CotizaciónHistorial = () => {
                     </span>
                   </div>
                   <div className="text-sm text-gray-600 space-y-1">
-                    <p>
-                      <span className="font-semibold">Cliente:</span>{" "}
-                      {cotizacion.cliente?.nombre || '-'}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">Cliente:</span>
+                      <span>{cotizacion.cliente?.nombre || '-'}</span>
+                      {cotizacion.cliente?.telefono && (
+                        <a
+                          href={`https://wa.me/51${cotizacion.cliente.telefono.replace(/\s/g, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-green-500 hover:text-green-600"
+                        ><FaWhatsapp /></a>
+                      )}
+                    </div>
                     <p>
                       <span className="font-semibold">Usuario:</span>{" "}
                       {cotizacion.usuario?.nombre || "N/A"}
@@ -304,7 +312,17 @@ const CotizaciónHistorial = () => {
                           #{cotizacion.numeroCotizacion}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-700">
-                          {cotizacion.cliente?.nombre || '-'}
+                          <div className="flex items-center gap-2">
+                            <span>{cotizacion.cliente?.nombre || '-'}</span>
+                            {cotizacion.cliente?.telefono && (
+                              <a
+                                href={`https://wa.me/51${cotizacion.cliente.telefono.replace(/\s/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-green-500 hover:text-green-600"
+                              ><FaWhatsapp /></a>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600">
                           {cotizacion.usuario?.nombre || "N/A"}
@@ -316,7 +334,9 @@ const CotizaciónHistorial = () => {
                           {cotizacion.moneda}
                         </td>
                         <td className="px-4 py-3 text-sm font-semibold text-gray-900">
-                          S/ {cotizacion.totalGeneral?.toFixed(2) || "0.00"}
+                          {cotizacion.moneda === "SOLES"
+                            ? `S/${cotizacion.totalGeneral?.toFixed(2) || "0.00"}`
+                            : `${Math.round(cotizacion.totalGeneral || 0)}$`}
                         </td>
                         <td className="px-4 py-3 text-sm">
                           <button

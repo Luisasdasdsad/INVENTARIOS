@@ -33,15 +33,6 @@ const ClienteForm = ({ onClienteCreado, onClose, clienteEdit }) => {
       setErrors(prev => ({ ...prev, [name]: "" }));
     }
 
-    // Consulta automática de RUC cuando se completa el campo
-    if (name === "ruc" && value.length === 11 && /^\d{11}$/.test(value) && cliente.tipoDoc === "RUC") {
-      await consultarRUC(value);
-    }
-
-    // Consulta automática de DNI cuando se completa el campo
-    if (name === "numero" && value.length === 8 && /^\d{8}$/.test(value) && cliente.tipoDoc === "DNI") {
-      await consultarDNI(value);
-    }
   };
 
   const consultarRUC = async (ruc) => {
@@ -472,21 +463,6 @@ const ClienteForm = ({ onClienteCreado, onClose, clienteEdit }) => {
                     placeholder="https://www.ejemplo.com"
                   />
                 </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-secondary-700 mb-2">
-                    Teléfono adicional
-                  </label>
-                  <input
-                    type="text"
-                    name="telefono"
-                    className="input-field"
-                    value={cliente.telefono}
-                    onChange={handleChange}
-                    maxLength="9"
-                    placeholder="999999999"
-                  />
-                </div>
               </div>
 
               <div>
@@ -502,6 +478,20 @@ const ClienteForm = ({ onClienteCreado, onClose, clienteEdit }) => {
                   placeholder="Observaciones adicionales..."
                 />
               </div>
+            </div>
+          )}
+
+          {/* Botón de consulta manual para RUC/DNI */}
+          {activeTab === "datos" && (cliente.tipoDoc === "RUC" || cliente.tipoDoc === "DNI") && (
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => cliente.tipoDoc === "RUC" ? consultarRUC(cliente.ruc) : consultarDNI(cliente.numero)}
+                disabled={isConsultingRUC || (cliente.tipoDoc === "RUC" && cliente.ruc.length !== 11) || (cliente.tipoDoc === "DNI" && cliente.numero.length !== 8)}
+                className="btn-secondary flex items-center gap-2"
+              >
+                <FaSearch /> {isConsultingRUC ? 'Consultando...' : `Consultar ${cliente.tipoDoc}`}
+              </button>
             </div>
           )}
 

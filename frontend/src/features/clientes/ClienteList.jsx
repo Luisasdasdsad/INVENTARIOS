@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import api from "../../services/api";
 import ClienteForm from "./ClienteForm";
 import Modal from "../../components/Modal/Modal";
-import { FaEdit, FaTrash, FaPlus, FaSearch } from "react-icons/fa";
+import { FaEdit, FaTrash, FaPlus, FaSearch, FaWhatsapp } from "react-icons/fa";
 
 const ClienteList = () => {
   const [clientes, setClientes] = useState([]);
@@ -148,8 +148,18 @@ const ClienteList = () => {
                     {cliente.direccion || "No especificada"}
                   </p>
                   <p>
-                    <span className="font-semibold">Teléfono:</span>{" "}
-                    {cliente.telefono || "No disponible"}
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">Teléfono:</span>
+                      <span>{cliente.telefono || "No disponible"}</span>
+                      {cliente.telefono && (
+                        <a
+                          href={`https://wa.me/51${cliente.telefono.replace(/\s/g, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-green-500 hover:text-green-600"
+                        ><FaWhatsapp /></a>
+                      )}
+                    </div>
                   </p>
                 </div>
 
@@ -204,7 +214,19 @@ const ClienteList = () => {
                         {cliente.direccion || "No especificada"}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
-                        {cliente.telefono || "—"}
+                        <div className="flex items-center gap-2">
+                          <span>{cliente.telefono || "—"}</span>
+                          {cliente.telefono && (
+                            <a
+                              href={`https://wa.me/51${cliente.telefono.replace(/\s/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-green-500 hover:text-green-600"
+                            >
+                              <FaWhatsapp />
+                            </a>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-sm space-x-2">
                         <button

@@ -1,7 +1,22 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import api from "../../services/api";
-import { FaSearch, FaPlay, FaCheck, FaClock } from "react-icons/fa";
+import { FaSearch, FaPlay, FaCheck, FaClock, FaPrint, FaPlus, FaTrash, FaEdit } from "react-icons/fa";
 import { useAuth } from "../../contexts/AuthContext";
+
+// Formatear fechas ignorando desplazamientos de zona horaria: usar la porción YYYY-MM-DD
+const formatLocalDate = (d) => {
+  if (!d) return "-";
+  try {
+    const s = typeof d === 'string' ? d : (d.toISOString ? d.toISOString() : String(d));
+    const datePart = s.slice(0, 10); // YYYY-MM-DD
+    const [y, m, day] = datePart.split('-');
+    if (!y || !m || !day) return new Date(d).toLocaleDateString();
+    return new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(day, 10)).toLocaleDateString();
+  } catch (err) {
+    return new Date(d).toLocaleDateString();
+  }
+};
 
 const OrdenTrabajoList = () => {
   const [ordenes, setOrdenes] = useState([]);
@@ -18,7 +33,7 @@ const OrdenTrabajoList = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get("/orden-trabajo/listar");
+      const res = await api.get("/ordenes-trabajo");
       // El backend ya filtra según el rol del usuario
       setOrdenes(res.data);
     } catch (err) {
@@ -31,19 +46,44 @@ const OrdenTrabajoList = () => {
 
   const filteredOrdenes = ordenes.filter((orden) =>
     orden.numeroOT.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    orden.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (orden.cliente?.nombre || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
     orden.observaciones?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleCambiarEstado = async (id, nuevoEstado) => {
     try {
-      await api.put(`/orden-trabajo/estado/${id}`, { estado: nuevoEstado });
+      await api.patch(`/ordenes-trabajo/${id}/estado`, { estado: nuevoEstado });
       setOrdenes(ordenes.map(orden =>
         orden._id === id ? { ...orden, estado: nuevoEstado } : orden
       ));
     } catch (err) {
       console.error("Error al cambiar estado:", err);
       alert(err.response?.data?.message || "Error al cambiar estado");
+    }
+  };
+
+  const handleEliminarOrden = async (id) => {
+    if (window.confirm("¿Estás seguro de que deseas eliminar esta orden de trabajo? Esta acción no se puede deshacer.")) {
+      try {
+        await api.delete(`/ordenes-trabajo/${id}`);
+        // Actualizar el estado para remover la orden eliminada de la lista
+        setOrdenes(ordenes.filter(orden => orden._id !== id));
+      } catch (err) {
+        console.error("Error al eliminar la orden:", err);
+        alert(err.response?.data?.message || "Error al eliminar la orden de trabajo");
+      }
+    }
+  };
+
+  const handleImprimirOrden = async (orden) => {
+    try {
+      // Obtener detalles completos de la orden si es necesario
+      const res = await api.get(`/ordenes-trabajo/${orden._id}`);
+      const { default: generarReporte } = await import("../../utils/generarReporteOrdenTrabajo");
+      generarReporte(res.data);
+    } catch (err) {
+      console.error("Error al generar reporte:", err);
+      alert("Error al generar el reporte de la orden de trabajo");
     }
   };
 
@@ -82,9 +122,21 @@ const OrdenTrabajoList = () => {
     <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
-        <h2 className="text-2xl font-bold text-gray-800 tracking-tight">
-          Mis Órdenes de Trabajo
-        </h2>
+        <div className="flex items-center gap-4">
+          <h2 className="text-2xl font-bold text-gray-800 tracking-tight">
+            Mis Órdenes de Trabajo
+          </h2>
+
+          {/* Botón Crear - visible para admin */}
+          {user && user.rol === 'admin' && (
+            <Link
+              to="/ordenes-trabajo/crear"
+              className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm font-medium shadow-sm transition-colors"
+            >
+              <FaPlus size={14} /> Nueva Orden
+            </Link>
+          )}
+        </div>
 
         <div className="relative w-full sm:w-72">
           <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -124,24 +176,30 @@ const OrdenTrabajoList = () => {
                 </div>
                 <div className="text-sm text-gray-600 space-y-1">
                   <p>
-                    <span className="font-semibold">Cliente:</span> {orden.cliente}
+                    <span className="font-semibold">Cliente:</span> {orden.cliente ? `${orden.cliente.nombre} (${orden.cliente.tipoDoc} ${orden.cliente.tipoDoc === 'RUC' ? orden.cliente.ruc : orden.cliente.numero})` : 'No asignado'}
                   </p>
                   <p>
                     <span className="font-semibold">Productos:</span> {orden.productos?.length || 0}
                   </p>
                   {orden.fechaInicio && (
                     <p>
-                      <span className="font-semibold">Inicio:</span> {new Date(orden.fechaInicio).toLocaleDateString()}
+                      <span className="font-semibold">Inicio:</span> {formatLocalDate(orden.fechaInicio)}
                     </p>
                   )}
                   {orden.fechaFin && (
                     <p>
-                      <span className="font-semibold">Fin:</span> {new Date(orden.fechaFin).toLocaleDateString()}
+                      <span className="font-semibold">Fin:</span> {formatLocalDate(orden.fechaFin)}
                     </p>
                   )}
                 </div>
 
                 <div className="flex gap-2 pt-4">
+                  <button
+                    onClick={() => handleImprimirOrden(orden)}
+                    className="flex-1 bg-gray-500 text-white py-2 rounded-md hover:bg-gray-600 text-xs font-medium"
+                  >
+                    <FaPrint className="inline-block mr-1" /> Imprimir
+                  </button>
                   {orden.estado === "pendiente" && (
                     <button
                       onClick={() => handleCambiarEstado(orden._id, "en_proceso")}
@@ -157,6 +215,20 @@ const OrdenTrabajoList = () => {
                     >
                       <FaCheck className="inline-block mr-1" /> Completar
                     </button>
+                  )}
+                  {/* Botón de Eliminar solo para Admin */}
+                  {user?.rol === 'admin' && (
+                    <>
+                      <Link to={`/ordenes-trabajo/editar/${orden._id}`} className="flex-1 bg-yellow-500 text-white py-2 rounded-md hover:bg-yellow-600 text-xs font-medium text-center">
+                        <FaEdit className="inline-block mr-1" /> Editar
+                      </Link>
+                      <button
+                        onClick={() => handleEliminarOrden(orden._id)}
+                        className="flex-1 bg-red-600 text-white py-2 rounded-md hover:bg-red-700 text-xs font-medium"
+                      >
+                        <FaTrash className="inline-block mr-1" /> Eliminar
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -188,7 +260,7 @@ const OrdenTrabajoList = () => {
                         #{orden.numeroOT}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">
-                        {orden.cliente}
+                        {orden.cliente ? `${orden.cliente.nombre} (${orden.cliente.tipoDoc} ${orden.cliente.tipoDoc === 'RUC' ? orden.cliente.ruc : orden.cliente.numero})` : 'No asignado'}
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${getEstadoColor(orden.estado)}`}>
@@ -199,12 +271,18 @@ const OrdenTrabajoList = () => {
                         {orden.productos?.length || 0}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-500">
-                        {orden.fechaInicio ? new Date(orden.fechaInicio).toLocaleDateString() : "-"}
+                        {formatLocalDate(orden.fechaInicio)}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-500">
-                        {orden.fechaFin ? new Date(orden.fechaFin).toLocaleDateString() : "-"}
+                        {formatLocalDate(orden.fechaFin)}
                       </td>
                       <td className="px-4 py-3 text-sm space-x-2">
+                        <button
+                          onClick={() => handleImprimirOrden(orden)}
+                          className="text-gray-600 hover:text-gray-700 font-medium text-xs"
+                        >
+                          <FaPrint className="inline-block mr-1" /> Imprimir
+                        </button>
                         {orden.estado === "pendiente" && (
                           <button
                             onClick={() => handleCambiarEstado(orden._id, "en_proceso")}
@@ -220,6 +298,20 @@ const OrdenTrabajoList = () => {
                           >
                             <FaCheck className="inline-block mr-1" /> Completar
                           </button>
+                        )}
+                        {/* Botón de Eliminar solo para Admin */}
+                        {user?.rol === 'admin' && (
+                          <>
+                            <Link to={`/ordenes-trabajo/editar/${orden._id}`} className="text-yellow-600 hover:text-yellow-700 font-medium text-xs">
+                              <FaEdit className="inline-block mr-1" /> Editar
+                            </Link>
+                            <button
+                              onClick={() => handleEliminarOrden(orden._id)}
+                              className="text-red-600 hover:text-red-700 font-medium text-xs"
+                            >
+                              <FaTrash className="inline-block mr-1" /> Eliminar
+                            </button>
+                          </>
                         )}
                       </td>
                     </tr>
