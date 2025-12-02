@@ -55,10 +55,18 @@ const generarReporteCotizacion = async (cotizacion) => {
 
   // Helper para formatear montos según la moneda
   const formatCurrencyAbs = (value) => {
-    const amt = (Number(value) || 0).toFixed(2);
-    if ((moneda || "").toUpperCase().includes("DOL")) return `${amt} $`;
-    return `S/. ${amt}`;
+    const numberValue = Number(value) || 0;
+    const currencyCode = (moneda || "").toUpperCase().includes("DOL") ? "USD" : "PEN";
+    
+    // Usar Intl.NumberFormat para un formato localizado correcto (con comas)
+    return new Intl.NumberFormat('es-PE', {
+      style: 'currency',
+      currency: currencyCode,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(numberValue);
   };
+
   const formattedSubtotal = formatCurrencyAbs(subtotal);
   const formattedDescuento = `-${formatCurrencyAbs(descuento)}`;
   const formattedIGV = formatCurrencyAbs(igv);
@@ -174,13 +182,13 @@ const generarReporteCotizacion = async (cotizacion) => {
       return `
         <tr>
           <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${index}</td>
-          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${cantidad}</td>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${cantidad.toLocaleString('es-PE')}</td>
           <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">UND</td>
           <td style="border-right: 1px solid #ddd; padding: 6px; text-align: left; white-space: pre-line; line-height: 1.4;">${p.descripcion || ''}</td>
-          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${vUnit.toFixed(2)}</td>
-          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${igvUnit.toFixed(2)}</td>
-          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${pUnit.toFixed(2)}</td>
-          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${totalItem.toFixed(2)}</td>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: right;">${vUnit.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: right;">${igvUnit.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: right;">${pUnit.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: right;">${totalItem.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
         </tr>`;
     });
     if (padTo8 && rows.length < 8) {
