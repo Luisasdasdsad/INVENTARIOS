@@ -185,10 +185,10 @@ const generarReporteCotizacion = async (cotizacion) => {
           <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${cantidad.toLocaleString('es-PE')}</td>
           <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">UND</td>
           <td style="border-right: 1px solid #ddd; padding: 6px; text-align: left; white-space: pre-line; line-height: 1.4;">${p.descripcion || ''}</td>
-          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: right;">${vUnit.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: right;">${igvUnit.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: right;">${pUnit.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: right;">${totalItem.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${vUnit.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${igvUnit.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${pUnit.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${totalItem.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
         </tr>`;
     });
     if (padTo8 && rows.length < 8) {
@@ -226,7 +226,7 @@ const generarReporteCotizacion = async (cotizacion) => {
 
       <!-- OBSERVACIONES -->
       <div style="border: 1px solid #ffc107; padding: 5px; margin-bottom: 10px; width: 100%;">
-        <p style="margin: 0; color: #444;">Observaciones: ${observaciones || "Ninguna"}</p>
+        <p style="margin: 0; color: #444; white-space: pre-wrap;">Observaciones: ${observaciones || "Ninguna"}</p>
       </div>
 
       <!-- TOTALES Y CUENTAS BANCARIAS -->
