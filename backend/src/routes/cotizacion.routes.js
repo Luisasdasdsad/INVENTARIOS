@@ -6,7 +6,8 @@ import {
   getCotizacionById, 
   updateCotizacion, 
   deleteCotizacion,
-  getNextCotizacionNumber 
+  getNextCotizacionNumber,
+  updateEstadoCotizacion
 } from "../controllers/cotizacion.controller.js";
 import { auth, requireRole } from "../middlewares/auth.js";
 
@@ -29,6 +30,9 @@ router.post("/", createCotizacion);
 
 // Obtener cotización por ID - verifica permisos en el controlador
 router.get("/:id", getCotizacionById);
+
+// ✅ NUEVA RUTA: Actualizar solo el estado de una cotización. Requiere auth.
+router.patch("/:id/estado", updateEstadoCotizacion);
 
 // Actualizar cotización - verifica permisos en el controlador
 router.put("/:id", updateCotizacion);

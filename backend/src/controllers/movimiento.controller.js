@@ -89,8 +89,9 @@ export const registrarMovimiento = async (req, res) => {
 
 export const listarMovimientos = async (req, res) => {
   try {
-    // Si no es admin ni responsable_inventario, solo mostrar sus propios movimientos
-    const filtro = (req.user.rol !== 'admin' && req.user.rol !== 'responsable_inventario') ? { usuario: req.user.id } : {};
+    const rolesConVistaTotal = ['admin', 'jefe_inventario'];
+    // Si el rol del usuario no está en la lista de vista total, solo mostrar sus propios movimientos
+    const filtro = !rolesConVistaTotal.includes(req.user.rol) ? { usuario: req.user.id } : {};
 
     const movimientos = await Movimiento.find(filtro)
       .populate({

@@ -109,6 +109,7 @@ export default function RegisterPage() {
             <option value="trabajador">Trabajador</option>
             <option value="tecnico">Técnico</option>
             <option value="admin">Admin</option>
+            <option value="jefe_inventario">Jefe de Inventario</option>
           </select>
         </div>
         {error && <p className="text-red-500 text-sm">{error}</p>}

@@ -14,6 +14,8 @@ import ProductoRoutes from './routes/producto.routes.js';
 import CotizacionRoutes from './routes/cotizacion.routes.js';
 import ordenTrabajoRoutes from './routes/ordenTrabajo.routes.js';
 import usuarioRoutes from './routes/usuario.routes.js';
+import facturaRoutes from './routes/factura.routes.js';
+import proveedorRoutes from './routes/proveedor.routes.js';
 
 dotenv.config();
 const app = express();
@@ -46,6 +48,10 @@ app.use('/api/cotizaciones', CotizacionRoutes);
 app.use("/api/ordenes-trabajo", ordenTrabajoRoutes);
 
 app.use('/api/usuarios', usuarioRoutes);
+
+app.use('/api/facturas', facturaRoutes);
+
+app.use('/api/proveedores', proveedorRoutes);
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB conectado'))

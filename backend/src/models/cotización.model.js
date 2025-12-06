@@ -22,7 +22,25 @@ const cotizacionSchema = new mongoose.Schema({
   descripcionServicio: String,
   numeroCotizacion: { type: String, required: true, unique: true },
   validez: { type: String, default: "15 días" },
+  estado: {
+    type: String,
+    required: true,
+    enum: ['Pendiente', 'Aceptada', 'Rechazada', 'Facturada'],
+    default: 'Pendiente'
+  },
 
 }, { timestamps: true });
+
+// Virtual property to link to the Factura
+cotizacionSchema.virtual('factura', {
+  ref: 'Factura', // The model to use
+  localField: '_id', // Find documents in the 'Factura' model where...
+  foreignField: 'cotizacion', // ...the 'cotizacion' field...
+  justOne: true // We expect only one invoice per quotation
+});
+
+// To include virtuals in res.json(), you need to set this schema option
+cotizacionSchema.set('toJSON', { virtuals: true });
+cotizacionSchema.set('toObject', { virtuals: true });
 
 export default mongoose.model("Cotizacion", cotizacionSchema);

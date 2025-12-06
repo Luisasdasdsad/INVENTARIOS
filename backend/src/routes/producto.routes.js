@@ -23,9 +23,9 @@ const upload = multer({ storage });
 router.get("/imagen-barcode/:barcode", generarImagenCodigoBarrasProducto);
 router.get("/imagen-qr/:qrCode", generarImagenQRProducto);
 
-// ✅ A PARTIR DE AQUÍ, TODAS LAS RUTAS REQUIEREN AUTENTICACIÓN Y ROL ADMIN
+// ✅ A PARTIR DE AQUÍ, TODAS LAS RUTAS REQUIEREN AUTENTICACIÓN 
 router.use(auth);
-router.use(requireRole(['admin', 'responsable_inventario']));
+router.use(requireRole(['admin', 'tecnico', 'jefe_inventario']));
 
 // CRUD productos
 router.post("/", upload.single("foto"), crearProducto);

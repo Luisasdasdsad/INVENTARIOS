@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import ClienteForm from "../clientes/ClienteForm";
 import generarReporteCotizacion from "../../utils/generarReporteCotización";
@@ -8,8 +8,8 @@ import { useAuth } from "../../contexts/AuthContext";
 
 const Cotización = () => {
   const location = useLocation();
+  const navigate = useNavigate(); // <-- Add this
   const cotizacionEdit = location.state?.cotizacion;
-  const { user } = useAuth();
 
   const [clientes, setClientes] = useState([]);
   const [clienteSeleccionado, setClienteSeleccionado] = useState("");
@@ -155,7 +155,7 @@ const Cotización = () => {
   const guardarCotizacion = async () => {
     if (!clienteSeleccionado) {
       alert("Selecciona un cliente");
-      return false;
+      return;
     }
 
     const { total } = calcularTotales();
@@ -186,17 +186,16 @@ const Cotización = () => {
     cotizacionData.descripcionServicio = descripcionServicio;
 
     try {
-      let response;
       if (isEditing && cotizacionEdit) {
-        response = await api.put(`/cotizaciones/${cotizacionEdit._id}`, cotizacionData);
+        await api.put(`/cotizaciones/${cotizacionEdit._id}`, cotizacionData);
         alert("Cotización actualizada exitosamente");
       } else {
-        response = await api.post("/cotizaciones", cotizacionData);
-        // Actualizar el estado con el número generado
-        setNumeroCotizacion(response.data.numeroCotizacion);
+        const response = await api.post("/cotizaciones", cotizacionData);
+        setNumeroCotizacion(response.data.numeroCotizacion); // Mantener por si acaso
         alert("Cotización guardada exitosamente");
       }
-      return true;
+      // ✅ Redireccionar después de guardar
+      navigate('/cotizaciones'); 
     } catch (error) {
       console.error("Error al guardar cotización:", error);
       if (error.response?.status === 400 && error.response?.data?.msg?.includes("duplicate key")) {
@@ -204,7 +203,6 @@ const Cotización = () => {
       } else {
         alert("Error al guardar la cotización: " + (error.response?.data?.msg || error.message));
       }
-      return false;
     }
   };
 

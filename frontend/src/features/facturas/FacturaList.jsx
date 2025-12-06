@@ -1,0 +1,231 @@
+import { useState, useEffect } from "react";
+import api from "../../services/api";
+import { FaFilePdf, FaSearch, FaPaperPlane, FaCheckCircle, FaTimesCircle, FaHourglassHalf } from "react-icons/fa";
+import { generarFactura } from "../../utils/generarFactura";
+
+const FacturaList = () => {
+  const [facturas, setFacturas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const fetchFacturas = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.get("/facturas");
+      setFacturas(res.data);
+    } catch (err) {
+      setError("Error al cargar las facturas.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFacturas();
+  }, []); // El array vacío asegura que solo se llame una vez al montar el componente
+
+  const handleImprimirFactura = async (facturaId) => {
+    try {
+      // 1. Obtener los datos completos de la factura desde el backend
+      const res = await api.get(`/facturas/${facturaId}`);
+      const facturaCompleta = res.data;
+
+      // 2. Preparar datos de la empresa (esto debería venir de una config global)
+      const EMPRESA_INFO = {
+        nombre: "TEAM GAS S.A.C.",
+        ruc: "20XXXXXXXXX",
+        direccion: "Av. Ejemplo 123, Lima, Perú",
+        telefono: "987654321",
+        email: "contacto@teamgas.com",
+        logoUrl: "/fondocotizacion.png",
+      };
+
+      // 3. Preparar información de pago (ejemplo)
+      const CUENTAS_BANCARIAS = [
+        { banco: "BCP", moneda: "SOLES", cuenta: "191-XXXXXXXXX-XX-XXX", cci: "002-191-XXXXXXXXX-XX-XXX" },
+        { banco: "Interbank", moneda: "DOLARES", cuenta: "003-XXXXXXXXX-XX-XXX", cci: "007-003-XXXXXXXXX-XX-XXX" },
+      ];
+
+      // 4. Ensamblar el objeto de datos para la función de generar PDF
+      const datosParaFactura = {
+        logoUrl: EMPRESA_INFO.logoUrl,
+        empresa: EMPRESA_INFO,
+        factura: {
+          numero: facturaCompleta.numeroFactura,
+          fechaEmision: new Date(facturaCompleta.fechaEmision).toLocaleDateString('es-ES'),
+          fechaVencimiento: new Date(facturaCompleta.fechaVencimiento).toLocaleDateString('es-ES'),
+        },
+        cliente: {
+          nombre: facturaCompleta.cliente?.nombre || "",
+          ruc: facturaCompleta.cliente?.ruc || facturaCompleta.cliente?.numero || "",
+          direccion: facturaCompleta.cliente?.direccion || "",
+        },
+        items: facturaCompleta.items.map(p => ({
+          cantidad: p.cantidad,
+          unidad: 'UND', // Asumimos UND, se podría guardar en el modelo si varía
+          descripcion: p.descripcion,
+          precioUnitario: parseFloat(p.precioUnitario) || 0,
+          total: p.total,
+        })),
+        totales: {
+          subtotal: facturaCompleta.subtotal,
+          descuento: facturaCompleta.descuento,
+          opGravada: facturaCompleta.subtotal - facturaCompleta.descuento,
+          igv: facturaCompleta.igv,
+          totalPagar: facturaCompleta.totalGeneral,
+        },
+        cuentas: CUENTAS_BANCARIAS,
+        observaciones: "", // Las facturas usualmente no llevan las observaciones de la cotización
+      };
+
+      await generarFactura(datosParaFactura);
+
+    } catch (error) {
+      console.error("Error al imprimir la factura:", error);
+      alert("No se pudo generar el PDF de la factura.");
+    }
+  };
+
+  const handleEnviarSunat = async (facturaId) => {    
+    const confirmSend = window.confirm("¿Estás seguro de que deseas enviar esta factura a la SUNAT? Esta acción no se puede deshacer.");
+    if (!confirmSend) return;
+
+    try {
+      // Actualiza el estado local para mostrar un feedback inmediato al usuario
+      setFacturas(facturas.map(f => f._id === facturaId ? { ...f, estadoSunat: 'Enviando...' } : f));
+
+      const res = await api.post(`/facturas/${facturaId}/enviar-sunat`);
+      const facturaActualizada = res.data.factura;
+
+      // Actualiza la lista de facturas con la respuesta final del backend
+      setFacturas(facturas.map(f => f._id === facturaId ? facturaActualizada : f));
+
+      alert(`Factura enviada. Estado SUNAT: ${facturaActualizada.estadoSunat}`);
+
+    } catch (error) {
+      console.error("Error al enviar a SUNAT:", error);
+      alert(`Error: ${error.response?.data?.message || 'No se pudo enviar la factura.'}`);
+      // Vuelve a cargar los datos para reflejar el estado de error guardado en el backend
+      fetchFacturas(); 
+    }
+  };
+
+  const filteredFacturas = facturas.filter((factura) =>
+    factura.numeroFactura.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    factura.cliente?.nombre?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) return <div className="text-center p-6 text-gray-600 animate-pulse">Cargando facturas...</div>;
+  if (error) return <div className="text-center p-6 bg-red-100 text-red-700 rounded-md shadow-sm">{error}</div>;
+
+  return (
+    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <h2 className="text-2xl font-bold text-secondary-800 tracking-tight">
+          Historial de Facturas
+        </h2>
+        <div className="relative w-full sm:w-64 md:w-72">
+          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-400" />
+          <input
+            type="text"
+            placeholder="Buscar por N° o cliente..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 pr-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-400 w-full text-sm"
+          />
+        </div>
+      </div>
+
+      {/* Lista de Facturas */}
+      {filteredFacturas.length === 0 ? (
+        <div className="text-center py-12 text-secondary-600 text-sm md:text-base bg-secondary-50 rounded-lg border border-dashed">
+          No se han generado facturas aún.
+        </div>
+      ) : (
+        <div className="overflow-x-auto bg-white shadow-soft rounded-lg border border-secondary-200">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-secondary-100 text-secondary-800">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">N° Factura</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Cliente</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Fecha Emisión</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Total</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Estado</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Estado SUNAT</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredFacturas.map((factura) => (
+                <tr key={factura._id} className="hover:bg-blue-50 transition-colors duration-150">
+                  <td className="px-4 py-3 text-sm font-medium text-secondary-900">
+                    {factura.numeroFactura}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-secondary-700">
+                    {factura.cliente?.nombre || '-'}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-secondary-500">
+                    {new Date(factura.fechaEmision).toLocaleDateString()}
+                  </td>
+                  <td className="px-4 py-3 text-sm font-semibold text-secondary-900">
+                    {new Intl.NumberFormat('es-PE', { style: 'currency', currency: factura.moneda === 'SOLES' ? 'PEN' : 'USD' }).format(factura.totalGeneral)}
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      factura.estado === 'Pagada' ? 'bg-success-100 text-success-800' :
+                      factura.estado === 'Anulada' ? 'bg-danger-100 text-danger-800' :
+                      'bg-warning-100 text-warning-800'
+                    }`}>
+                      {factura.estado}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    <span className={`flex items-center gap-1.5 text-xs font-semibold ${
+                      factura.estadoSunat === 'Aceptada' ? 'text-success-700' :
+                      factura.estadoSunat === 'Rechazada' ? 'text-danger-700' :
+                      'text-secondary-600'
+                    }`}>
+                      {factura.estadoSunat === 'Aceptada' && <FaCheckCircle />}
+                      {factura.estadoSunat === 'Rechazada' && <FaTimesCircle />}
+                      {factura.estadoSunat === 'Pendiente de Envío' && <FaHourglassHalf />}
+                      {factura.estadoSunat}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-sm flex items-center gap-3">
+                    {factura.estadoSunat === 'Pendiente de Envío' && (
+                      <button
+                        onClick={() => handleEnviarSunat(factura._id)}
+                        className="text-primary-600 hover:text-primary-800 font-medium text-xs flex items-center gap-1"
+                        title="Enviar a SUNAT"
+                      >
+                        <FaPaperPlane /> Enviar
+                      </button>
+                    )}
+                    {factura.estadoSunat === 'Aceptada' ? (
+                       <a href={factura.enlacePdf || '#'} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-medium text-xs flex items-center gap-1">
+                         <FaFilePdf /> Ver PDF
+                       </a>
+                    ) : (
+                      <button
+                        onClick={() => handleImprimirFactura(factura._id)}
+                        className="text-blue-600 hover:text-blue-800 font-medium text-xs flex items-center gap-1"
+                      >
+                        <FaFilePdf /> Preliminar
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default FacturaList;

@@ -232,14 +232,15 @@ export default function MovimientosList() {
           {/* Mobile: Cards */}
           <div className="md:hidden space-y-3">
             {movimientos.map((mov) => (
-              <div key={mov._id} className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
+              <div key={mov._id} className={`bg-white p-4 rounded-xl shadow-md border-l-4 ${mov.tipo === 'entrada' ? 'border-green-500' : 'border-red-500'}`}>
                 <div className="flex justify-between items-start mb-3">
                   <span
-                    className={`px-2 py-1 rounded text-white text-xs font-semibold ${
-                      mov.tipo === 'entrada' ? 'bg-green-600' : 'bg-red-600'
+                    className={`px-2.5 py-1 rounded-full text-white text-xs font-bold flex items-center gap-1.5 ${
+                      mov.tipo === 'entrada' ? 'bg-green-500' : 'bg-red-500'
                     }`}
                   >
-                    {mov.tipo.charAt(0).toUpperCase() + mov.tipo.slice(1)}
+                    {mov.tipo === 'entrada' ? <FaSignInAlt/> : <FaSignOutAlt/>}
+                    <span>{mov.tipo.charAt(0).toUpperCase() + mov.tipo.slice(1)}</span>
                   </span>
                   <span className="text-xs text-gray-500">
                     {new Date(mov.createdAt).toLocaleDateString()}
@@ -248,7 +249,7 @@ export default function MovimientosList() {
 
                 <div className="space-y-2">
                   <div>
-                    <h3 className="font-semibold text-gray-900 text-sm">
+                    <h3 className="font-bold text-gray-800 text-base">
                       {mov.herramientas && mov.herramientas.length > 0 ? (
                         mov.herramientas.map((h, idx) => (
                           <div key={idx} className="mb-1">
@@ -320,14 +321,15 @@ export default function MovimientosList() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {movimientos.map((mov) => (
-                    <tr key={mov._id} className="hover:bg-gray-50">
+                    <tr key={mov._id} className="hover:bg-blue-50 transition-colors duration-150">
                       <td className="px-4 py-3 whitespace-nowrap">
                         <span
-                          className={`px-2 py-1 rounded text-white text-xs font-semibold ${
-                            mov.tipo === 'entrada' ? 'bg-green-600' : 'bg-red-600'
+                          className={`px-2.5 py-1 rounded-full text-white text-xs font-bold inline-flex items-center gap-1.5 ${
+                            mov.tipo === 'entrada' ? 'bg-green-500' : 'bg-red-500'
                           }`}
                         >
-                          {mov.tipo.charAt(0).toUpperCase() + mov.tipo.slice(1)}
+                          {mov.tipo === 'entrada' ? <FaSignInAlt/> : <FaSignOutAlt/>}
+                          <span>{mov.tipo.charAt(0).toUpperCase() + mov.tipo.slice(1)}</span>
                         </span>
                       </td>
                       <td className="px-4 py-3">

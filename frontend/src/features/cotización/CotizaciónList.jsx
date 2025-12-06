@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
-import { FaEdit, FaTrash, FaPlus, FaSearch, FaFilePdf, FaWhatsapp } from "react-icons/fa";
-import generarReporteCotizacion from "../../utils/generarReporteCotización";
+import { FaEdit, FaTrash, FaPlus, FaSearch, FaFilePdf, FaWhatsapp, FaFileInvoice } from "react-icons/fa";
+import generarReporteCotizacion from "../../utils/generarReporteCotización"; // Para cotizaciones
+import { generarFactura } from "../../utils/generarFactura"; // NUEVO: Para facturas
 
 const CotizaciónList = () => {
   const [cotizaciones, setCotizaciones] = useState([]);
@@ -54,6 +55,105 @@ const CotizaciónList = () => {
 
   const handleNuevaCotizacion = () => {
     navigate("/cotización");
+  };
+
+  // NUEVA FUNCIÓN: Para cambiar el estado de una cotización
+  const handleUpdateEstado = async (cotizacionId, nuevoEstado) => {
+    // Pedir confirmación para evitar clics accidentales
+    if (!window.confirm(`¿Estás seguro de que quieres marcar esta cotización como "${nuevoEstado}"?`)) {
+      return;
+    }
+    try {
+      const res = await api.patch(`/cotizaciones/${cotizacionId}/estado`, { estado: nuevoEstado });
+      // Actualizar la lista de cotizaciones en el frontend para reflejar el cambio al instante
+      setCotizaciones(cotizaciones.map(c => 
+        c._id === cotizacionId ? res.data : c
+      ));
+      alert(`Cotización marcada como ${nuevoEstado}`);
+    } catch (error) {
+      console.error("Error al actualizar el estado:", error);
+      alert(error.response?.data?.msg || "Error al cambiar el estado de la cotización");
+    }
+  };
+
+  // FUNCIÓN ACTUALIZADA: Ahora crea la factura en el backend
+  const handleGenerarFactura = async (cotizacion) => {
+    if (!window.confirm(`¿Estás seguro de que quieres generar una factura para la cotización #${cotizacion.numeroCotizacion}? Esto marcará la cotización como "Facturada".`)) {
+      return;
+    }
+
+    try {
+      // Llamar al nuevo endpoint del backend para crear la factura
+      const res = await api.post("/facturas", { cotizacionId: cotizacion._id });
+      const nuevaFactura = res.data;
+
+      alert(`Factura ${nuevaFactura.numeroFactura} creada exitosamente.`);
+
+      // El backend ya cambia el estado, solo necesitamos actualizar el frontend
+      fetchCotizaciones(); // Recargamos la lista para ver el estado "Facturada"
+
+    } catch (error) {
+      console.error("Error al generar la factura:", error);
+      alert("Error al generar la factura: " + (error.response?.data?.msg || error.message));
+    }
+  };
+
+  // NUEVO: Handler para ver la factura en PDF
+  const handleVerFactura = async (cotizacion) => {
+    if (!cotizacion.factura) {
+      alert("Esta cotización no tiene una factura asociada para mostrar.");
+      return;
+    }
+  
+    // Datos de la empresa (pueden venir de un contexto, config, etc.)
+    const empresa = {
+      nombre: "SOLUCIONES Y SERVICIOS GENERALES SAC",
+      ruc: "20606422259",
+      direccion: "CAL. LAS CAMELIAS NRO. 176 INT. 201 URB. SANTA ISABEL LIMA - LIMA - SAN ISIDRO",
+      telefono: "960 629 031",
+      email: "proyectos@solucionesyserviciosgenerales.com",
+    };
+  
+    // Cuentas bancarias
+    const cuentas = [
+      { banco: 'BCP', moneda: 'Soles', cuenta: '191-2345678-0-01', cci: '002-191-002345678001-55' },
+      { banco: 'BCP', moneda: 'Dólares', cuenta: '191-2345679-1-02', cci: '002-191-002345679102-56' }
+    ];
+  
+    const datosParaPdf = {
+      logoUrl: '/logo.png', // Logo en la carpeta public
+      empresa,
+      factura: {
+        numero: cotizacion.factura.numeroFactura,
+        fechaEmision: new Date(cotizacion.factura.fechaEmision).toLocaleDateString('es-PE'),
+        fechaVencimiento: new Date(cotizacion.factura.fechaVencimiento).toLocaleDateString('es-PE'),
+      },
+      cliente: {
+        nombre: cotizacion.cliente?.nombre || "",
+        ruc: cotizacion.cliente?.ruc || cotizacion.cliente?.numero || "",
+        direccion: cotizacion.cliente?.direccion || "N/A",
+      },
+      items: cotizacion.factura.items.map(item => ({
+        ...item,
+        unidad: item.unidad || 'UND',
+      })),
+      totales: {
+        subtotal: cotizacion.factura.subtotal,
+        descuento: cotizacion.factura.descuento || 0,
+        opGravada: (cotizacion.factura.subtotal || 0) - (cotizacion.factura.descuento || 0),
+        igv: cotizacion.factura.igv,
+        totalPagar: cotizacion.factura.totalGeneral,
+      },
+      cuentas,
+      observaciones: `Factura generada desde la Cotización #${cotizacion.numeroCotizacion}`,
+    };
+  
+    try {
+      await generarFactura(datosParaPdf);
+    } catch (error) {
+      console.error("Error al generar el PDF de la factura:", error);
+      alert("No se pudo generar el PDF de la factura.");
+    }
   };
 
   const handleImprimir = async (cotizacion) => {
@@ -128,26 +228,26 @@ const CotizaciónList = () => {
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
-        <h2 className="text-2xl font-bold text-gray-800 tracking-tight">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <h2 className="text-2xl font-bold text-secondary-800 tracking-tight">
           Mis Cotizaciones
         </h2>
 
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <div className="relative w-full sm:w-72">
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <div className="relative w-full sm:w-64 md:w-72">
+            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-400" />
             <input
               type="text"
               placeholder="Buscar cotización, cliente u observación..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 w-full text-sm md:text-base"
+              className="pl-10 pr-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-400 w-full text-sm"
             />
           </div>
 
           <button
             onClick={handleNuevaCotizacion}
-            className="flex items-center justify-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-black font-medium px-4 py-2 rounded-lg shadow-sm transition-colors"
+            className="flex items-center justify-center gap-2 bg-primary-400 hover:bg-primary-500 text-secondary-800 font-bold px-4 py-2 rounded-lg shadow-soft hover:shadow-medium transition-all duration-300"
           >
             <FaPlus size={14} /> Nueva Cotización
           </button>
@@ -156,7 +256,7 @@ const CotizaciónList = () => {
 
       {/* Lista */}
       {filteredCotizaciones.length === 0 ? (
-        <div className="text-center py-10 text-gray-600 text-sm md:text-base bg-gray-50 rounded-lg">
+        <div className="text-center py-12 text-secondary-600 text-sm md:text-base bg-secondary-50 rounded-lg border border-dashed">
           {searchTerm
             ? "No se encontraron cotizaciones que coincidan con la búsqueda."
             : "No has creado cotizaciones aún."}
@@ -168,12 +268,27 @@ const CotizaciónList = () => {
             {filteredCotizaciones.map((cotizacion) => (
               <div
                 key={cotizacion._id}
-                className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition"
+                className="bg-white p-4 rounded-xl shadow-soft border border-secondary-200 hover:shadow-medium hover:-translate-y-1 transition-all duration-300"
               >
-                <h3 className="text-base font-bold text-gray-900 mb-2">
-                  Cotización #{cotizacion.numeroCotizacion}
-                </h3>
-                <div className="text-sm text-gray-600 space-y-1">
+                <div className="flex justify-between items-start">
+                  <h3 className="text-base font-bold text-secondary-800 mb-2">
+                    Cotización #{cotizacion.numeroCotizacion}
+                  </h3>
+                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                    cotizacion.estado === 'Aceptada' ? 'bg-success-100 text-success-800' :
+                    cotizacion.estado === 'Facturada' ? 'bg-blue-100 text-blue-800' :
+                    cotizacion.estado === 'Rechazada' ? 'bg-danger-100 text-danger-800' :
+                    'bg-secondary-100 text-secondary-800'
+                  }`}>
+                    {cotizacion.estado || 'Pendiente'}
+                  </span>
+                </div>
+                {cotizacion.factura && (
+                  <p className="text-sm font-semibold text-blue-600 mb-2">
+                    Factura: {cotizacion.factura.numeroFactura}
+                  </p>
+                )}
+                <div className="text-sm text-secondary-600 space-y-1.5">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold">Cliente:</span>
                     <span>{cotizacion.cliente?.nombre || '-'}</span>
@@ -182,10 +297,10 @@ const CotizaciónList = () => {
                         href={`https://wa.me/51${cotizacion.cliente.telefono.replace(/\s/g, '')}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-green-500 hover:text-green-600"
+                        className="text-success-500 hover:text-success-600"
                       ><FaWhatsapp /></a>  
                     )}
-                </div>
+                  </div>
                   <p>
                     <span className="font-semibold">Fecha:</span>{" "}
                     {new Date(cotizacion.fecha).toLocaleDateString()}
@@ -196,31 +311,42 @@ const CotizaciónList = () => {
                       ? `S/ ${cotizacion.totalGeneral?.toFixed(2) || "0.00"}`
                       : `${Math.round(cotizacion.totalGeneral || 0)} $`}
                   </p>
-                  <p>
-                    <span className="font-semibold">Productos:</span>{" "}
-                    {cotizacion.productos?.length || 0}
-                  </p>
                 </div>
 
-                <div className="flex gap-2 pt-4">
-                  <button
+                <div className="grid grid-cols-2 gap-2 pt-4">
+                  {cotizacion.factura ? (
+                     <button
+                        onClick={() => handleVerFactura(cotizacion)}
+                        className="col-span-2 flex items-center justify-center gap-1 bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 text-xs font-medium"
+                      >
+                        <FaFileInvoice className="inline-block mr-1" /> Ver Factura
+                      </button>
+                  ) : (
+                    <>
+                      {cotizacion.estado === 'Aceptada' && (
+                        <button 
+                          onClick={() => handleGenerarFactura(cotizacion)}
+                          className="col-span-2 bg-success-500 text-white flex items-center justify-center gap-1 py-2 rounded-md hover:bg-success-600 text-xs font-medium"
+                        >
+                          Generar Factura
+                        </button>
+                      )}
+                    </>
+                  )}
+                   <button
                     onClick={() => handleImprimir(cotizacion)}
-                    className="flex-1 bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 text-xs font-medium"
+                    className="flex items-center justify-center gap-1 bg-gray-500 text-white py-2 rounded-md hover:bg-gray-600 text-xs font-medium"
                   >
-                    <FaFilePdf className="inline-block mr-1" /> Imprimir
+                    <FaFilePdf className="inline-block mr-1" /> Ver Coti
                   </button>
-                  <button
-                    onClick={() => handleEdit(cotizacion)}
-                    className="flex-1 bg-yellow-500 text-black py-2 rounded-md hover:bg-yellow-600 text-xs font-medium"
-                  >
-                    <FaEdit className="inline-block mr-1" /> Editar
-                  </button>
-                  <button
-                    onClick={() => handleDelete(cotizacion._id)}
-                    className="flex-1 bg-red-600 text-white py-2 rounded-md hover:bg-red-700 text-xs font-medium"
-                  >
-                    <FaTrash className="inline-block mr-1" /> Eliminar
-                  </button>
+                  {cotizacion.estado !== 'Facturada' && (
+                     <button
+                      onClick={() => handleDelete(cotizacion._id)}
+                      className="flex items-center justify-center gap-1 bg-danger-500 text-white py-2 rounded-md hover:bg-danger-600 text-xs font-medium"
+                    >
+                      <FaTrash className="inline-block mr-1" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -228,29 +354,29 @@ const CotizaciónList = () => {
 
           {/* Escritorio - Tabla */}
           <div className="hidden md:block">
-            <div className="overflow-x-auto bg-white shadow-sm rounded-lg border border-gray-200">
+            <div className="overflow-x-auto bg-white shadow-soft rounded-lg border border-secondary-200">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-yellow-100 text-gray-800">
+                <thead className="bg-primary-50 text-secondary-800">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">N° Cotización</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Cliente</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Fecha</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Moneda</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Total</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Productos</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Acciones</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">N° Cotización</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Cliente</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Fecha</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Total</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">N° Factura</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Estado</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredCotizaciones.map((cotizacion) => (
                     <tr
                       key={cotizacion._id}
-                      className="hover:bg-gray-50 transition"
+                      className="hover:bg-primary-50 transition-colors duration-150"
                     >
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                      <td className="px-4 py-3 text-sm font-medium text-secondary-900">
                         #{cotizacion.numeroCotizacion}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
+                      <td className="px-4 py-3 text-sm text-secondary-700">
                         <div className="flex items-center gap-2">
                           <span>{cotizacion.cliente?.nombre || '-'}</span>
                           {cotizacion.cliente?.telefono && (
@@ -258,44 +384,77 @@ const CotizaciónList = () => {
                               href={`https://wa.me/51${cotizacion.cliente.telefono.replace(/\s/g, '')}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-green-500 hover:text-green-600"
+                              className="text-success-500 hover:text-success-600"
                             ><FaWhatsapp /></a>
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-500">
+                      <td className="px-4 py-3 text-sm text-secondary-500">
                         {new Date(cotizacion.fecha).toLocaleDateString()}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {cotizacion.moneda}
-                      </td>
-                      <td className="px-4 py-3 text-sm font-semibold text-gray-900">
+                      <td className="px-4 py-3 text-sm font-semibold text-secondary-900">
                         {cotizacion.moneda === "SOLES"
                           ? `S/ ${cotizacion.totalGeneral?.toFixed(2) || "0.00"}`
                           : `${Math.round(cotizacion.totalGeneral || 0)} $`}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {cotizacion.productos?.length || 0}
+                      <td className="px-4 py-3 text-sm text-secondary-500">
+                        {cotizacion.factura ? (
+                          <span className="font-bold text-blue-600">{cotizacion.factura.numeroFactura}</span>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
                       </td>
-                      <td className="px-4 py-3 text-sm space-x-2">
-                        <button
-                          onClick={() => handleImprimir(cotizacion)}
-                          className="text-blue-600 hover:text-blue-700 font-medium text-xs"
-                        >
-                          <FaFilePdf className="inline-block mr-1" /> Imprimir
+                      <td className="px-4 py-3 text-sm">
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                          cotizacion.estado === 'Aceptada' ? 'bg-success-100 text-success-800' :
+                          cotizacion.estado === 'Facturada' ? 'bg-blue-100 text-blue-800' :
+                          cotizacion.estado === 'Rechazada' ? 'bg-danger-100 text-danger-800' :
+                          'bg-secondary-100 text-secondary-800'
+                        }`}>
+                          {cotizacion.estado || 'Pendiente'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm space-x-2 whitespace-nowrap">
+                        {/* Botón para ver la factura si ya existe */}
+                        {cotizacion.factura ? (
+                          <button onClick={() => handleVerFactura(cotizacion)} className="text-blue-600 hover:text-blue-800 font-medium text-xs">
+                             <FaFileInvoice className="inline-block mr-1" /> Ver Factura
+                           </button>
+                        ) : (
+                          <>
+                            {/* Lógica para estados sin factura */}
+                            {cotizacion.estado === 'Aceptada' && (
+                              <button 
+                                onClick={() => handleGenerarFactura(cotizacion)}
+                                className="bg-success-500 text-white px-2 py-1 rounded-md text-xs hover:bg-success-600 transition-colors"
+                              >
+                                Generar Factura
+                              </button>
+                            )}
+                          </>
+                        )}
+                        
+                        {(!cotizacion.factura && cotizacion.estado === 'Pendiente') && (
+                          <>
+                            <button onClick={() => handleEdit(cotizacion)} className="text-warning-600 hover:text-warning-700 font-medium text-xs">
+                              <FaEdit className="inline-block mr-1" />Editar
+                            </button>
+                            <button onClick={() => handleUpdateEstado(cotizacion._id, 'Aceptada')} className="text-success-600 hover:text-success-700 font-medium text-xs">Aceptar</button>
+                            <button onClick={() => handleUpdateEstado(cotizacion._id, 'Rechazada')} className="text-danger-600 hover:text-danger-700 font-medium text-xs">Rechazar</button>
+                          </>
+                        )}
+
+                        {/* Botón para ver la cotización siempre disponible */}
+                        <button onClick={() => handleImprimir(cotizacion)} className="text-gray-600 hover:text-gray-800 font-medium text-xs">
+                          <FaFilePdf className="inline-block mr-1" /> Ver Coti
                         </button>
-                        <button
-                          onClick={() => handleEdit(cotizacion)}
-                          className="text-yellow-600 hover:text-yellow-700 font-medium text-xs"
-                        >
-                          <FaEdit className="inline-block mr-1" /> Editar
-                        </button>
-                        <button
-                          onClick={() => handleDelete(cotizacion._id)}
-                          className="text-red-600 hover:text-red-700 font-medium text-xs"
-                        >
-                          <FaTrash className="inline-block mr-1" /> Eliminar
-                        </button>
+
+                        {/* Eliminar si no está facturada */}
+                        {cotizacion.estado !== 'Facturada' && (
+                          <button onClick={() => handleDelete(cotizacion._id)} className="text-danger-600 hover:text-danger-700 font-medium text-xs">
+                            <FaTrash className="inline-block mr-1" />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}

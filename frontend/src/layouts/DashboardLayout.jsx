@@ -1,5 +1,5 @@
 import { Outlet, Link } from "react-router-dom";
-import { FaTools, FaClipboardList, FaExchangeAlt, FaHome, FaSignOutAlt, FaBars, FaTimes, FaUsers, FaFileAlt, FaHistory, FaPlus, FaUser } from "react-icons/fa";
+import { FaTools, FaClipboardList, FaExchangeAlt, FaHome, FaSignOutAlt, FaBars, FaTimes, FaUsers, FaFileAlt, FaHistory, FaPlus, FaUser, FaFileInvoiceDollar, FaTruck } from "react-icons/fa";
 import { useAuth } from "../contexts/AuthContext";
 import { useState, useEffect } from "react";
 
@@ -101,8 +101,8 @@ export default function DashboardLayout() {
               </p>
             </div>
           )}
-          {/* Inventario - Solo Admin */}
-          {user && user.rol === 'admin' && (
+          {/* Inventario - Admin y Técnico */}
+          {user && (user.rol === 'admin' || user.rol === 'tecnico' || user.rol === 'jefe_inventario') && (
             <Link
               to="/herramientas"
               onClick={handleNavClick}
@@ -139,8 +139,8 @@ export default function DashboardLayout() {
             {isSidebarOpen && <span className="font-medium">Movimientos</span>}
           </Link>
 
-          {/* Productos - Admin y Responsable de Inventario */}
-          {user && (user.rol === 'admin' || user.rol === 'responsable_inventario') && (
+          {/* Productos - Admin, Responsable de Inventario y Técnico */}
+          {user && (user.rol === 'admin' || user.rol === 'tecnico' || user.rol === 'jefe_inventario') && (
             <Link
               to="/productos"
               onClick={handleNavClick}
@@ -159,14 +159,14 @@ export default function DashboardLayout() {
             </Link>
           )}
 
-          {/* --- SECCIÓN COTIZACIONES (Oculta para técnicos) --- */}
-          {user?.rol !== 'tecnico' && (
+          {/* --- SECCIÓN COTIZACIONES (Oculta para técnicos y jefe de inventario) --- */}
+          {user?.rol !== 'tecnico' && user?.rol !== 'jefe_inventario' && (
             <>
               {/* Separador de Cotizaciones */}
               {isSidebarOpen && (
                 <div className="pt-4 pb-2">
                   <p className="text-xs font-semibold text-secondary-500 uppercase tracking-wider px-3">
-                    Cotizaciones
+                    Ventas
                   </p>
                 </div>
               )}
@@ -231,6 +231,24 @@ export default function DashboardLayout() {
                   </div>
                 )}
               </Link>
+
+              {/* Facturas */}
+              <Link
+                to="/facturas"
+                onClick={handleNavClick}
+                className={`flex items-center gap-3 hover:bg-green-50 hover:text-green-700 transition-all duration-200 rounded-xl ${
+                  !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
+                }`}
+              >
+                {isSidebarOpen ? (
+                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                    <FaFileInvoiceDollar size={16} className="text-green-600" />
+                  </div>
+                ) : (
+                  <FaFileInvoiceDollar size={18} className="text-green-600" />
+                )}
+                {isSidebarOpen && <span className="font-medium">Facturas</span>}
+              </Link>
             </>
           )}
           {/* --- FIN SECCIÓN COTIZACIONES --- */}
@@ -241,53 +259,86 @@ export default function DashboardLayout() {
             para agrupar toda la lógica y que se oculte la sección completa.
           */}
 
-          {/* Separador de Orden de trabajo */}
-          {isSidebarOpen && (
-            <div className="pt-4 pb-2">
-              <p className="text-xs font-semibold text-secondary-500 uppercase tracking-wider px-3">
-                Orden de trabajo
-              </p>
-            </div>
-          )}
+          {/* --- SECCIÓN ORDEN DE TRABAJO (Oculta para técnicos y jefe de inventario) --- */}
+          {user?.rol !== 'tecnico' && user?.rol !== 'jefe_inventario' && (
+            <>
+              {/* Separador de Orden de trabajo */}
+              {isSidebarOpen && (
+                <div className="pt-4 pb-2">
+                  <p className="text-xs font-semibold text-secondary-500 uppercase tracking-wider px-3">
+                    Orden de trabajo
+                  </p>
+                </div>
+              )}
 
-          {/* 🆕 Órdenes de Trabajo - Todos los usuarios */}
-          <Link
-            to="/ordenes-trabajo"
-            onClick={handleNavClick}
-            className={`flex items-center gap-3 hover:bg-indigo-50 hover:text-indigo-700 transition-all duration-200 rounded-xl ${
-              !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
-            }`}
-          >
-            {isSidebarOpen ? (
-              <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-                <FaClipboardList size={16} className="text-indigo-600" />
-              </div>
-            ) : (
-              <FaClipboardList size={18} className="text-indigo-600" />
-            )}
-            {isSidebarOpen && <span className="font-medium">Órdenes de Trabajo</span>}
-          </Link>
+              {/* Órdenes de Trabajo */}
+              <Link
+                to="/ordenes-trabajo"
+                onClick={handleNavClick}
+                className={`flex items-center gap-3 hover:bg-indigo-50 hover:text-indigo-700 transition-all duration-200 rounded-xl ${
+                  !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
+                }`}
+              >
+                {isSidebarOpen ? (
+                  <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                    <FaClipboardList size={16} className="text-indigo-600" />
+                  </div>
+                ) : (
+                  <FaClipboardList size={18} className="text-indigo-600" />
+                )}
+                {isSidebarOpen && <span className="font-medium">Órdenes de Trabajo</span>}
+              </Link>
+            </>
+          )}
+          {/* --- FIN SECCIÓN ORDEN DE TRABAJO --- */}
 
           {/* Asignar OT eliminado: las OTs se asignan al crear */}
 
-          {/* Clientes - Solo Admin */}
+          {/* --- SECCIÓN GESTIÓN (Admin) --- */}
           {user && user.rol === 'admin' && (
-            <Link
-              to="/clientes"
-              onClick={handleNavClick}
-              className={`flex items-center gap-3 hover:bg-primary-50 hover:text-primary-700 transition-all duration-200 rounded-xl ${
-                !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
-              }`}
-            >
-              {isSidebarOpen ? (
-                <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
-                  <FaUsers size={16} className="text-primary-600" />
+            <>
+              {isSidebarOpen && (
+                <div className="pt-4 pb-2">
+                  <p className="text-xs font-semibold text-secondary-500 uppercase tracking-wider px-3">
+                    Gestión
+                  </p>
                 </div>
-              ) : (
-                <FaUsers size={18} className="text-primary-600" />
               )}
-              {isSidebarOpen && <span className="font-medium">Clientes</span>}
-            </Link>
+              {/* Clientes */}
+              <Link
+                to="/clientes"
+                onClick={handleNavClick}
+                className={`flex items-center gap-3 hover:bg-primary-50 hover:text-primary-700 transition-all duration-200 rounded-xl ${
+                  !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
+                }`}
+              >
+                {isSidebarOpen ? (
+                  <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
+                    <FaUsers size={16} className="text-primary-600" />
+                  </div>
+                ) : (
+                  <FaUsers size={18} className="text-primary-600" />
+                )}
+                {isSidebarOpen && <span className="font-medium">Clientes</span>}
+              </Link>
+              {/* Proveedores */}
+              <Link
+                to="/proveedores"
+                onClick={handleNavClick}
+                className={`flex items-center gap-3 hover:bg-teal-50 hover:text-teal-700 transition-all duration-200 rounded-xl ${
+                  !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
+                }`}
+              >
+                {isSidebarOpen ? (
+                  <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center">
+                    <FaTruck size={16} className="text-teal-600" />
+                  </div>
+                ) : (
+                  <FaTruck size={18} className="text-teal-600" />
+                )}
+                {isSidebarOpen && <span className="font-medium">Proveedores</span>}
+              </Link>
+            </>
           )}
 
           {/* Perfil - Todos los usuarios */}
@@ -318,7 +369,7 @@ export default function DashboardLayout() {
               </p>
               <p className="font-semibold text-secondary-800">{user.nombre}</p>
               <p className="text-xs text-secondary-500 mt-1">
-                {user.rol === 'admin' ? '👑 Administrador' : user.rol === 'responsable_inventario' ? '📦 Resp. Inventario' : '🔧 Técnico'}
+                {user.rol === 'admin' ? '👑 Administrador' : user.rol === 'jefe_inventario' ? '📦 Jefe de Inventario' : '🔧 Técnico'}
               </p>
             </div>
           )}

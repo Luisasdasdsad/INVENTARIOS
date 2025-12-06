@@ -17,6 +17,8 @@ import CrearOrdenTrabajoManual from "../features/ordenTrabajo/CrearOrdenTrabajoM
 import ProductoList from "../features/productos/ProductoList";
 import ClienteList from "../features/clientes/ClienteList";
 import PerfilForm from "../features/perfil/PerfilForm";
+import ProveedorList from "../features/proveedores/ProveedorList";
+import FacturaList from "../features/facturas/FacturaList";
 
 export default function AppRouter() {
   return (
@@ -44,14 +46,18 @@ export default function AppRouter() {
             <Route path="historial-cotizaciones" element={<CotizaciónHistorial />} /> {/* 🆕 Historial solo lectura */}
             <Route path="ordenes-trabajo" element={<OrdenTrabajoList />} /> {/* 🆕 Órdenes de Trabajo */}
             <Route path="ordenes-trabajo/crear" element={<CrearOrdenTrabajo />} />
+            <Route path="facturas" element={<FacturaList />} />
             <Route path="ordenes-trabajo/editar/:id" element={<CrearOrdenTrabajoManual />} />
           </Route>
 
           {/* Rutas Protegidas con Roles Específicos */}
+          <Route path="/" element={<PrivateRoute allowedRoles={['admin', 'tecnico', 'jefe_inventario']} />}>
+          <Route path="productos" element={<ProductoList />} />
+          </Route>
           <Route path="/" element={<PrivateRoute allowedRoles={['admin']} />}>
-            <Route path="productos" element={<ProductoList />} />
-            <Route path="clientes" element={<ClienteList />} />
-            <Route path="cotizaciones" element={<Cotización />} />
+          <Route path="clientes" element={<ClienteList />} />
+          <Route path="proveedores" element={<ProveedorList />} />
+          <Route path="cotizaciones" element={<Cotización />} />
           </Route>
 
           {/* Ruta para 404 */}

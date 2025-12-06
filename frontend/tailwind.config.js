@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -7,7 +7,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // 🎯 Amarillo principal (estilo TeamGas)
+        // Amarillo principal (estilo TeamGas)
         primary: {
           50: "#fffdea",
           100: "#fff4b3",
@@ -20,7 +20,7 @@ export default {
           800: "#665000",
           900: "#332800",
         },
-        // ⚙️ Gris / Azul oscuro neutro para fondos y texto
+        // Gris / Azul oscuro neutro para fondos y texto
         secondary: {
           50: "#f9fafb",
           100: "#e5e7eb",
@@ -33,7 +33,7 @@ export default {
           800: "#111827", // negro grisáceo
           900: "#000000", // negro profundo
         },
-        // 🖤 Negro puro para acentos o textos importantes
+        // Negro puro para acentos o textos importantes
         accent: {
           50: '#fafafa',
           100: '#f4f4f5',
@@ -46,7 +46,7 @@ export default {
           800: '#27272a',
           900: '#000000', // negro puro
         },
-        // ✅ Éxito (verde)
+        // Éxito (verde)
         success: {
           50: '#f0fdf4',
           100: '#dcfce7',
@@ -59,7 +59,7 @@ export default {
           800: '#166534',
           900: '#14532d',
         },
-        // ⚠️ Advertencia (amarillo más cálido)
+        // Advertencia (amarillo más cálido)
         warning: {
           50: '#fffbeb',
           100: '#fef3c7',
@@ -72,7 +72,7 @@ export default {
           800: '#92400e',
           900: '#78350f',
         },
-        // ❌ Error (rojo)
+        // Error (rojo)
         danger: {
           50: '#fef2f2',
           100: '#fee2e2',

@@ -66,6 +66,7 @@ export const getMisCotizaciones = async (req, res) => {
     })
       .populate('cliente')
       .populate('usuario', 'nombre email')
+      .populate('factura') // Popula la factura asociada
       .sort({ createdAt: -1 });
     
     res.json(cotizaciones);
@@ -104,6 +105,7 @@ export const getCotizaciones = async (req, res) => {
     const cotizaciones = await Cotizacion.find(filtros)
       .populate('cliente')
       .populate('usuario', 'nombre email rol')
+      .populate('factura') // Popula la factura asociada
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
@@ -125,7 +127,8 @@ export const getCotizacionById = async (req, res) => {
   try {
     const cotizacion = await Cotizacion.findById(req.params.id)
       .populate('cliente')
-      .populate('usuario', 'nombre email');
+      .populate('usuario', 'nombre email')
+      .populate('factura'); // Popula la factura asociada
     
     if (!cotizacion) {
       return res.status(404).json({ msg: "Cotización no encontrada" });
@@ -198,5 +201,41 @@ export const deleteCotizacion = async (req, res) => {
     res.json({ msg: "Cotización eliminada correctamente" });
   } catch (error) {
     res.status(500).json({ msg: "Error al eliminar cotización", error: error.message });
+  }
+};
+
+// ✅ NUEVO: Actualizar solo el estado de una cotización
+export const updateEstadoCotizacion = async (req, res) => {
+  try {
+    const { estado } = req.body;
+    const { id } = req.params;
+
+    // Validar que el estado enviado es uno de los permitidos en el modelo
+    const estadosValidos = Cotizacion.schema.path('estado').enumValues;
+    if (!estadosValidos.includes(estado)) {
+      return res.status(400).json({ msg: `Estado no válido. Los estados permitidos son: ${estadosValidos.join(', ')}` });
+    }
+
+    const cotizacion = await Cotizacion.findById(id);
+    if (!cotizacion) {
+      return res.status(404).json({ msg: "Cotización no encontrada" });
+    }
+
+    // Verificar permisos: solo el dueño o admin pueden cambiar el estado
+    if (req.user.rol !== 'admin' && cotizacion.usuario.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ msg: "No tienes permiso para modificar esta cotización" });
+    }
+
+    // Actualizar y devolver el documento actualizado
+    cotizacion.estado = estado;
+    await cotizacion.save();
+
+    // ✅ SOLUCIÓN: Volver a popular los datos antes de enviar la respuesta
+    const cotizacionActualizada = await Cotizacion.findById(id)
+      .populate('cliente').populate('usuario', 'nombre email');
+
+    res.json(cotizacionActualizada);
+  } catch (error) {
+    res.status(500).json({ msg: "Error al actualizar el estado de la cotización", error: error.message });
   }
 };

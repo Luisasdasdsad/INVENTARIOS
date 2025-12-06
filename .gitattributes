@@ -1,0 +1,14 @@
+# Tratar todos los archivos como 'auto' por defecto. Git intentará adivinar si son de texto o binarios.
+* text=auto eol=lf
+
+# Forzar explícitamente los finales de línea LF para los tipos de archivo más comunes.
+# Esto asegura consistencia en todos los sistemas operativos.
+*.js      text eol=lf
+*.jsx     text eol=lf
+*.css     text eol=lf
+*.html    text eol=lf
+*.json    text eol=lf
+*.md      text eol=lf
+*.yml     text eol=lf
+*.yaml    text eol=lf
+*.sh      text eol=lf
