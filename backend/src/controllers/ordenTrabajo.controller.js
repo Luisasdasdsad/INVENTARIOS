@@ -251,9 +251,9 @@ export const crearDesdeCotizacion = async (req, res) => {
         const cotizacion = await Cotizacion.findById(cotizacionId).populate('cliente');
         if (!cotizacion) return res.status(404).json({ message: 'Cotización no encontrada' });
 
-        // Asegurar que esté aprobada (si existe el campo estado en cotización)
-        if (cotizacion.estado && cotizacion.estado !== 'aprobada') {
-            return res.status(400).json({ message: 'La cotización debe estar aprobada para crear una orden de trabajo' });
+        // Asegurar que esté aprobada o facturada
+        if (cotizacion.estado && !['Aceptada', 'Facturada'].includes(cotizacion.estado)) {
+            return res.status(400).json({ message: 'La cotización debe estar aprobada o facturada para crear una orden de trabajo' });
         }
 
         // Asegurar que `cotizacion.productos` es un arreglo
