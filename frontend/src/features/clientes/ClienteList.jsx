@@ -133,22 +133,22 @@ const ClienteList = () => {
                   {cliente.nombre}
                 </h3>
                 <div className="text-sm text-gray-600 space-y-1">
-                  <p>
+                  <div>
                     <span className="font-semibold">Tipo Doc:</span>{" "}
                     {cliente.tipoDoc}
-                  </p>
-                  <p>
+                  </div>
+                  <div>
                     <span className="font-semibold">Número:</span>{" "}
                     {cliente.tipoDoc === "RUC"
                       ? cliente.ruc
                       : cliente.numero}
-                  </p>
-                  <p>
+                  </div>
+                  <div>
                     <span className="font-semibold">Dirección:</span>{" "}
                     {cliente.direccion || "No especificada"}
-                  </p>
-                  <p>
-                    <div className="flex items-center gap-2">
+                  </div>
+                  <div>
+                    <span className="flex items-center gap-2">
                       <span className="font-semibold">Teléfono:</span>
                       <span>{cliente.telefono || "No disponible"}</span>
                       {cliente.telefono && (
@@ -159,8 +159,8 @@ const ClienteList = () => {
                           className="text-green-500 hover:text-green-600"
                         ><FaWhatsapp /></a>
                       )}
-                    </div>
-                  </p>
+                    </span>
+                  </div>
                 </div>
 
                 <div className="flex gap-2 pt-4">

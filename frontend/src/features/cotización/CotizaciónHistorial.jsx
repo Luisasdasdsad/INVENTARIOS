@@ -77,7 +77,8 @@ const CotizaciónHistorial = () => {
       const fechaFormateada = new Date(cotizacion.fecha).toLocaleDateString('es-ES', {
         year: 'numeric',
         month: '2-digit',
-        day: '2-digit'
+        day: '2-digit',
+        timeZone: 'UTC'
       });
 
       await generarReporteCotizacion({
@@ -265,7 +266,7 @@ const CotizaciónHistorial = () => {
                     </p>
                     <p>
                       <span className="font-semibold">Fecha:</span>{" "}
-                      {new Date(cotizacion.fecha).toLocaleDateString()}
+                      {new Date(cotizacion.fecha).toLocaleDateString('es-ES', { timeZone: 'UTC' })}
                     </p>
                     <p>
                       <span className="font-semibold">Total:</span>{" "}
@@ -328,7 +329,7 @@ const CotizaciónHistorial = () => {
                           {cotizacion.usuario?.nombre || "N/A"}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-500">
-                          {new Date(cotizacion.fecha).toLocaleDateString()}
+                          {new Date(cotizacion.fecha).toLocaleDateString('es-ES', { timeZone: 'UTC' })}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600">
                           {cotizacion.moneda}

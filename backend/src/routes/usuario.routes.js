@@ -1,20 +1,22 @@
 import express from 'express';
-import { getUsuarios, updateUsuario, deleteUsuario } from '../controllers/usuario.controller.js';
+import { getUsuarios, updateUsuario, deleteUsuario, updateUserRole } from '../controllers/usuario.controller.js';
 import { auth, requireRole } from '../middlewares/auth.js';
 
 const router = express.Router();
 
-// Todas las rutas requieren autenticación y rol admin
+// Todas las rutas de usuarios requieren autenticación
 router.use(auth);
-router.use(requireRole(['admin']));
 
-// Obtener todos los usuarios
-router.get('/', getUsuarios);
+// Obtener todos los usuarios (admin y superadmin)
+router.get('/', requireRole(['admin', 'superadmin']), getUsuarios);
 
-// Actualizar usuario
-router.put('/:id', updateUsuario);
+// Actualizar usuario (admin y superadmin)
+router.put('/:id', requireRole(['admin', 'superadmin']), updateUsuario);
 
-// Eliminar usuario
-router.delete('/:id', deleteUsuario);
+// Actualizar solo el rol de un usuario (superadmin only)
+router.put('/:id/rol', requireRole(['superadmin']), updateUserRole);
+
+// Eliminar usuario (admin y superadmin)
+router.delete('/:id', requireRole(['admin', 'superadmin']), deleteUsuario);
 
 export default router;

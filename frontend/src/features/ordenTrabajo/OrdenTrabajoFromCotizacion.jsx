@@ -16,7 +16,8 @@ const OrdenTrabajoFromCotizacion = () => {
     tecnicoId: "",
     observaciones: "",
     instruccionesTecnico: "",
-    descripcionServicio: "" // 💡 Añadimos el campo al estado del formulario
+    descripcionServicio: "", // 💡 Añadimos el campo al estado del formulario
+    ubicacion: "",
   });
 
   // Añadir fechas al formulario
@@ -107,7 +108,8 @@ const OrdenTrabajoFromCotizacion = () => {
         formData.fechaInicio,
         formData.fechaFin,
         formData.instruccionesTecnico,
-        formData.descripcionServicio // 💡 Enviamos la descripción actualizada
+        formData.descripcionServicio,
+        formData.ubicacion
       );
 
       alert("Orden de trabajo creada exitosamente desde la cotización");
@@ -217,6 +219,12 @@ const OrdenTrabajoFromCotizacion = () => {
                 <option value="">Seleccionar técnico</option>
                 {tecnicos.map(tecnico => (<option key={tecnico._id} value={tecnico._id}>{tecnico.nombre}</option>))}
               </select>
+            </div>
+
+            {/* Ubicación */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Ubicación de la Obra</label>
+              <input type="text" name="ubicacion" value={formData.ubicacion} onChange={handleInputChange} className="input-field" placeholder="Ingrese la ubicación de la obra" />
             </div>
 
             {/* Fechas */}

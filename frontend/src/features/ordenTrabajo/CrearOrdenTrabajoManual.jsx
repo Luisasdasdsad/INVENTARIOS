@@ -4,8 +4,8 @@ import api from '../../services/api';
 import { ordenTrabajoService } from './ordenTrabajoService';
 
 export default function CrearOrdenTrabajoManual() {
-  const { id } = useParams(); // Hook para obtener el ID de la URL
-  const navigate = useNavigate(); // Hook para navegar
+  const { id } = useParams();
+  const navigate = useNavigate();
   const isEditMode = Boolean(id);
 
   const [clientes, setClientes] = useState([]);
@@ -23,7 +23,8 @@ export default function CrearOrdenTrabajoManual() {
     fechaInicio: '',
     fechaFin: '',
     productos: [],
-    herramientas: []
+    herramientas: [],
+    ubicacion: ''
   });
 
   useEffect(() => {
@@ -44,7 +45,6 @@ export default function CrearOrdenTrabajoManual() {
         if (isEditMode) {
           const otRes = await api.get(`/ordenes-trabajo/${id}`);
           const ot = otRes.data;
-          // Formatear fechas para input type="date" (YYYY-MM-DD)
           const formatDateForInput = (date) => {
             if (!date) return '';
             return new Date(date).toISOString().split('T')[0];
@@ -59,7 +59,8 @@ export default function CrearOrdenTrabajoManual() {
             fechaInicio: formatDateForInput(ot.fechaInicio),
             fechaFin: formatDateForInput(ot.fechaFin),
             productos: ot.productos.map(p => ({ producto: p.producto._id, cantidad: p.cantidad })),
-            herramientas: ot.herramientas?.map(h => ({ herramienta: h.herramienta._id, cantidad: h.cantidad })) || []
+            herramientas: ot.herramientas?.map(h => ({ herramienta: h.herramienta._id, cantidad: h.cantidad })) || [],
+            ubicacion: ot.ubicacion || ''
           });
         }
       } catch (error) {
@@ -72,10 +73,27 @@ export default function CrearOrdenTrabajoManual() {
     fetchInitialData();
   }, [id, isEditMode]);
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+  };
+
   const addProducto = () => setForm(prev => ({ ...prev, productos: [...prev.productos, { producto: '', cantidad: 1 }] }));
   const removeProducto = (index) => setForm(prev => ({ ...prev, productos: prev.productos.filter((_, i) => i !== index) }));
+  const handleProductoChange = (index, field, value) => {
+    const newProductos = [...form.productos];
+    newProductos[index][field] = value;
+    setForm(prev => ({ ...prev, productos: newProductos }));
+  };
+
   const addHerramienta = () => setForm(prev => ({ ...prev, herramientas: [...prev.herramientas, { herramienta: '', cantidad: 1 }] }));
   const removeHerramienta = (index) => setForm(prev => ({ ...prev, herramientas: prev.herramientas.filter((_, i) => i !== index) }));
+  const handleHerramientaChange = (index, field, value) => {
+    const newHerramientas = [...form.herramientas];
+    newHerramientas[index][field] = value;
+    setForm(prev => ({ ...prev, herramientas: newHerramientas }));
+  };
+
 
   const submit = async (e) => {
     e.preventDefault();
@@ -84,7 +102,6 @@ export default function CrearOrdenTrabajoManual() {
       return;
     }
 
-    // Validación de fechas
     if (!form.fechaInicio || !form.fechaFin) {
       alert("Debes seleccionar una fecha de inicio y una fecha de fin.");
       return;
@@ -112,7 +129,7 @@ export default function CrearOrdenTrabajoManual() {
         await ordenTrabajoService.crearOrdenTrabajo(payload);
         alert('Orden de trabajo creada exitosamente');
       }
-      navigate('/ordenes-trabajo'); // Redirigir a la lista
+      navigate('/ordenes-trabajo');
     } catch (error) {
       console.error('Error guardando la orden:', error);
       const serverMsg = error.response?.data?.message || 'Ocurrió un error.';
@@ -128,99 +145,103 @@ export default function CrearOrdenTrabajoManual() {
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-6">{isEditMode ? 'Editar Orden de Trabajo' : 'Crear Orden de Trabajo Manual'}</h2>
       <form onSubmit={submit} className="space-y-6">
-        {/* ... (el resto del formulario JSX no cambia) ... */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Cliente</label>
-          <select value={form.cliente} onChange={e => setForm({ ...form, cliente: e.target.value })} required className="input-field mt-1">
-            <option value="">Seleccionar cliente</option>
-            {clientes.map(c => <option key={c._id} value={c._id}>{c.nombre}</option>)}
-          </select>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Cliente</label>
+            <select name="cliente" value={form.cliente} onChange={handleInputChange} required className="input-field mt-1">
+              <option value="">Seleccionar cliente</option>
+              {clientes.map(c => <option key={c._id} value={c._id}>{c.nombre}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Técnico asignado</label>
+            <select name="tecnicoAsignado" value={form.tecnicoAsignado} onChange={handleInputChange} className="input-field mt-1">
+              <option value="">Sin asignar</option>
+              {tecnicos.map(t => <option key={t._id} value={t._id}>{t.nombre}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Fecha de Inicio *</label>
+            <input type="date" name="fechaInicio" value={form.fechaInicio} onChange={handleInputChange} className="input-field mt-1" required />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Fecha de Fin *</label>
+            <input type="date" name="fechaFin" value={form.fechaFin} onChange={handleInputChange} className="input-field mt-1" required />
+          </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Técnico asignado</label>
-          <select value={form.tecnicoAsignado} onChange={e => setForm({ ...form, tecnicoAsignado: e.target.value })} className="input-field mt-1">
-            <option value="">Sin asignar</option>
-            {tecnicos.map(t => <option key={t._id} value={t._id}>{t.nombre}</option>)}
-          </select>
+          <label className="block text-sm font-medium text-gray-700">Descripción del servicio</label>
+          <textarea name="descripcionServicio" value={form.descripcionServicio} onChange={handleInputChange} className="input-field mt-1" rows={4} />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Fecha de Inicio *</label>
-          <input type="date" value={form.fechaInicio} onChange={e => setForm({ ...form, fechaInicio: e.target.value })} className="input-field mt-1" required />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Fecha de Fin *</label>
-          <input type="date" value={form.fechaFin} onChange={e => setForm({ ...form, fechaFin: e.target.value })} className="input-field mt-1" required />
-        </div>
-      </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Descripción del servicio</label>
-        <textarea value={form.descripcionServicio} onChange={e => setForm({ ...form, descripcionServicio: e.target.value })} className="input-field mt-1" rows={4} />
-      </div>
-
-      <div className="bg-gray-50 p-4 rounded-md">
-        <div className="flex items-center justify-between mb-2">
-          <h4 className="text-sm font-semibold">Productos</h4>
-          <button type="button" onClick={addProducto} className="btn-secondary text-sm">+ Agregar</button>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Ubicación de la obra</label>
+          <textarea name="ubicacion" value={form.ubicacion} onChange={handleInputChange} className="input-field mt-1" rows={2} />
         </div>
-        {form.productos.length === 0 && <div className="text-sm text-gray-500">No hay productos agregados.</div>}
-        <div className="space-y-2 mt-2">
-          {form.productos.map((p, i) => (
-            <div key={i} className="grid grid-cols-12 gap-2 items-center">
+
+        <div className="bg-gray-50 p-4 rounded-md">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-sm font-semibold">Productos</h4>
+            <button type="button" onClick={addProducto} className="btn-secondary text-sm">+ Agregar</button>
+          </div>
+          {form.productos.length === 0 && <div className="text-sm text-gray-500">No hay productos agregados.</div>}
+          <div className="space-y-2 mt-2">
+            {form.productos.map((p, i) => (
+              <div key={i} className="grid grid-cols-12 gap-2 items-center">
                 <div className="col-span-7">
-                <select value={p.producto} onChange={e => { const newP = [...form.productos]; newP[i].producto = e.target.value; setForm({ ...form, productos: newP }); }} className="input-field">
-                  <option value="">Seleccionar producto</option>
-                  {productosDB.map(prod => <option key={prod._id} value={prod._id}>{prod.nombre}</option>)}
-                </select>
+                  <select value={p.producto} onChange={e => handleProductoChange(i, 'producto', e.target.value)} className="input-field">
+                    <option value="">Seleccionar producto</option>
+                    {productosDB.map(prod => <option key={prod._id} value={prod._id}>{prod.nombre}</option>)}
+                  </select>
+                </div>
+                <div className="col-span-3">
+                  <input type="number" min="1" value={p.cantidad} onChange={e => handleProductoChange(i, 'cantidad', Number(e.target.value))} className="input-field" />
+                </div>
+                <div className="col-span-2 text-right">
+                  <button type="button" onClick={() => removeProducto(i)} className="text-sm text-red-600">Eliminar</button>
+                </div>
               </div>
-              <div className="col-span-3">
-                <input type="number" min="1" value={p.cantidad} onChange={e => { const newP = [...form.productos]; newP[i].cantidad = Number(e.target.value); setForm({ ...form, productos: newP }); }} className="input-field" />
-              </div>
-              <div className="col-span-2 text-right">
-                <button type="button" onClick={() => removeProducto(i)} className="text-sm text-red-600">Eliminar</button>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
 
-      <div className="bg-gray-50 p-4 rounded-md">
-        <div className="flex items-center justify-between mb-2">
-          <h4 className="text-sm font-semibold">Herramientas</h4>
-          <button type="button" onClick={addHerramienta} className="btn-secondary text-sm">+ Agregar</button>
-        </div>
-        {form.herramientas.length === 0 && <div className="text-sm text-gray-500">No hay herramientas agregadas.</div>}
-        <div className="space-y-2 mt-2">
-          {form.herramientas.map((h, i) => (
-            <div key={i} className="grid grid-cols-12 gap-2 items-center">
+        <div className="bg-gray-50 p-4 rounded-md">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-sm font-semibold">Herramientas</h4>
+            <button type="button" onClick={addHerramienta} className="btn-secondary text-sm">+ Agregar</button>
+          </div>
+          {form.herramientas.length === 0 && <div className="text-sm text-gray-500">No hay herramientas agregadas.</div>}
+          <div className="space-y-2 mt-2">
+            {form.herramientas.map((h, i) => (
+              <div key={i} className="grid grid-cols-12 gap-2 items-center">
                 <div className="col-span-7">
-                <select value={h.herramienta} onChange={e => { const newH = [...form.herramientas]; newH[i].herramienta = e.target.value; setForm({ ...form, herramientas: newH }); }} className="input-field">
-                  <option value="">Seleccionar herramienta</option>
-                  {herramientasDB.map(hd => <option key={hd._id} value={hd._id}>{hd.nombre}</option>)}
-                </select>
+                  <select value={h.herramienta} onChange={e => handleHerramientaChange(i, 'herramienta', e.target.value)} className="input-field">
+                    <option value="">Seleccionar herramienta</option>
+                    {herramientasDB.map(hd => <option key={hd._id} value={hd._id}>{hd.nombre}</option>)}
+                  </select>
+                </div>
+                <div className="col-span-3">
+                  <input type="number" min="1" value={h.cantidad} onChange={e => handleHerramientaChange(i, 'cantidad', Number(e.target.value))} className="input-field" />
+                </div>
+                <div className="col-span-2 text-right">
+                  <button type="button" onClick={() => removeHerramienta(i)} className="text-sm text-red-600">Eliminar</button>
+                </div>
               </div>
-              <div className="col-span-3">
-                <input type="number" min="1" value={h.cantidad} onChange={e => { const newH = [...form.herramientas]; newH[i].cantidad = Number(e.target.value); setForm({ ...form, herramientas: newH }); }} className="input-field" />
-              </div>
-              <div className="col-span-2 text-right">
-                <button type="button" onClick={() => removeHerramienta(i)} className="text-sm text-red-600">Eliminar</button>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Observaciones</label>
-        <textarea value={form.observaciones} onChange={e => setForm({ ...form, observaciones: e.target.value })} className="input-field mt-1" rows={3} />
-      </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Observaciones</label>
+          <textarea name="observaciones" value={form.observaciones} onChange={handleInputChange} className="input-field mt-1" rows={3} />
+        </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Instrucciones para el Técnico</label>
-        <textarea value={form.instruccionesTecnico} onChange={e => setForm({ ...form, instruccionesTecnico: e.target.value })} className="input-field mt-1" rows={3} />
-      </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Instrucciones para el Técnico</label>
+          <textarea name="instruccionesTecnico" value={form.instruccionesTecnico} onChange={handleInputChange} className="input-field mt-1" rows={3} />
+        </div>
 
         <div className="flex justify-end">
           <button type="submit" className="btn-primary">{isEditMode ? 'Guardar Cambios' : 'Crear Orden de Trabajo'}</button>

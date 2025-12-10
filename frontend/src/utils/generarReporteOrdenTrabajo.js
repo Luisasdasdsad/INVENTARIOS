@@ -13,6 +13,7 @@ const generarReporteOrdenTrabajo = async (ordenTrabajo) => {
     instruccionesTecnico,
     descripcionServicio,
     createdAt,
+    ubicacion,
   } = ordenTrabajo;
 
   // Formatear fechas
@@ -22,6 +23,7 @@ const generarReporteOrdenTrabajo = async (ordenTrabajo) => {
       year: "numeric",
       month: "long",
       day: "numeric",
+      timeZone: 'UTC',
     });
   };
 
@@ -65,6 +67,7 @@ const generarReporteOrdenTrabajo = async (ordenTrabajo) => {
         <p><b>Nombre:</b> ${cliente?.nombre ?? 'N/A'}</p>
         <p><b>${cliente?.tipoDoc || 'Documento'}:</b> ${cliente?.tipoDoc === 'RUC' ? (cliente?.ruc || 'N/A') : (cliente?.numero || 'N/A')}</p>
         <p><b>Dirección:</b> ${cliente?.direccion || ''}</p>
+        <p><b>Ubicación de la obra:</b> ${ubicacion || ''}</p>
       </div>
 
       <div style="width: 48%; border: 2px solid #007bff; border-radius: 8px; padding: 5px;">

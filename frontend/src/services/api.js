@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: "https://inventarios-axfm.onrender.com/api",
+  baseURL: "http://localhost:5000/api",
 });
 
 // Interceptor para agregar el token

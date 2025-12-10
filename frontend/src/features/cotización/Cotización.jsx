@@ -26,6 +26,7 @@ const Cotización = () => {
   const [descripcionServicio, setDescripcionServicio] = useState("");
   const [numeroCotizacion, setNumeroCotizacion] = useState("");
   const [descuento, setDescuento] = useState(0);
+  const [tipoCambio, setTipoCambio] = useState(1);
   const [validez, setValidez] = useState(15);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -238,6 +239,7 @@ const Cotización = () => {
       total,
       fecha,
       moneda,
+      tipoCambio: moneda === 'DOLARES' ? tipoCambio : null,
       numeroCotizacion: numeroCotizacion || "001",
       condicionPago: "CONTADO",
       validez: `${validez} días`,
@@ -350,6 +352,20 @@ const Cotización = () => {
               <option value="DOLARES">DÓLARES</option>
             </select>
           </div>
+          {moneda === 'DOLARES' && (
+            <div>
+              <label className="text-sm text-gray-600">Tipo de Cambio (S/)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={tipoCambio}
+                onChange={(e) => setTipoCambio(parseFloat(e.target.value) || 1)}
+                placeholder="3.75"
+                className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          )}
           <div>
             <label className="text-sm text-gray-600">Descuento (S/)</label>
             <input

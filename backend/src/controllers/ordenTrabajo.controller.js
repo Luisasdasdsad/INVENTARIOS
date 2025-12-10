@@ -4,7 +4,7 @@ import Cotizacion from "../models/cotización.model.js";
 
 export const crearOrdenTrabajo = async (req, res) => {
     try {
-        const { numeroOT, cliente, productos, tecnicoAsignado, cotizacion, descripcionServicio, tareas, herramientas, fechaInicio, fechaFin } = req.body;
+        const { numeroOT, cliente, productos, tecnicoAsignado, cotizacion, descripcionServicio, tareas, herramientas, fechaInicio, fechaFin, ubicacion } = req.body;
 
         // Helper: parse YYYY-MM-DD (from <input type="date">) into a local Date to avoid timezone shifts
         const parseDateLocal = (d) => {
@@ -89,6 +89,7 @@ export const crearOrdenTrabajo = async (req, res) => {
             descripcionServicio,
             tareas,
             herramientas,
+            ubicacion, // Añadir aquí
             fechaAsignacion: tecnicoAsignado ? new Date() : undefined,
             fechaInicio: parseDateLocal(fechaInicio),
             fechaFin: parseDateLocal(fechaFin)
@@ -243,7 +244,7 @@ export const cambiarEstadoOT = async (req, res) => {
 // Crear OT a partir de una cotización
 export const crearDesdeCotizacion = async (req, res) => {
     try {
-        const { cotizacionId, tecnicoId, observaciones, fechaInicio, fechaFin, instruccionesTecnico, descripcionServicio } = req.body;
+        const { cotizacionId, tecnicoId, observaciones, fechaInicio, fechaFin, instruccionesTecnico, descripcionServicio, ubicacion } = req.body;
 
         console.log('crearDesdeCotizacion payload:', { cotizacionId, tecnicoId, observaciones, instruccionesTecnico, descripcionServicio });
 
@@ -325,7 +326,8 @@ export const crearDesdeCotizacion = async (req, res) => {
             descripcionServicio: descripcionServicio || cotizacion.descripcionServicio || '',
             tareas: tareasFromCot,
             fechaInicio: fechaInicio ? new Date(fechaInicio) : undefined,
-            fechaFin: fechaFin ? new Date(fechaFin) : undefined
+            fechaFin: fechaFin ? new Date(fechaFin) : undefined,
+            ubicacion
         });
 
         try {

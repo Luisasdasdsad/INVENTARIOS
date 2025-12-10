@@ -9,9 +9,6 @@ export const generarFactura = async (datosFactura) => {
     cliente, // { nombre, ruc, direccion }
     items,   // [{ cantidad, unidad, descripcion, precioUnitario, total }]
     totales, // { subtotal, descuento, opGravada, igv, totalPagar }
-    cuentas, // [{ banco, moneda, cuenta, cci }]
-    pagosDigitales, // [{ tipo, numero, titular }]
-    observaciones,
   } = datosFactura;
 
   // Construir las filas de la tabla de items
@@ -23,11 +20,6 @@ export const generarFactura = async (datosFactura) => {
       <td class="numero">${item.precioUnitario.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
       <td class="numero">${item.total.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
     </tr>
-  `).join('');
-
-  // Construir la sección de cuentas bancarias
-  const cuentasHtml = cuentas.map(c => `
-    <p><strong>${c.banco} (${c.moneda}):</strong> ${c.cuenta} | <strong>CCI:</strong> ${c.cci}</p>
   `).join('');
 
   // Plantilla HTML de la factura
@@ -106,10 +98,6 @@ export const generarFactura = async (datosFactura) => {
           </div>
 
           <div class="footer">
-            <h4>Información de Pago:</h4>
-            ${cuentasHtml}
-            <hr/>
-            <p><strong>Observaciones:</strong> ${observaciones || 'Ninguna.'}</p>
             <p style="text-align: center; margin-top: 20px;">¡Gracias por su preferencia!</p>
           </div>
         </div>

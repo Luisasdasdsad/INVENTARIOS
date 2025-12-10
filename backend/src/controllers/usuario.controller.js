@@ -14,11 +14,6 @@ export const updateUsuario = async (req, res) => {
         const { id } = req.params;
         const { nombre, email, rol } = req.body;
 
-        // Solo admin puede actualizar usuarios
-        if (req.user.rol !== 'admin') {
-            return res.status(403).json({ msg: 'Solo administradores pueden gestionar usuarios' });
-        }
-
         const usuario = await User.findByIdAndUpdate(
             id,
             { nombre, email, rol },
@@ -39,11 +34,6 @@ export const deleteUsuario = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Solo admin puede eliminar usuarios
-        if (req.user.rol !== 'admin') {
-            return res.status(403).json({ msg: 'Solo administradores pueden eliminar usuarios' });
-        }
-
         // No permitir eliminar al propio usuario
         if (req.user.id === id) {
             return res.status(400).json({ msg: 'No puedes eliminar tu propio usuario' });
@@ -58,5 +48,35 @@ export const deleteUsuario = async (req, res) => {
         res.json({ msg: 'Usuario eliminado correctamente' });
     } catch (error) {
         res.status(500).json({ msg: 'Error al eliminar usuario', error });
+    }
+};
+
+export const updateUserRole = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { rol } = req.body;
+
+        if (!rol) {
+            return res.status(400).json({ msg: 'El campo rol es requerido' });
+        }
+
+        // Un superadmin no puede cambiarse el rol a sí mismo para evitar bloqueos
+        if (req.user.id === id) {
+            return res.status(400).json({ msg: 'No puedes cambiar tu propio rol como superadmin' });
+        }
+
+        const usuario = await User.findByIdAndUpdate(
+            id,
+            { rol },
+            { new: true, select: '-password' }
+        );
+
+        if (!usuario) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
+
+        res.json(usuario);
+    } catch (error) {
+        res.status(500).json({ msg: 'Error al actualizar el rol del usuario', error });
     }
 };

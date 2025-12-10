@@ -259,8 +259,8 @@ export default function DashboardLayout() {
             para agrupar toda la lógica y que se oculte la sección completa.
           */}
 
-          {/* --- SECCIÓN ORDEN DE TRABAJO (Oculta para técnicos y jefe de inventario) --- */}
-          {user?.rol !== 'tecnico' && user?.rol !== 'jefe_inventario' && (
+          {/* --- SECCIÓN ORDEN DE TRABAJO (Oculta para jefe de inventario) --- */}
+          {user?.rol !== 'jefe_inventario' && (
             <>
               {/* Separador de Orden de trabajo */}
               {isSidebarOpen && (

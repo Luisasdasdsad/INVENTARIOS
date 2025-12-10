@@ -107,26 +107,20 @@ const CotizaciónList = () => {
   
     // Datos de la empresa (pueden venir de un contexto, config, etc.)
     const empresa = {
-      nombre: "SOLUCIONES Y SERVICIOS GENERALES SAC",
-      ruc: "20606422259",
-      direccion: "CAL. LAS CAMELIAS NRO. 176 INT. 201 URB. SANTA ISABEL LIMA - LIMA - SAN ISIDRO",
-      telefono: "960 629 031",
-      email: "proyectos@solucionesyserviciosgenerales.com",
+      nombre: "TEAM GAS S.A.C.",
+      ruc: "20604956499",
+      direccion: "Jr. Coronel Guerra Nro. 152 (Plaza Principal) Junín - Chupaca - Chupaca",
+      telefono: "997030802 - 919289085",
+      email: "info@teamgas.com.pe",
     };
-  
-    // Cuentas bancarias
-    const cuentas = [
-      { banco: 'BCP', moneda: 'Soles', cuenta: '191-2345678-0-01', cci: '002-191-002345678001-55' },
-      { banco: 'BCP', moneda: 'Dólares', cuenta: '191-2345679-1-02', cci: '002-191-002345679102-56' }
-    ];
   
     const datosParaPdf = {
       logoUrl: '/logo.png', // Logo en la carpeta public
       empresa,
       factura: {
         numero: cotizacion.factura.numeroFactura,
-        fechaEmision: new Date(cotizacion.factura.fechaEmision).toLocaleDateString('es-PE'),
-        fechaVencimiento: new Date(cotizacion.factura.fechaVencimiento).toLocaleDateString('es-PE'),
+        fechaEmision: new Date(cotizacion.factura.fechaEmision).toLocaleDateString('es-PE', { timeZone: 'UTC' }),
+        fechaVencimiento: new Date(cotizacion.factura.fechaVencimiento).toLocaleDateString('es-PE', { timeZone: 'UTC' }),
       },
       cliente: {
         nombre: cotizacion.cliente?.nombre || "",
@@ -144,8 +138,6 @@ const CotizaciónList = () => {
         igv: cotizacion.factura.igv,
         totalPagar: cotizacion.factura.totalGeneral,
       },
-      cuentas,
-      observaciones: `Factura generada desde la Cotización #${cotizacion.numeroCotizacion}`,
     };
   
     try {
@@ -179,7 +171,8 @@ const CotizaciónList = () => {
       const fechaFormateada = new Date(cotizacion.fecha).toLocaleDateString('es-ES', {
         year: 'numeric',
         month: '2-digit',
-        day: '2-digit'
+        day: '2-digit',
+        timeZone: 'UTC'
       });
 
       await generarReporteCotizacion({
@@ -303,7 +296,7 @@ const CotizaciónList = () => {
                   </div>
                   <p>
                     <span className="font-semibold">Fecha:</span>{" "}
-                    {new Date(cotizacion.fecha).toLocaleDateString()}
+                    {new Date(cotizacion.fecha).toLocaleDateString('es-ES', { timeZone: 'UTC' })}
                   </p>
                   <p>
                     <span className="font-semibold">Total:</span>{" "}
@@ -333,20 +326,18 @@ const CotizaciónList = () => {
                       )}
                     </>
                   )}
-                   <button
+                  <button
                     onClick={() => handleImprimir(cotizacion)}
                     className="flex items-center justify-center gap-1 bg-gray-500 text-white py-2 rounded-md hover:bg-gray-600 text-xs font-medium"
                   >
                     <FaFilePdf className="inline-block mr-1" /> Ver Coti
                   </button>
-                  {cotizacion.estado !== 'Facturada' && (
-                     <button
-                      onClick={() => handleDelete(cotizacion._id)}
-                      className="flex items-center justify-center gap-1 bg-danger-500 text-white py-2 rounded-md hover:bg-danger-600 text-xs font-medium"
-                    >
-                      <FaTrash className="inline-block mr-1" />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => handleDelete(cotizacion._id)}
+                    className="flex items-center justify-center gap-1 bg-danger-500 text-white py-2 rounded-md hover:bg-danger-600 text-xs font-medium"
+                  >
+                    <FaTrash className="inline-block mr-1" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -390,7 +381,7 @@ const CotizaciónList = () => {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-secondary-500">
-                        {new Date(cotizacion.fecha).toLocaleDateString()}
+                        {new Date(cotizacion.fecha).toLocaleDateString('es-ES', { timeZone: 'UTC' })}
                       </td>
                       <td className="px-4 py-3 text-sm font-semibold text-secondary-900">
                         {cotizacion.moneda === "SOLES"
@@ -450,11 +441,9 @@ const CotizaciónList = () => {
                         </button>
 
                         {/* Eliminar si no está facturada */}
-                        {cotizacion.estado !== 'Facturada' && (
-                          <button onClick={() => handleDelete(cotizacion._id)} className="text-danger-600 hover:text-danger-700 font-medium text-xs">
-                            <FaTrash className="inline-block mr-1" />
-                          </button>
-                        )}
+                        <button onClick={() => handleDelete(cotizacion._id)} className="text-danger-600 hover:text-danger-700 font-medium text-xs">
+                          <FaTrash className="inline-block mr-1" />
+                        </button>
                       </td>
                     </tr>
                   ))}

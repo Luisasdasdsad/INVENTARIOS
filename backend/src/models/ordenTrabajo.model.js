@@ -24,6 +24,8 @@ const ordenTrabajoSchema = new mongoose.Schema({
     ref: "Cliente",
     required: true },
 
+    ubicacion: { type: String },
+
     productos: [{
         producto: { type: mongoose.Schema.Types.ObjectId, ref: "Producto", required: true },
         cantidad: { type: Number, required: true, min: 1 }

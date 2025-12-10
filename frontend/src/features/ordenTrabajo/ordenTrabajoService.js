@@ -32,7 +32,7 @@ export const ordenTrabajoService = {
   },
 
   // Crear orden de trabajo desde cotización
-  crearDesdeCotizacion: async (cotizacionId, tecnicoId, observaciones, fechaInicio, fechaFin, instruccionesTecnico, descripcionServicio) => {
+  crearDesdeCotizacion: async (cotizacionId, tecnicoId, observaciones, fechaInicio, fechaFin, instruccionesTecnico, descripcionServicio, ubicacion) => {
     const response = await api.post("/ordenes-trabajo/desde-cotizacion", {
       cotizacionId,
       tecnicoId,
@@ -40,7 +40,8 @@ export const ordenTrabajoService = {
       fechaInicio,
       fechaFin,
       instruccionesTecnico,
-      descripcionServicio // 💡 Añadido el campo que faltaba
+      descripcionServicio,
+      ubicacion
     });
     return response.data;
   },
