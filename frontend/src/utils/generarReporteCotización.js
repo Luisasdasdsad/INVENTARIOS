@@ -262,7 +262,7 @@ const generarReporteCotizacion = async (cotizacion) => {
             <tr><td style="padding: 4px;">Subtotal</td><td style="text-align: right; padding-left: 15px;">${formattedSubtotal}</td></tr>
             <tr><td style="padding: 4px;">Descuento</td><td style="text-align: right; padding-left: 15px;">${formattedDescuento}</td></tr>
             <tr><td style="padding: 4px;">IGV (18%)</td><td style="text-align: right; padding-left: 15px;">${formattedIGV}</td></tr>
-            <tr style="background: #fff3cd; font-weight: bold;"><td style="padding: 4px;">TOTAL</td><td style="text-align: right; padding-left: 15px;">${formattedTotal}</td></tr>
+            <tr style="font-weight: bold;"><td style="padding: 8px 4px; background: #fff3cd;">TOTAL</td><td style="text-align: right; padding-left: 15px; background: #fff3cd;">${formattedTotal}</td></tr>
           </table>
         </div>
       </div>
