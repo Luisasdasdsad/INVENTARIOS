@@ -243,10 +243,10 @@ const generarReporteCotizacion = async (cotizacion) => {
             <p style="margin: 2px 0;"><b>Cuenta corriente en dólares:</b> 003-500-003004600486-64</p>
             <p style="margin: 2px 0;"><b>Titular:</b> TEAM GAS SAC</p>
           </div>
-          ${tipoCambio ? `
+          ${(tipoCambio || (moneda && moneda.toUpperCase().includes("DOL"))) ? `
           <div style="margin-top: 10px;">
             <p style="margin: 0; font-weight: bold;">Tipo de Cambio:</p>
-            <p style="margin: 0;">S/ ${parseFloat(tipoCambio).toFixed(2)} por Dólar</p>
+            <p style="margin: 0;">S/ ${parseFloat(tipoCambio || 0).toFixed(2)} por Dólar</p>
           </div>
           ` : ''}
         </div>

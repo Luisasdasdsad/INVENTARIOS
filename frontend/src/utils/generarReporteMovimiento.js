@@ -73,18 +73,33 @@ export const generarReporteMovimientoIndividual = (movimiento) => {
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("HERRAMIENTAS INVOLUCRADAS", 40, startYHerramientas);
+  doc.text("ÍTEMS INVOLUCRADOS", 40, startYHerramientas);
 
-  const herramientasDatos = movimiento.herramientas.map(h => [
-    h.herramienta?.nombre || 'N/A',
-    h.herramienta?.marca || 'N/A',
-    h.herramienta?.modelo || 'N/A',
-    `${h.cantidad} ${h.herramienta?.unidad || 'unidad'}`,
+  // --- INICIO DE LA CORRECCIÓN ---
+  // Normalizar los datos para que siempre sean un array de ítems
+  let items = [];
+  if (movimiento.herramientas && movimiento.herramientas.length > 0) {
+    // Caso 1: Movimiento de herramientas (formato nuevo con array)
+    items = movimiento.herramientas;
+  } else if (movimiento.producto) {
+    // Caso 2: Movimiento de producto (objeto singular)
+    items = [{ herramienta: movimiento.producto, cantidad: movimiento.cantidad }];
+  } else if (movimiento.herramienta) {
+    // Caso 3: Movimiento de herramienta antiguo (objeto singular)
+    items = [{ herramienta: movimiento.herramienta, cantidad: movimiento.cantidad }];
+  }
+
+  const herramientasDatos = items.map(h => [
+    h.herramienta?.nombre || 'Ítem no encontrado',
+    h.herramienta?.marca || '-',
+    h.herramienta?.modelo || '-',
+    `${h.cantidad || 0} ${h.herramienta?.unidad || 'unidad'}`,
   ]);
+  // --- FIN DE LA CORRECCIÓN ---
 
   autoTable(doc, {
     startY: startYHerramientas + 20,
-    head: [["Herramienta", "Marca", "Modelo", "Cantidad"]],
+    head: [["Ítem", "Marca", "Modelo", "Cantidad"]],
     body: herramientasDatos,
     theme: "grid",
     headStyles: {
@@ -164,7 +179,7 @@ export const generarReporteMovimientos = (movimientosFiltrados = []) => {
     { header: "Fecha", dataKey: "fecha" },
     { header: "Hora", dataKey: "hora" },
     { header: "Movimiento", dataKey: "tipo" },
-    { header: "Herramienta", dataKey: "herramienta" },
+    { header: "Ítem/Descripción", dataKey: "herramienta" },
     { header: "Cantidad", dataKey: "cantidad" },
     { header: "Responsable", dataKey: "usuario" },
     { header: "Obra", dataKey: "obra" },
@@ -186,35 +201,47 @@ export const generarReporteMovimientos = (movimientosFiltrados = []) => {
     });
     const tipoMov = m.tipo || "—";
     const usuarioMov = m.usuario?.nombre || "—";
-    const obraMov = m.obra || "—";
+    const obraMov = m.obra || "—"; 
     const notaMov = m.nota || "—";
 
+    // --- INICIO DE LA CORRECCIÓN ---
     if (m.herramientas && m.herramientas.length > 0) {
       m.herramientas.forEach((h) => {
         filas.push({
           fecha: fechaMov,
           hora: horaMov,
           tipo: tipoMov,
-          herramienta: h.herramienta?.nombre || "—",
+          herramienta: h.herramienta?.nombre || "Herramienta eliminada",
           cantidad: h.cantidad || 0,
           usuario: usuarioMov,
           obra: obraMov,
           nota: notaMov,
         });
       });
-    } else {
-      // Fallback para movimientos antiguos con una sola herramienta
+    } else if (m.producto) { // Manejar movimientos de productos
       filas.push({
         fecha: fechaMov,
         hora: horaMov,
         tipo: tipoMov,
-        herramienta: m.herramienta?.nombre || "—",
+        herramienta: m.producto.nombre || "Producto eliminado",
+        cantidad: m.cantidad || 0,
+        usuario: usuarioMov,
+        obra: obraMov,
+        nota: notaMov,
+      });
+    } else if (m.herramienta) { // Fallback para movimientos antiguos de una sola herramienta
+      filas.push({
+        fecha: fechaMov,
+        hora: horaMov,
+        tipo: tipoMov,
+        herramienta: m.herramienta.nombre || "Herramienta eliminada",
         cantidad: m.cantidad || 0,
         usuario: usuarioMov,
         obra: obraMov,
         nota: notaMov,
       });
     }
+    // --- FIN DE LA CORRECCIÓN ---
   });
 
   // 🔹 Tabla con diseño
@@ -237,7 +264,7 @@ export const generarReporteMovimientos = (movimientosFiltrados = []) => {
       fecha: { cellWidth: 70 },
       hora: { cellWidth: 60 },
       tipo: { cellWidth: 70 },
-      herramienta: { cellWidth: 120 },
+      herramienta: { cellWidth: 150 }, // Aumentamos el ancho para descripciones más largas
       cantidad: { cellWidth: 50, halign: "center" },
       usuario: { cellWidth: 80 },
       obra: { cellWidth: 80 },

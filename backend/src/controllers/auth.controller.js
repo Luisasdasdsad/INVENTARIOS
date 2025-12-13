@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 
 export const register = async (req, res) => {
     try {
-    const { nombre, email, password, rol } = req.body;
+    const { nombre, email, password, rol, telefono, celular, direccion } = req.body;
     const existing = await User.findOne({ email });
     if (existing) return res.status(400).json({ msg: 'Usuario ya existe' });
 
@@ -23,7 +23,7 @@ export const register = async (req, res) => {
 
     const salt = await bcrypt.genSalt(10);
     const hashed = await bcrypt.hash(password, salt);
-    const user = new User({ nombre, email, password: hashed, rol: rol || 'trabajador' });
+    const user = new User({ nombre, email, password: hashed, rol: rol || 'trabajador', telefono, celular, direccion });
     await user.save();
     res.status(201).json({ msg: 'Usuario creado' });
     } catch (error) {
@@ -43,7 +43,15 @@ export const login = async (req, res) => {
     const payload = { id: user._id, email: user.email, nombre: user.nombre, rol: user.rol };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
 
-    res.json({ token, user: { id: user._id, nombre: user.nombre, email: user.email, rol: user.rol } });
+    res.json({ token, user: { 
+        id: user._id, 
+        nombre: user.nombre, 
+        email: user.email, 
+        rol: user.rol,
+        telefono: user.telefono,
+        celular: user.celular,
+        direccion: user.direccion
+    } });
     } catch (error) {
     console.error("❌ Error en /login:", error); // imprime en Railway Logs
     res.status(500).json({
@@ -56,7 +64,15 @@ export const login = async (req, res) => {
 export const validate = async (req, res) => {
     try {
         // El middleware auth ya verifica el token, así que req.user está disponible
-        res.json({ user: { id: req.user.id, nombre: req.user.nombre, email: req.user.email, rol: req.user.rol } });
+        res.json({ user: { 
+            id: req.user.id, 
+            nombre: req.user.nombre, 
+            email: req.user.email, 
+            rol: req.user.rol,
+            telefono: req.user.telefono,
+            celular: req.user.celular,
+            direccion: req.user.direccion
+        } });
     } catch (error) {
         res.status(500).json({ msg: 'Error en servidor', error });
     }
@@ -95,7 +111,7 @@ export const changePassword = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
     try {
-        const { nombre, email } = req.body;
+        const { nombre, email, telefono, celular, direccion } = req.body;
         const userId = req.user.id;
 
         const user = await User.findById(userId);
@@ -109,11 +125,22 @@ export const updateProfile = async (req, res) => {
 
         user.nombre = nombre;
         user.email = email;
+        user.telefono = telefono;
+        user.celular = celular;
+        user.direccion = direccion;
         await user.save();
 
         res.json({
             msg: 'Perfil actualizado exitosamente',
-            user: { id: user._id, nombre: user.nombre, email: user.email, rol: user.rol }
+            user: { 
+                id: user._id, 
+                nombre: user.nombre, 
+                email: user.email, 
+                rol: user.rol,
+                telefono: user.telefono,
+                celular: user.celular,
+                direccion: user.direccion
+            }
         });
     } catch (error) {
         res.status(500).json({ msg: 'Error en servidor', error });

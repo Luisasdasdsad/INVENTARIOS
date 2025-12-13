@@ -1,5 +1,6 @@
-  import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../../services/api.js';
+import PhotoCapture from '../../components/PhotoCapture/PhotoCapture';
 
 export default function ProductoForm({ producto, onSuccess, onCancel }) {
   const [formData, setFormData] = useState({
@@ -14,18 +15,10 @@ export default function ProductoForm({ producto, onSuccess, onCancel }) {
     moneda: 'SOLES',
   });
 
-  // Estados para captura de foto (AGREGADOS)
-  const [showCamera, setShowCamera] = useState(false);
-  const [capturedImage, setCapturedImage] = useState(null);
-  const [foto, setFoto] = useState(null);
+  // Estado para la URL de la foto
   const [preview, setPreview] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  // Refs para cámara
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const [cameraStream, setCameraStream] = useState(null);
 
   useEffect(() => {
     if (producto) {
@@ -41,9 +34,6 @@ export default function ProductoForm({ producto, onSuccess, onCancel }) {
         moneda: producto.moneda || 'SOLES',
       });
       setPreview(producto.foto || '');
-      if (producto.foto) {
-        setCapturedImage(producto.foto);
-      }
     } else {
       setFormData({
         nombre: '',
@@ -57,177 +47,12 @@ export default function ProductoForm({ producto, onSuccess, onCancel }) {
         moneda: 'SOLES',
       });
       setPreview('');
-      setCapturedImage(null);
     }
   }, [producto]);
-
-  // useEffect para manejar el stream de la cámara
-  useEffect(() => {
-    if (showCamera && cameraStream && videoRef.current) {
-      const video = videoRef.current;
-      video.srcObject = cameraStream;
-
-      video.muted = true;
-      video.play()
-        .then(() => {
-          console.log('✅ Video reproduciéndose exitosamente');
-        })
-        .catch((err) => {
-          console.error('❌ Error en video.play():', err);
-          setError('Error al iniciar la cámara: ' + err.message);
-        });
-
-      return () => {
-        if (video.srcObject) {
-          video.srcObject.getTracks().forEach(track => track.stop());
-          video.srcObject = null;
-        }
-      };
-    }
-  }, [showCamera, cameraStream]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // Función para subir archivo normal (mantener por si acaso)
-  const handleFotoChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFoto(file);
-      setPreview(URL.createObjectURL(file));
-      setCapturedImage(URL.createObjectURL(file));
-    }
-  };
-
-  // Función para iniciar la cámara
-  const startCamera = async () => {
-    try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('getUserMedia no está soportado en este navegador.');
-      }
-
-      console.log('🔄 Iniciando cámara...');
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'environment',
-          width: { min: 320, max: 640 },
-          height: { min: 240, max: 480 }
-        }
-      });
-
-      console.log('✅ Stream obtenido exitosamente');
-      setCameraStream(stream);
-      setShowCamera(true);
-      setError('');
-
-    } catch (err) {
-      console.error('Error cámara:', err);
-      setError('Error al acceder a la cámara: ' + err.message + '. Verifica permisos y navegador.');
-      setCameraStream(null);
-    }
-  };
-
-  // Función para detener la cámara
-  const stopCamera = () => {
-    console.log('🛑 Deteniendo cámara...');
-    if (videoRef.current && videoRef.current.srcObject) {
-      videoRef.current.srcObject.getTracks().forEach(track => track.stop());
-      videoRef.current.srcObject = null;
-    }
-    setShowCamera(false);
-    setCameraStream(null);
-    setError('');
-  };
-
-  // Función para capturar foto y subirla
-  const capturePhoto = async () => {
-    if (!videoRef.current) {
-      setError('Elemento de video no encontrado.');
-      return;
-    }
-
-    const video = videoRef.current;
-
-    // Esperar hasta que el video tenga frames
-    const waitForVideoReady = () => {
-      return new Promise((resolve, reject) => {
-        let attempts = 0;
-        const maxAttempts = 50;
-
-        const checkVideo = () => {
-          attempts++;
-          if (video.videoWidth > 0 && video.videoHeight > 0) {
-            console.log('✅ Video listo para capturar!');
-            resolve();
-          } else if (attempts >= maxAttempts) {
-            reject(new Error('El video no se cargó a tiempo. Intenta de nuevo o verifica la cámara.'));
-          } else {
-            setTimeout(checkVideo, 100);
-          }
-        };
-
-        video.addEventListener('loadeddata', () => {
-          if (video.videoWidth > 0) resolve();
-        }, { once: true });
-
-        checkVideo();
-      });
-    };
-
-    try {
-      setError('');
-      await waitForVideoReady();
-
-      const canvas = canvasRef.current;
-      if (!canvas) {
-        throw new Error('Canvas no encontrado.');
-      }
-
-      const context = canvas.getContext('2d');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      context.drawImage(video, 0, 0);
-      console.log('🖼️ Imagen dibujada en canvas');
-
-      // Convertir a Blob y subir
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          setError('No se pudo crear el blob de la imagen.');
-          return;
-        }
-
-        setLoading(true);
-        try {
-          const formDataUpload = new FormData();
-          formDataUpload.append('foto', blob, `producto-foto-${Date.now()}.jpg`);
-
-          console.log('📤 Subiendo foto al backend...');
-          const response = await api.post('/fotos', formDataUpload, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-          });
-
-          const fotoUrl = response.data.foto;
-          // Guardamos tanto la URL para el formulario como el preview
-          setPreview(fotoUrl);
-          setCapturedImage(URL.createObjectURL(blob));
-          setFoto(blob); // También guardamos el blob por si necesitas usarlo
-          setError('');
-          alert('Foto capturada y subida exitosamente');
-          stopCamera(); // Cerramos la cámara después de capturar
-        } catch (err) {
-          setError('Error al subir la foto: ' + (err.response?.data?.msg || err.message));
-          console.error('Error upload:', err);
-        } finally {
-          setLoading(false);
-        }
-      }, 'image/jpeg', 0.8);
-
-    } catch (err) {
-      console.error('Error en captura:', err);
-      setError(err.message || 'Cámara no lista. Intenta de nuevo.');
-    }
   };
 
   const handleSubmit = async (e) => {
@@ -239,12 +64,9 @@ export default function ProductoForm({ producto, onSuccess, onCancel }) {
       const data = new FormData();
       Object.entries(formData).forEach(([key, value]) => data.append(key, value));
 
-      // Si hay una foto capturada, la agregamos al FormData
-      if (foto) {
-        data.append("foto", foto);
-      } else if (preview && preview.startsWith('http')) {
-        // Si ya hay una URL de foto (de un producto existente), la enviamos como string
-        data.append("fotoUrl", preview);
+      // Si hay una URL de foto, la enviamos como fotoUrl
+      if (preview) {
+        data.append("fotoUrl", preview); // El backend debe soportar recibir la URL si la imagen ya se subió
       }
 
       if (producto) {
@@ -415,102 +237,12 @@ export default function ProductoForm({ producto, onSuccess, onCancel }) {
           />
         </div>
 
-        {/* SECCIÓN DE FOTO - COMO EN MOVIMIENTOPAGE */}
-        <div className="border rounded-lg p-4 bg-gray-50">
-          <h3 className="text-lg font-semibold mb-3">Foto del Producto (opcional)</h3>
-
-          {/* Canvas oculto para snapshot */}
-          <canvas ref={canvasRef} className="hidden" />
-
-          {/* Si no hay foto capturada, muestra botón para abrir cámara */}
-          {!showCamera && !capturedImage && (
-            <button
-              type="button"
-              onClick={startCamera}
-              className="w-full bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 transition-colors mb-2"
-              disabled={loading}
-            >
-              📸 Tomar Foto con Cámara
-            </button>
-          )}
-
-          {/* Si cámara abierta, muestra video y botones */}
-          {showCamera && (
-            <div className="mb-4 text-center p-4 border-2 border-blue-300 rounded bg-gray-50">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Vista previa de la cámara:</h4>
-              <video
-                ref={videoRef}
-                autoPlay
-                muted
-                playsInline
-                className="w-full max-w-md mx-auto rounded border-2 border-gray-300 block"
-                style={{
-                  minHeight: '240px',
-                  backgroundColor: '#e0f2fe',
-                  width: '100%'
-                }}
-              />
-              <div className="mt-3 flex justify-center space-x-3">
-                <button
-                  type="button"
-                  onClick={capturePhoto}
-                  className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-                  disabled={loading}
-                >
-                  📷 Capturar Foto
-                </button>
-                <button
-                  type="button"
-                  onClick={stopCamera}
-                  className="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors flex items-center"
-                >
-                  ❌ Detener Cámara
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Preview de foto capturada (si existe) */}
-          {capturedImage && (
-            <div className="mt-4 text-center">
-              <p className="text-sm text-green-600 mb-2">Foto capturada:</p>
-              <img
-                src={capturedImage}
-                alt="Foto del producto"
-                className="w-full max-w-xs mx-auto rounded border"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                {preview && preview.startsWith('http') ? `URL: ${preview}` : 'Foto lista para guardar'}
-              </p>
-              {/* Botón para tomar otra foto */}
-              <button
-                type="button"
-                onClick={() => {
-                  setCapturedImage(null);
-                  setPreview('');
-                  setFoto(null);
-                  startCamera();
-                }}
-                className="text-sm text-blue-600 underline mt-1"
-              >
-                📸 Tomar otra foto
-              </button>
-            </div>
-          )}
-
-          {/* Opción alternativa: subir archivo */}
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              O subir archivo de imagen:
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFotoChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-        </div>
+        {/* SECCIÓN DE FOTO REUTILIZABLE */}
+        <PhotoCapture 
+          onCapture={(url) => setPreview(url)} 
+          currentPhoto={preview} 
+          fileNamePrefix={`producto-${formData.nombre ? formData.nombre.trim().replace(/\s+/g, '_') : 'nuevo'}`}
+        />
 
         {error && (
           <div className="text-red-500 text-sm bg-red-50 p-3 rounded-md border border-red-200">

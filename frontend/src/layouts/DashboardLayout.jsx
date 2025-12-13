@@ -1,12 +1,16 @@
-import { Outlet, Link } from "react-router-dom";
-import { FaTools, FaClipboardList, FaExchangeAlt, FaHome, FaSignOutAlt, FaBars, FaTimes, FaUsers, FaFileAlt, FaHistory, FaPlus, FaUser, FaFileInvoiceDollar, FaTruck } from "react-icons/fa";
+import { Outlet, Link, useNavigate } from "react-router-dom";
+import { FaTools, FaClipboardList, FaExchangeAlt, FaHome, FaSignOutAlt, FaBars, FaTimes, FaUsers, FaFileAlt, FaHistory, FaPlus, FaUser, FaFileInvoiceDollar, FaTruck, FaBell } from "react-icons/fa";
 import { useAuth } from "../contexts/AuthContext";
 import { useState, useEffect } from "react";
+import { useNotifications } from "../contexts/NotificationContext";
 
 export default function DashboardLayout() {
   const { logout, user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const { unreadCount, notificaciones, marcarLeida } = useNotifications();
+  const [showNotifications, setShowNotifications] = useState(false);
+  const navigate = useNavigate();
 
   // Detectar si es móvil
   useEffect(() => {
@@ -32,6 +36,17 @@ export default function DashboardLayout() {
     if (isMobile) {
       setIsSidebarOpen(false);
     }
+  };
+
+  // Manejar clic en una notificación
+  const handleNotificationClick = async (notif) => {
+    if (!notif.leido) {
+      await marcarLeida(notif._id);
+    }
+    setShowNotifications(false);
+    
+    // Redirigir siempre a la lista de órdenes de trabajo
+    navigate('/ordenes-trabajo');
   };
 
   return (
@@ -287,6 +302,13 @@ export default function DashboardLayout() {
                   <FaClipboardList size={18} className="text-indigo-600" />
                 )}
                 {isSidebarOpen && <span className="font-medium">Órdenes de Trabajo</span>}
+                
+                {/* CONTADOR EN SIDEBAR */}
+                {isSidebarOpen && unreadCount > 0 && (
+                  <span className="ml-auto bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
+                    {unreadCount}
+                  </span>
+                )}
               </Link>
             </>
           )}
@@ -393,15 +415,73 @@ export default function DashboardLayout() {
       <main className={`flex-1 p-2 md:p-6 transition-all duration-300 ${
         isMobile ? 'ml-0' : isSidebarOpen ? 'ml-0' : 'ml-16'
       }`}>
-        {/* Botón para abrir sidebar en móvil */}
-        {isMobile && !isSidebarOpen && (
-          <button
-            onClick={toggleSidebar}
-            className="fixed top-4 left-4 z-30 p-2 bg-white rounded-md shadow-md text-gray-600 hover:text-gray-900"
-          >
-            <FaBars size={20} />
-          </button>
-        )}
+        
+        {/* HEADER SUPERIOR CON NOTIFICACIONES */}
+        <header className="flex justify-between items-center mb-6 bg-white p-3 md:p-4 rounded-xl shadow-sm border border-secondary-100">
+          <div className="flex items-center">
+            {/* Botón móvil integrado en el header */}
+            {isMobile && !isSidebarOpen && (
+              <button
+                onClick={toggleSidebar}
+                className="p-2 mr-3 text-secondary-600 hover:bg-secondary-50 rounded-lg"
+              >
+                <FaBars size={20} />
+              </button>
+            )}
+            <h2 className="text-lg font-semibold text-secondary-800">Panel de Control</h2>
+          </div>
+
+          {/* Área de Notificaciones */}
+          <div className="relative">
+            <button 
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="p-2 text-secondary-600 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-all relative focus:outline-none"
+            >
+              <FaBell size={22} />
+              {unreadCount > 0 && (
+                <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white transform translate-x-1/4 -translate-y-1/4">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Menú Desplegable */}
+            {showNotifications && (
+              <div className="absolute right-0 mt-3 w-80 md:w-96 bg-white rounded-xl shadow-xl border border-secondary-100 z-50 overflow-hidden animate-fade-in-down">
+                <div className="p-4 border-b border-secondary-100 flex justify-between items-center bg-secondary-50">
+                  <h3 className="font-semibold text-secondary-800">Notificaciones</h3>
+                  <span className="text-xs font-medium text-primary-600 bg-primary-50 px-2 py-1 rounded-full">{unreadCount} nuevas</span>
+                </div>
+                <div className="max-h-[400px] overflow-y-auto">
+                  {notificaciones.length === 0 ? (
+                    <div className="p-8 text-center text-secondary-500 text-sm">
+                      <p>No tienes notificaciones pendientes.</p>
+                    </div>
+                  ) : (
+                    notificaciones.map(notif => (
+                      <div 
+                        key={notif._id}
+                        onClick={() => handleNotificationClick(notif)}
+                        className={`p-4 border-b border-secondary-50 cursor-pointer hover:bg-secondary-50 transition-colors flex gap-3 ${!notif.leido ? 'bg-blue-50/50' : ''}`}
+                      >
+                        <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${!notif.leido ? 'bg-primary-500' : 'bg-transparent'}`}></div>
+                        <div>
+                          <p className={`text-sm ${!notif.leido ? 'font-semibold text-secondary-900' : 'text-secondary-700'}`}>
+                            {notif.mensaje}
+                          </p>
+                          <p className="text-xs text-secondary-400 mt-1">
+                            {new Date(notif.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </header>
+
         <Outlet />
       </main>
     </div>

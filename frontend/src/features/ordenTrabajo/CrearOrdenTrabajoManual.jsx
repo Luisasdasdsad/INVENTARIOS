@@ -31,20 +31,29 @@ export default function CrearOrdenTrabajoManual() {
     const fetchInitialData = async () => {
       setLoading(true);
       try {
-        const [cRes, pRes, hRes, uRes] = await Promise.all([
+        // Usamos Promise.allSettled para que si falla uno (ej: permisos de usuarios/clientes), no falle todo
+        const results = await Promise.allSettled([
           api.get('/clientes'),
           api.get('/productos'),
           api.get('/herramientas'),
           api.get('/usuarios')
         ]);
-        setClientes(cRes.data);
-        setProductosDB(pRes.data);
-        setHerramientasDB(hRes.data);
-        setTecnicos(uRes.data.filter(u => u.rol === 'tecnico'));
+
+        const [cRes, pRes, hRes, uRes] = results;
+
+        if (cRes.status === 'fulfilled') setClientes(cRes.value.data);
+        if (pRes.status === 'fulfilled') setProductosDB(pRes.value.data);
+        if (hRes.status === 'fulfilled') setHerramientasDB(hRes.value.data);
+        if (uRes.status === 'fulfilled') setTecnicos(uRes.value.data.filter(u => u.rol === 'tecnico'));
 
         if (isEditMode) {
           const otRes = await api.get(`/ordenes-trabajo/${id}`);
           const ot = otRes.data;
+
+          // Si no se pudieron cargar clientes/técnicos (por permisos), agregamos los actuales para que se vean en el select
+          if (cRes.status === 'rejected' && ot.cliente) setClientes([ot.cliente]);
+          if (uRes.status === 'rejected' && ot.tecnicoAsignado) setTecnicos([ot.tecnicoAsignado]);
+
           const formatDateForInput = (date) => {
             if (!date) return '';
             return new Date(date).toISOString().split('T')[0];
@@ -58,8 +67,8 @@ export default function CrearOrdenTrabajoManual() {
             instruccionesTecnico: ot.instruccionesTecnico || '',
             fechaInicio: formatDateForInput(ot.fechaInicio),
             fechaFin: formatDateForInput(ot.fechaFin),
-            productos: ot.productos.map(p => ({ producto: p.producto._id, cantidad: p.cantidad })),
-            herramientas: ot.herramientas?.map(h => ({ herramienta: h.herramienta._id, cantidad: h.cantidad })) || [],
+            productos: ot.productos.map(p => ({ producto: p.producto?._id || '', cantidad: p.cantidad })),
+            herramientas: ot.herramientas?.map(h => ({ herramienta: h.herramienta?._id || '', cantidad: h.cantidad })) || [],
             ubicacion: ot.ubicacion || ''
           });
         }

@@ -12,11 +12,11 @@ export const getUsuarios = async (req, res) => {
 export const updateUsuario = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombre, email, rol } = req.body;
+        const { nombre, email, rol, telefono, celular, direccion } = req.body;
 
         const usuario = await User.findByIdAndUpdate(
             id,
-            { nombre, email, rol },
+            { nombre, email, rol, telefono, celular, direccion },
             { new: true, select: '-password' }
         );
 

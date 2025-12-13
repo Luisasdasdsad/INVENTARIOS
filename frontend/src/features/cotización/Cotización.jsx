@@ -88,6 +88,8 @@ const Cotización = () => {
           igv: p.igv || 0,
           pUnit: p.precioUnitario,
           total: p.total,
+          producto: p.producto ? (p.producto._id || p.producto) : undefined,
+          herramienta: p.herramienta ? (p.herramienta._id || p.herramienta) : undefined
         }))
       );
       setMoneda(cotizacionEdit.moneda || "SOLES");
@@ -170,6 +172,8 @@ const Cotización = () => {
         igv: p.igv,
         vUnit: p.vUnit,
         total: p.total,
+        producto: p.producto, // Guardar ID del producto
+        herramienta: p.herramienta // Guardar ID de la herramienta
       })),
       fecha,
       totalGeneral: total,
@@ -579,7 +583,7 @@ const Cotización = () => {
               const total = pUnit * cantidad;
               setProductos([
                 ...productos,
-                { cantidad, unidad: prod.unidad || "", descripcion: prod.nombre || "", vUnit, igv, pUnit, total },
+                { cantidad, unidad: prod.unidad || "", descripcion: prod.nombre || "", vUnit, igv, pUnit, total, producto: prod._id },
               ]);
             }
             e.target.value = "";
@@ -606,7 +610,7 @@ const Cotización = () => {
               const descripcion = `${herramienta.nombre} - ${herramienta.marca} ${herramienta.modelo}`;
               setProductos([
                 ...productos,
-                { cantidad, unidad: herramienta.unidad || "", descripcion, vUnit, igv, pUnit, total },
+                { cantidad, unidad: herramienta.unidad || "", descripcion, vUnit, igv, pUnit, total, herramienta: herramienta._id },
               ]);
             }
             e.target.value = "";

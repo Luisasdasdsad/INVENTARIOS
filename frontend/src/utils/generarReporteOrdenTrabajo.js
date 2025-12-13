@@ -4,7 +4,9 @@ const generarReporteOrdenTrabajo = async (ordenTrabajo) => {
   const {
     numeroOT,
     cliente,
-    productos,
+    productos: productosRaw,
+    herramientas: herramientasRaw,
+    tareas: tareasRaw,
     estado,
     tecnicoAsignado,
     fechaInicio,
@@ -16,8 +18,13 @@ const generarReporteOrdenTrabajo = async (ordenTrabajo) => {
     ubicacion,
   } = ordenTrabajo;
 
+  // Asegurar que sean arrays incluso si vienen como null
+  const productos = productosRaw || [];
+  const herramientas = herramientasRaw || [];
+  const tareas = tareasRaw || [];
+
   // Formatear fechas
-  const formatDate = (date) => {
+  const formatDateUTC = (date) => {
     if (!date) return "N/A";
     return new Date(date).toLocaleDateString("es-ES", {
       year: "numeric",
@@ -27,19 +34,37 @@ const generarReporteOrdenTrabajo = async (ordenTrabajo) => {
     });
   };
 
-  const formattedFechaInicio = formatDate(fechaInicio);
-  const formattedFechaFin = formatDate(fechaFin);
-  const formattedCreatedAt = formatDate(createdAt);
+  const formatDateLocal = (date) => {
+    if (!date) return "N/A";
+    const fecha = new Date(date);
+    // Restamos 5 horas (5 * 60 * 60 * 1000 ms) para ajustar manualmente a hora Perú
+    const fechaPeru = new Date(fecha.getTime() - 5 * 60 * 60 * 1000);
+    return fechaPeru.toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: 'UTC', // Usamos UTC porque ya restamos las horas manualmente
+    });
+  };
+
+  const formattedFechaInicio = formatDateUTC(fechaInicio);
+  const formattedFechaFin = formatDateUTC(fechaFin);
+  const formattedCreatedAt = formatDateLocal(createdAt);
+
+  // Combinar teléfono y celular si existen
+  const telefonos = [cliente?.telefono, cliente?.celular].filter(Boolean).join(" / ");
+  const telefonosTecnico = [tecnicoAsignado?.telefono, tecnicoAsignado?.celular].filter(Boolean).join(" / ");
 
   const headerWithDetails = `
     <!-- ENCABEZADO -->
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #007bff; padding-bottom: 10px; margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #007bff; padding-bottom: 10px; margin-bottom: 5px;">
       <div style="display: flex; align-items: center;">
         <img src="/logo.png" alt="Logo" style="height: 70px;">
         <div style="margin-left: 15px;">
           <h3 style="margin: 0; color: #333; font-size: 16px;">TEAMGAS</h3>
           <p style="margin: 2px 0; font-size: 12px;">Email: info@teamgas.pe</p>
           <p style="margin: 2px 0; font-size: 12px;">Web: www.teamgas.pe</p>
+          <p style="margin: 2px 0; font-size: 12px;"><b>Teléfono:</b> 997030802 - 919289085</p>
           <p style="margin: 2px 0; font-size: 12px;"><b>RUC:</b> 20604956499</p>
         </div>
       </div>
@@ -54,7 +79,6 @@ const generarReporteOrdenTrabajo = async (ordenTrabajo) => {
     <!-- TÍTULO DE LA EMPRESA -->
     <div style="text-align: left; margin-bottom: 10px;">
       <h2 style="margin: 0 0 2px 0; color: #333; font-size: 16px; text-transform: uppercase;">Teamgas Sociedad Anónima Cerrada</h2>
-      <p style="margin: 0; color: #444; font-size: 14px;">Jr. Coronel Guerra Nro. 152 (Plaza Principal) Junín - Chupaca - Chupaca</p>
       <p style="margin: 0; color: #444; font-size: 14px;"><b>Dirección:</b> Jr. Coronel Guerra Nro. 152, Junín - Chupaca</p>
     </div>
   `;
@@ -68,12 +92,16 @@ const generarReporteOrdenTrabajo = async (ordenTrabajo) => {
         <p><b>${cliente?.tipoDoc || 'Documento'}:</b> ${cliente?.tipoDoc === 'RUC' ? (cliente?.ruc || 'N/A') : (cliente?.numero || 'N/A')}</p>
         <p><b>Dirección:</b> ${cliente?.direccion || ''}</p>
         <p><b>Ubicación de la obra:</b> ${ubicacion || ''}</p>
+        <p><b>Teléfono:</b> ${telefonos || '__________________'}</p>
       </div>
 
       <div style="width: 48%; border: 2px solid #007bff; border-radius: 8px; padding: 5px;">
         <h4 style="margin-top: 0; color: #444; text-align: center;"><Strong>Técnico Asignado</Strong></h4>
         <p><b>Nombre:</b> ${tecnicoAsignado?.nombre || "N/A"}</p>
         <p><b>Email:</b> ${tecnicoAsignado?.email || "N/A"}</p>
+        <p><b>Teléfono:</b> ${telefonosTecnico || '__________________'}</p>
+        <p><b>Hora de Llegada:</b> __________________</p>
+        <p><b>Hora de Salida:</b> __________________</p>
       </div>
     </div>
 
@@ -107,24 +135,45 @@ const generarReporteOrdenTrabajo = async (ordenTrabajo) => {
         <tr style="background: #e3f2fd; color: #333;">
           <th style="border: 2px solid #007bff; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold; width: 10%;">N°</th>
           <th style="border: 2px solid #007bff; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold; width: 15%;">CANTIDAD</th>
-          <th style="border: 2px solid #007bff; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold; width: 75%;">DESCRIPCIÓN</th>
+          <th style="border: 2px solid #007bff; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold; width: 75%;">PRODUCTOS/MATERIALES</th>
         </tr>
       </thead>
       <tbody>
   `;
 
   const generateTableRows = (prods) => {
+    if (!prods || prods.length === 0) return "";
     const rows = prods.map((p, idx) => {
       const index = idx + 1;
+      const nombreProducto = p.producto?.nombre || "Producto no especificado";
       return `
         <tr>
           <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center; width: 10%;">${index}</td>
           <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center; width: 15%;">${p.cantidad}</td>
-          <td style="border-right: 1px solid #ddd; padding: 6px; text-align: left; white-space: pre-line; line-height: 1.4; width: 75%;">${p.producto.nombre}</td>
+          <td style="border-right: 1px solid #ddd; padding: 6px; text-align: left; white-space: pre-line; line-height: 1.4; width: 75%;">${nombreProducto}</td>
         </tr>`;
     });
     return rows.join("");
   };
+
+  // Combinar productos y tareas para mostrar en la tabla de materiales/productos
+  const tareasComoProductos = tareas.map(t => ({
+    cantidad: t.cantidad,
+    producto: { nombre: t.descripcion }
+  }));
+
+  // Combinar herramientas para incluirlas en la misma tabla
+  const herramientasComoProductos = herramientas.map(h => ({
+    cantidad: h.cantidad,
+    producto: { 
+      nombre: `${h.herramienta?.nombre || "Herramienta"}${h.herramienta?.marca ? ` (${h.herramienta.marca})` : ""}` 
+    }
+  }));
+
+  const todosLosProductos = [...productos, ...tareasComoProductos, ...herramientasComoProductos];
+
+  // Generamos el HTML de las tablas antes para evitar errores en el template string
+  const productosRows = generateTableRows(todosLosProductos);
 
   const formatInstructions = (instructions) => {
     if (!instructions) {
@@ -178,11 +227,14 @@ const generarReporteOrdenTrabajo = async (ordenTrabajo) => {
       ${companyTitle}
       ${infoSection}
       ${descripcionSection}
-      <div style="margin-bottom: 20px; ${!productos || productos.length === 0 ? 'display: none;' : ''}">
+
+      <div style="margin-bottom: 20px; ${!todosLosProductos || todosLosProductos.length === 0 ? 'display: none;' : ''}">
+        <h4 style="margin: 0 0 5px 0; color: #444; font-size: 12px;">Materiales / Productos / Herramientas</h4>
         ${tableHeader}
-        ${generateTableRows(productos)}
+        ${productosRows}
         </tbody></table>
       </div>
+
       ${footerSection}
     </div>
   `;

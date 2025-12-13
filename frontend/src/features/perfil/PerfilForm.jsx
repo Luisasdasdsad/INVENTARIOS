@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import api from '../../services/api.js';
 import { useAuth } from '../../contexts/AuthContext';
-import { FaUser, FaEnvelope, FaLock, FaSave, FaEye, FaEyeSlash, FaUsers, FaEdit } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaLock, FaSave, FaEye, FaEyeSlash, FaUsers, FaEdit, FaPhone, FaMobileAlt, FaMapMarkerAlt } from 'react-icons/fa';
 import Modal from '../../components/Modal/Modal';
 
 export default function PerfilForm() {
-  const { user, login } = useAuth();
+  const { user, login, setUser } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -17,7 +17,10 @@ export default function PerfilForm() {
   // Estado para perfil
   const [profileData, setProfileData] = useState({
     nombre: '',
-    email: ''
+    email: '',
+    telefono: '',
+    celular: '',
+    direccion: ''
   });
 
   // Estado para cambio de contraseña
@@ -37,7 +40,10 @@ export default function PerfilForm() {
     if (user) {
       setProfileData({
         nombre: user.nombre || '',
-        email: user.email || ''
+        email: user.email || '',
+        telefono: user.telefono || '',
+        celular: user.celular || '',
+        direccion: user.direccion || ''
       });
     }
   }, [user]);
@@ -68,7 +74,10 @@ export default function PerfilForm() {
       await api.put(`/usuarios/${selectedUsuario._id}`, {
         nombre: selectedUsuario.nombre,
         email: selectedUsuario.email,
-        rol: selectedUsuario.rol
+        rol: selectedUsuario.rol,
+        telefono: selectedUsuario.telefono,
+        celular: selectedUsuario.celular,
+        direccion: selectedUsuario.direccion
       });
       setSuccess('Usuario actualizado exitosamente');
       setShowModal(false);
@@ -99,7 +108,12 @@ export default function PerfilForm() {
       setSuccess('Perfil actualizado exitosamente');
 
       // Actualizar el contexto de autenticación
-      login(response.data.user);
+      // Usamos setUser si está disponible, o recargamos la página para obtener los datos frescos
+      if (setUser) {
+        setUser(response.data.user);
+      } else {
+        window.location.reload();
+      }
     } catch (err) {
       setError(err.response?.data?.msg || 'Error al actualizar perfil');
     } finally {
@@ -234,6 +248,46 @@ export default function PerfilForm() {
                   onChange={(e) => setProfileData({...profileData, email: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <FaPhone className="inline mr-2" />
+                    Teléfono Fijo
+                  </label>
+                  <input
+                    type="text"
+                    value={profileData.telefono}
+                    onChange={(e) => setProfileData({...profileData, telefono: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <FaMobileAlt className="inline mr-2" />
+                    Celular
+                  </label>
+                  <input
+                    type="text"
+                    value={profileData.celular}
+                    onChange={(e) => setProfileData({...profileData, celular: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <FaMapMarkerAlt className="inline mr-2" />
+                  Dirección
+                </label>
+                <input
+                  type="text"
+                  value={profileData.direccion}
+                  onChange={(e) => setProfileData({...profileData, direccion: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 
@@ -387,6 +441,35 @@ export default function PerfilForm() {
                 type="email"
                 value={selectedUsuario.email}
                 onChange={(e) => setSelectedUsuario({...selectedUsuario, email: e.target.value})}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+                <input
+                  type="text"
+                  value={selectedUsuario.telefono || ''}
+                  onChange={(e) => setSelectedUsuario({...selectedUsuario, telefono: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Celular</label>
+                <input
+                  type="text"
+                  value={selectedUsuario.celular || ''}
+                  onChange={(e) => setSelectedUsuario({...selectedUsuario, celular: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
+              <input
+                type="text"
+                value={selectedUsuario.direccion || ''}
+                onChange={(e) => setSelectedUsuario({...selectedUsuario, direccion: e.target.value})}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>

@@ -8,7 +8,6 @@ import qrRoutes from './routes/qr.routes.js';
 import authRoutes from './routes/auth.js';
 import movimientoRoutes from './routes/movimientos.js';
 import fotoRouter from './routes/fotos.routes.js';
-import path from 'path';
 import ClienteRoutes from './routes/cliente.routes.js';
 import ProductoRoutes from './routes/producto.routes.js';
 import CotizacionRoutes from './routes/cotizacion.routes.js';
@@ -16,6 +15,8 @@ import ordenTrabajoRoutes from './routes/ordenTrabajo.routes.js';
 import usuarioRoutes from './routes/usuario.routes.js';
 import facturaRoutes from './routes/factura.routes.js';
 import proveedorRoutes from './routes/proveedor.routes.js';
+import movimientoProductoRoutes from './routes/movimientoProducto.routes.js';
+import notificacionRoutes from './routes/notificacion.routes.js';
 
 dotenv.config();
 const app = express();
@@ -38,7 +39,6 @@ app.use("/api/auth", authRoutes);
 //Ruta de movimientos
 app.use("/api/movimientos", movimientoRoutes)
 //Ruta foto
-app.use(' /uploads', express.static(path.join(process.cwd(), 'uploads'))); // Servir archivos estáticos
 app.use('/api/fotos', fotoRouter); // Monta las rutas
 
 app.use('/api/clientes', ClienteRoutes);
@@ -52,6 +52,10 @@ app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/facturas', facturaRoutes);
 
 app.use('/api/proveedores', proveedorRoutes);
+
+app.use('/api/movimientos-productos', movimientoProductoRoutes);
+
+app.use('/api/notificaciones', notificacionRoutes);
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB conectado'))

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
-import { FaSearch, FaPlay, FaCheck, FaClock, FaPrint, FaPlus, FaTrash, FaEdit } from "react-icons/fa";
+import { FaSearch, FaPlay, FaCheck, FaClock, FaPrint, FaPlus, FaTrash, FaEdit, FaWhatsapp, FaEnvelope } from "react-icons/fa";
 import { useAuth } from "../../contexts/AuthContext";
 
 // Formatear fechas ignorando desplazamientos de zona horaria: usar la porción YYYY-MM-DD
@@ -105,6 +105,19 @@ const OrdenTrabajoList = () => {
     }
   };
 
+  // Helper para generar enlace de WhatsApp
+  const getWhatsAppLink = (numero) => {
+    if (!numero) return null;
+    const cleanNum = numero.replace(/\D/g, ''); // Quitar no numéricos
+    const fullNum = cleanNum.length === 9 ? `51${cleanNum}` : cleanNum; // Asumir Perú si es 9 dígitos
+    return `https://wa.me/${fullNum}`;
+  };
+
+  // Helper para generar enlace directo a Gmail
+  const getGmailLink = (email) => {
+    return `https://mail.google.com/mail/?view=cm&fs=1&to=${email}`;
+  };
+
   if (loading)
     return (
       <div className="text-center p-6 text-gray-600 animate-pulse">
@@ -178,6 +191,58 @@ const OrdenTrabajoList = () => {
                   <p>
                     <span className="font-semibold">Cliente:</span> {orden.cliente ? `${orden.cliente.nombre} (${orden.cliente.tipoDoc} ${orden.cliente.tipoDoc === 'RUC' ? orden.cliente.ruc : orden.cliente.numero})` : 'No asignado'}
                   </p>
+                  {/* Iconos de contacto en Móvil */}
+                  {orden.cliente && (
+                    <div className="flex gap-3 mt-1 pl-1">
+                      {(orden.cliente.celular || orden.cliente.telefono) && (
+                        <a 
+                          href={getWhatsAppLink(orden.cliente.celular || orden.cliente.telefono)}
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-green-500 hover:text-green-600 flex items-center gap-1 text-xs font-medium"
+                        >
+                          <FaWhatsapp size={16} /> WhatsApp
+                        </a>
+                      )}
+                      {orden.cliente.email && (
+                        <a 
+                          href={getGmailLink(orden.cliente.email)}
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:text-blue-600 flex items-center gap-1 text-xs font-medium"
+                        >
+                          <FaEnvelope size={16} /> Correo
+                        </a>
+                      )}
+                    </div>
+                  )}
+                  <p className="mt-1">
+                    <span className="font-semibold">Técnico:</span> {orden.tecnicoAsignado ? orden.tecnicoAsignado.nombre : 'Sin asignar'}
+                  </p>
+                  {orden.tecnicoAsignado && (
+                    <div className="flex gap-3 mt-1 pl-1">
+                      {(orden.tecnicoAsignado.celular || orden.tecnicoAsignado.telefono) && (
+                        <a 
+                          href={getWhatsAppLink(orden.tecnicoAsignado.celular || orden.tecnicoAsignado.telefono)}
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-green-500 hover:text-green-600 flex items-center gap-1 text-xs font-medium"
+                        >
+                          <FaWhatsapp size={16} /> WhatsApp
+                        </a>
+                      )}
+                      {orden.tecnicoAsignado.email && (
+                        <a 
+                          href={getGmailLink(orden.tecnicoAsignado.email)}
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:text-blue-600 flex items-center gap-1 text-xs font-medium"
+                        >
+                          <FaEnvelope size={16} /> Correo
+                        </a>
+                      )}
+                    </div>
+                  )}
                   <p>
                     <span className="font-semibold">Productos:</span> {orden.productos?.length || 0}
                   </p>
@@ -243,6 +308,7 @@ const OrdenTrabajoList = () => {
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">N° OT</th>
                     <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Cliente</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Técnico</th>
                     <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Estado</th>
                     <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Productos</th>
                     <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Fecha Inicio</th>
@@ -260,7 +326,69 @@ const OrdenTrabajoList = () => {
                         #{orden.numeroOT}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">
-                        {orden.cliente ? `${orden.cliente.nombre} (${orden.cliente.tipoDoc} ${orden.cliente.tipoDoc === 'RUC' ? orden.cliente.ruc : orden.cliente.numero})` : 'No asignado'}
+                        <div>
+                          {orden.cliente ? `${orden.cliente.nombre} (${orden.cliente.tipoDoc} ${orden.cliente.tipoDoc === 'RUC' ? orden.cliente.ruc : orden.cliente.numero})` : 'No asignado'}
+                        </div>
+                        {/* Iconos de contacto en Escritorio */}
+                        {orden.cliente && (
+                          <div className="flex gap-2 mt-1">
+                            {(orden.cliente.celular || orden.cliente.telefono) && (
+                              <a 
+                                href={getWhatsAppLink(orden.cliente.celular || orden.cliente.telefono)}
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-green-500 hover:text-green-600"
+                                title={`WhatsApp: ${orden.cliente.celular || orden.cliente.telefono}`}
+                              >
+                                <FaWhatsapp size={18} />
+                              </a>
+                            )}
+                            {orden.cliente.email && (
+                              <a 
+                                href={getGmailLink(orden.cliente.email)}
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:text-blue-600" 
+                                title={`Enviar correo a: ${orden.cliente.email}`}
+                              >
+                                <FaEnvelope size={18} />
+                              </a>
+                            )}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        {orden.tecnicoAsignado ? (
+                          <div>
+                            <div className="font-medium">{orden.tecnicoAsignado.nombre}</div>
+                            <div className="flex gap-2 mt-1">
+                              {(orden.tecnicoAsignado.celular || orden.tecnicoAsignado.telefono) && (
+                                <a 
+                                  href={getWhatsAppLink(orden.tecnicoAsignado.celular || orden.tecnicoAsignado.telefono)}
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-green-500 hover:text-green-600"
+                                  title={`WhatsApp: ${orden.tecnicoAsignado.celular || orden.tecnicoAsignado.telefono}`}
+                                >
+                                  <FaWhatsapp size={18} />
+                                </a>
+                              )}
+                              {orden.tecnicoAsignado.email && (
+                                <a 
+                                  href={getGmailLink(orden.tecnicoAsignado.email)}
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-blue-500 hover:text-blue-600" 
+                                  title={`Enviar correo a: ${orden.tecnicoAsignado.email}`}
+                                >
+                                  <FaEnvelope size={18} />
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 italic text-xs">Sin asignar</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${getEstadoColor(orden.estado)}`}>

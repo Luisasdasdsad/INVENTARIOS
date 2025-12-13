@@ -9,6 +9,7 @@ import RegistrarMovimientoPage from "../features/movimientos/RegistrarMovimiento
 import { AuthProvider } from "../contexts/AuthContext";
 import { PrivateRoute } from "../components/PrivateRoute";
 import Cotización from "../features/cotización/Cotización";
+import { NotificationProvider } from "../contexts/NotificationContext";
 import CotizaciónList from "../features/cotización/CotizaciónList";
 import CotizaciónHistorial from "../features/cotización/CotizaciónHistorial"; 
 import OrdenTrabajoList from "../features/ordenTrabajo/OrdenTrabajoList"; 
@@ -24,6 +25,7 @@ export default function AppRouter() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <NotificationProvider>
         <Routes>
           {/* Rutas de Autenticación */}
           <Route path="/" element={<AuthLayout />}>
@@ -63,6 +65,7 @@ export default function AppRouter() {
           {/* Ruta para 404 */}
           <Route path="*" element={<div>404 Not Found</div>} />
         </Routes>
+        </NotificationProvider>
       </AuthProvider>
     </BrowserRouter>
   );

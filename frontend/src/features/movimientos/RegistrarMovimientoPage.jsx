@@ -6,30 +6,29 @@ import { useSearchParams } from 'react-router-dom';
 import BarcodeScanner from '../../components/BarcodeScanner/BarcodeScanner';
 import EscanerQR from '../../components/EscannerQR/EscannerQR.jsx';
 import axios from 'axios';
+import PhotoCapture from '../../components/PhotoCapture/PhotoCapture';
 
 export default function RegistrarMovimientoPage() {
   const [searchParams] = useSearchParams();
   const tipoInicial = searchParams.get('tipo') || 'entrada';
 
   const [herramientas, setHerramientas] = useState([]);
+  const [productos, setProductos] = useState([]);
   const [formData, setFormData] = useState({
     herramientas: [{ herramienta: '', barcode: '', qrCode: '', cantidad: '' }],
     tipo: tipoInicial,
     nota: '',
     nombreUsuario: '',
     obra: '',
-    foto: ''
+    foto: '',
+    barcode: '',
+    qrCode: '',
+    herramienta: ''
   });
 
   // Estado para manejar múltiples herramientas
   const [herramientasSeleccionadas, setHerramientasSeleccionadas] = useState([]);
-
-  // Estados para captura de foto
-  const [showCamera, setShowCamera] = useState(false);
-  const [capturedImage, setCapturedImage] = useState(null); // Preview de la foto
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const [cameraStream, setCameraStream] = useState(null); // NUEVO: Estado para guardar el stream
+  const [tipoSeleccion, setTipoSeleccion] = useState('herramienta'); // 'herramienta' | 'producto'
 
   const [error, setError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -48,203 +47,18 @@ export default function RegistrarMovimientoPage() {
 
   // useEffect para cargar herramientas al inicio
   useEffect(() => {
-    api.get('/herramientas')
-      .then(res => setHerramientas(res.data))
-      .catch(() => setError('Error al cargar herramientas'));
+    Promise.all([api.get('/herramientas'), api.get('/productos')])
+      .then(([resHerramientas, resProductos]) => {
+        setHerramientas(resHerramientas.data);
+        setProductos(resProductos.data);
+      })
+      .catch(() => setError('Error al cargar inventario'));
   }, []);
 
   // Reset qrProcessing cuando se abre el modal QR
   useEffect(() => {
     setQrProcessing(false);
   }, [showEscanerQR]);
-
-  // NUEVO useEffect: Para asignar el stream al elemento <video> una vez que se renderiza
-  useEffect(() => {
-    console.log('🔍 useEffect de cámara disparado - showCamera:', showCamera, 'cameraStream:', !!cameraStream, 'videoRef.current:', !!videoRef.current);
-
-    if (showCamera && cameraStream && videoRef.current) {
-      console.log('🎥 Asignando stream al video después del render...');
-      
-      const video = videoRef.current;
-      video.srcObject = cameraStream;
-      
-      // Event listeners para confirmar carga y debug
-      const handleLoadedMetadata = () => {
-        console.log('📹 loadedmetadata: Width:', video.videoWidth, 'Height:', video.videoHeight);
-      };
-      const handleCanPlay = () => {
-        console.log('🎬 canplay: Video listo para reproducir');
-      };
-      const handleVideoError = (e) => {
-        console.error('❌ Error en video element:', e);
-      };
-
-      video.addEventListener('loadedmetadata', handleLoadedMetadata, { once: true });
-      video.addEventListener('canplay', handleCanPlay, { once: true });
-      video.addEventListener('error', handleVideoError, { once: true });
-
-      // Fuerza play
-      video.muted = true;
-      video.play()
-        .then(() => {
-          console.log('▶️ Video reproduciéndose exitosamente');
-        })
-        .catch((err) => {
-          console.error('❌ Error en video.play():', err);
-        });
-
-      // Cleanup: Detener tracks y remover listeners cuando el componente se desmonte o el stream cambie
-      return () => {
-        console.log('🧹 Limpiando listeners y tracks del video...');
-        video.removeEventListener('loadedmetadata', handleLoadedMetadata);
-        video.removeEventListener('canplay', handleCanPlay);
-        video.removeEventListener('error', handleVideoError);
-        if (video.srcObject) {
-          video.srcObject.getTracks().forEach(track => track.stop());
-          video.srcObject = null;
-        }
-      };
-    } else if (showCamera && !cameraStream) {
-      console.log('⏳ useEffect esperando: showCamera es true, pero cameraStream aún no está disponible.');
-    } else if (showCamera && cameraStream && !videoRef.current) {
-      console.log('⏳ useEffect esperando: showCamera y cameraStream están listos, pero videoRef.current es null (video no renderizado aún).');
-    } else {
-      console.log('⏳ useEffect esperando: showCamera es false o cameraStream es null.');
-    }
-  }, [showCamera, cameraStream]); // Dependencias: se ejecuta cuando showCamera o cameraStream cambian
-
-  // Función para iniciar la cámara
-  const startCamera = async () => {
-    try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { // CORREGIDO: getUserMedia sin espacio
-        throw new Error('getUserMedia no está soportado en este navegador.');
-      }
-      console.log('🔄 Iniciando cámara...');
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode: 'environment',  // Cámara frontal para laptops
-          width: { min: 320, max: 640 },  
-          height: { min: 240, max: 480 }
-        } 
-      });
-      console.log('✅ Stream obtenido exitosamente');
-      // Guardamos el stream en estado temporal; el useEffect lo asignará al video
-      setCameraStream(stream);
-      setShowCamera(true);  // Esto triggera el render del <video>
-      setError('');
-      console.log('📹 Stream guardado, esperando render del video...');
-    } catch (err) {
-      console.error('Error cámara:', err);
-      setError('Error al acceder a la cámara: ' + err.message + '. Verifica permisos y navegador.');
-      setCameraStream(null);
-    }
-  };
-   
-  // Función para detener la cámara
-  const stopCamera = () => {
-    console.log('🛑 Deteniendo cámara...');
-    if (videoRef.current && videoRef.current.srcObject) {
-      videoRef.current.srcObject.getTracks().forEach(track => track.stop());
-      videoRef.current.srcObject = null; // Limpiar srcObject del video
-    }
-    setShowCamera(false);
-    setCameraStream(null); // Limpiar el estado del stream
-    setCapturedImage(null); // Limpiar preview de la foto
-    setError(''); // Limpiar errores
-    console.log('⏹️ Cámara detenida y stream limpiado');
-  };
-
-  // Función para capturar foto y subirla
-  const capturePhoto = async () => {
-    if (!videoRef.current) {
-      setError('Elemento de video no encontrado.');
-      return;
-    }
-
-    const video = videoRef.current;
-    console.log('🔄 Intentando capturar - Video width inicial:', video.videoWidth, 'Height:', video.videoHeight);
-
-    // Esperar hasta que el video tenga frames (máximo 5 segundos)
-    const waitForVideoReady = () => {
-      return new Promise((resolve, reject) => {
-        let attempts = 0;
-        const maxAttempts = 50; // ~5 segundos (100ms x 50)
-
-        const checkVideo = () => {
-          attempts++;
-          console.log(`⏳ Esperando frames... Intento ${attempts}, Width: ${video.videoWidth}`);
-
-          if (video.videoWidth > 0 && video.videoHeight > 0) {
-            console.log('✅ Video listo para capturar!');
-            resolve();
-          } else if (attempts >= maxAttempts) {
-            reject(new Error('El video no se cargó a tiempo. Intenta de nuevo o verifica la cámara.'));
-          } else {
-            setTimeout(checkVideo, 100); // Revisa cada 100ms
-          }
-        };
-
-        // Listener para cuando el video cargue datos (por si acaso)
-        video.addEventListener('loadeddata', () => {
-          console.log('🎥 Evento loadeddata disparado');
-          if (video.videoWidth > 0) resolve();
-        }, { once: true });
-
-        checkVideo(); // Inicia la espera
-      });
-    };
-
-    try {
-      setError(''); // Limpia errores previos
-      await waitForVideoReady(); // Espera aquí hasta que esté listo
-
-      const canvas = canvasRef.current;
-      if (!canvas) {
-        throw new Error('Canvas no encontrado.');
-      }
-
-      const context = canvas.getContext('2d');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      context.drawImage(video, 0, 0);
-      console.log('🖼️ Imagen dibujada en canvas');
-
-      // Convertir a Blob y subir
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          setError('No se pudo crear el blob de la imagen.');
-          return;
-        }
-
-        setLoading(true);
-        try {
-          const formDataUpload = new FormData();
-          formDataUpload.append('foto', blob, `movimiento-foto-${Date.now()}.jpg`);
-
-          console.log('📤 Subiendo foto al backend...');
-          const response = await api.post('/fotos', formDataUpload, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-          });
-
-          const fotoUrl = response.data.foto;
-          setFormData(prev => ({ ...prev, foto: fotoUrl })); // Actualiza formData
-          setCapturedImage(URL.createObjectURL(blob)); // Preview local temporal
-          setError('');
-          alert('Foto capturada y subida exitosamente');
-        } catch (err) {
-          setError('Error al subir la foto: ' + (err.response?.data?.msg || err.message));
-          console.error('Error upload:', err);
-        } finally {
-          setLoading(false);
-        }
-      }, 'image/jpeg', 0.8); // Calidad 80%
-
-      // stopCamera(); // Cierra cámara después de capturar (opcional, puedes dejarla abierta)
-    } catch (err) {
-      console.error('Error en captura:', err);
-      setError(err.message || 'Cámara no lista. Intenta de nuevo.');
-    }
-  };
 
   const fetchHerramientaByBarcode = async (barcode) => {
   if (isScanning) {
@@ -281,7 +95,8 @@ export default function RegistrarMovimientoPage() {
       ...herramienta,
       barcode: codigo,
       qrCode: '',
-      cantidad: 1 // Default cantidad
+      cantidad: 1, // Default cantidad
+      tipo: 'herramienta'
     }]);
 
     // Limpiar formData para permitir agregar más
@@ -327,6 +142,8 @@ export default function RegistrarMovimientoPage() {
         qrCode: ''  // Limpia QR
       }));
       const herramienta = herramientas.find(h => h._id === value);
+      const producto = productos.find(p => p._id === value);
+
       if (herramienta) {
         // Agregar a herramientas seleccionadas
         setHerramientasSeleccionadas(prev => [...prev, {
@@ -334,9 +151,22 @@ export default function RegistrarMovimientoPage() {
           herramienta: herramienta._id,
           barcode: '',
           qrCode: '',
-          cantidad: 1 // Default cantidad
+          cantidad: 1, // Default cantidad
+          tipo: 'herramienta'
         }]);
+      } else if (producto) {
+        // Agregar producto seleccionado
+        setHerramientasSeleccionadas(prev => [...prev, {
+          ...producto,
+          producto: producto._id,
+          barcode: '',
+          qrCode: '',
+          cantidad: 1,
+          tipo: 'producto'
+        }]);
+      }
 
+      if (herramienta || producto) {
         // Limpiar formData para permitir agregar más
         setFormData(prev => ({
           ...prev,
@@ -441,7 +271,8 @@ const handleBarcodeManualChange = e => {
         ...herramienta,
         qrCode: qrCode.toUpperCase(),
         barcode: '',
-        cantidad: 1 // Default cantidad
+        cantidad: 1, // Default cantidad
+        tipo: 'herramienta'
       }]);
 
       // Limpiar formData para permitir agregar más
@@ -492,20 +323,20 @@ const handleBarcodeManualChange = e => {
     setFieldErrors({});
 
     // Validar que al menos una herramienta tenga datos
-    const herramientasValidas = herramientasSeleccionadas.filter(h =>
-      h.herramienta || h.barcode || h.qrCode
+    const itemsValidos = herramientasSeleccionadas.filter(h =>
+      h.herramienta || h.producto || h.barcode || h.qrCode
     );
 
-    if (herramientasValidas.length === 0) {
-      setError('Debe seleccionar al menos una herramienta');
+    if (itemsValidos.length === 0) {
+      setError('Debe seleccionar al menos un ítem');
       setLoading(false);
       return;
     }
 
     // Validar que cada herramienta tenga cantidad > 0
-    for (const h of herramientasValidas) {
+    for (const h of itemsValidos) {
       if (!h.cantidad || h.cantidad <= 0) {
-        setError('Todas las herramientas deben tener cantidad mayor que cero');
+        setError('Todos los ítems deben tener cantidad mayor que cero');
         setLoading(false);
         return;
       }
@@ -513,18 +344,40 @@ const handleBarcodeManualChange = e => {
 
     try {
       const { nombreUsuario, ...payloadData } = formData; // Excluir nombreUsuario ya que viene del auth
-      const payload = {
-        ...payloadData,
-        herramientas: herramientasValidas.map(h => ({
-          herramienta: h.herramienta || undefined,
-          barcode: h.barcode || undefined,
-          qrCode: h.qrCode || undefined,
-          cantidad: Number(h.cantidad)
-        }))
-      };
+      
+      const herramientasItems = itemsValidos.filter(i => i.tipo !== 'producto');
+      const productosItems = itemsValidos.filter(i => i.tipo === 'producto');
+      const promises = [];
 
-      console.log('Payload enviado a /movimientos:', payload);
-      await api.post('/movimientos', payload);
+      // 1. Enviar Herramientas (si hay)
+      if (herramientasItems.length > 0) {
+        const payloadH = {
+          ...payloadData,
+          herramientas: herramientasItems.map(h => ({
+            herramienta: h.herramienta || undefined,
+            barcode: h.barcode || undefined,
+            qrCode: h.qrCode || undefined,
+            cantidad: Number(h.cantidad)
+          }))
+        };
+        promises.push(api.post('/movimientos', payloadH));
+      }
+
+      // 2. Enviar Productos (si hay)
+      if (productosItems.length > 0) {
+        const payloadP = {
+          ...payloadData,
+          productos: productosItems.map(p => ({
+            producto: p.producto || undefined,
+            cantidad: Number(p.cantidad)
+          }))
+        };
+        // Asumiendo que tu backend tiene este endpoint para la colección movimientosproductos
+        promises.push(api.post('/movimientos-productos', payloadP));
+      }
+
+      await Promise.all(promises);
+
       alert('Movimiento registrado con éxito');
       navigate('/movimientos');
     } catch (err) {
@@ -544,17 +397,17 @@ const handleBarcodeManualChange = e => {
       
       {/* Sección de selección de herramienta */}
       <div className="mb-6 p-4 border rounded-lg bg-gray-50">
-        <h3 className="text-lg font-semibold mb-3">Seleccionar Herramienta</h3>
+        <h3 className="text-lg font-semibold mb-3">Seleccionar Ítem</h3>
         
         {herramientasSeleccionadas.length > 0 && (
           <div className="mb-4 p-3 bg-green-100 border border-green-300 rounded">
-            <p className="text-green-800 font-semibold mb-2">Herramientas seleccionadas:</p>
+            <p className="text-green-800 font-semibold mb-2">Ítems seleccionados:</p>
             {herramientasSeleccionadas.map((h, index) => (
               <div key={index} className="mb-2 p-2 bg-white rounded border">
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="text-green-800">
-                      <strong>{h.nombre}</strong> ({h.codigo})
+                      <strong>{h.nombre}</strong> {h.codigo ? `(${h.codigo})` : ''} <span className="text-xs bg-gray-200 px-1 rounded">{h.tipo === 'producto' ? 'Prod' : 'Herr'}</span>
                     </p>
                     <p className="text-green-700 text-sm">
                       Cantidad disponible: {h.cantidad} {h.unidad}
@@ -666,6 +519,32 @@ const handleBarcodeManualChange = e => {
           <span className="flex items-center text-gray-500">o</span>
         </div>
 
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">Tipo de Selección</label>
+          <div className="flex space-x-4">
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                value="herramienta"
+                checked={tipoSeleccion === 'herramienta'}
+                onChange={() => setTipoSeleccion('herramienta')}
+                className="form-radio text-blue-600"
+              />
+              <span className="ml-2">Herramienta</span>
+            </label>
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                value="producto"
+                checked={tipoSeleccion === 'producto'}
+                onChange={() => setTipoSeleccion('producto')}
+                className="form-radio text-blue-600"
+              />
+              <span className="ml-2">Producto</span>
+            </label>
+          </div>
+        </div>
+
         <select
           name="herramienta"
           value={formData.herramienta}
@@ -673,10 +552,14 @@ const handleBarcodeManualChange = e => {
           className="w-full border p-2 rounded"
           disabled={!!formData.barcode || loading}
         >
-          <option value="">Seleccione manualmente una herramienta</option>
-          {herramientas.map(h => (
+          <option value="">{tipoSeleccion === 'herramienta' ? 'Seleccione herramienta' : 'Seleccione producto'}</option>
+          {tipoSeleccion === 'herramienta' ? herramientas.map(h => (
             <option key={h._id} value={h._id}>
               {h.nombre} ({h.codigo}) - Cantidad: {h.cantidad}
+            </option>
+          )) : productos.map(p => (
+            <option key={p._id} value={p._id}>
+              {p.nombre} - Stock: {p.stock} {p.unidad}
             </option>
           ))}
         </select>
@@ -744,87 +627,12 @@ const handleBarcodeManualChange = e => {
         {fieldErrors.obra && <p className="text-red-600 text-sm">{fieldErrors.obra}</p>}
 
         {/* Sección: Captura de Foto */}
-        <div className="border rounded-lg p-4 bg-gray-50">
-          <h3 className="text-lg font-semibold mb-3">Foto de Referencia (opcional)</h3>
-          
-          {/* Canvas oculto para snapshot */}
-          <canvas ref={canvasRef} className="hidden" />
-          
-          {/* Si no hay foto capturada, muestra botón para abrir cámara */}
-          {!showCamera && !capturedImage && (
-            <button
-              type="button"
-              onClick={startCamera}
-              className="w-full bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 transition-colors mb-2"
-              disabled={loading}
-            >
-              📸 Tomar Foto con Cámara
-            </button>
-          )}
-          
-          {/* Si cámara abierta, muestra video y botones */}
-          {showCamera && (
-            <div className="mb-4 text-center p-4 border-2 border-blue-300 rounded bg-gray-50">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Vista previa de la cámara (debe mostrar video aquí):</h4>
-              <video
-                ref={videoRef}
-                autoPlay
-                muted
-                playsInline
-                className="w-full max-w-md mx-auto rounded border-2 border-gray-300 block"
-                style={{ 
-                  minHeight: '240px',  // Altura mínima para ver si está vacío
-                  backgroundColor: '#e0f2fe',  // Fondo azul claro si está vacío (para debug)
-                  width: '100%'
-                }}
-              />
-              <div className="mt-3 flex justify-center space-x-3">
-                <button
-                  type="button"
-                  onClick={capturePhoto}
-                  className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-                  disabled={loading}
-                >
-                  📷 Capturar Foto
-                </button>
-                <button
-                  type="button"
-                  onClick={stopCamera}
-                  className="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors flex items-center"
-                >
-                  ❌ Detener Cámara
-                </button>
-              </div>
-            </div>
-          )}
-          
-          {/* Preview de foto capturada (si existe) */}
-          {capturedImage && (
-            <div className="mt-4 text-center">
-              <p className="text-sm text-green-600 mb-2">Foto capturada:</p>
-              <img 
-                src={capturedImage} 
-                alt="Foto capturada" 
-                className="w-full max-w-xs mx-auto rounded border"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                URL guardada: {formData.foto || 'Subiendo...'}
-              </p>
-              {/* Botón para tomar otra foto */}
-              <button
-                type="button"
-                onClick={() => {
-                  setCapturedImage(null);
-                  setFormData(prev => ({ ...prev, foto: '' }));
-                  startCamera(); // Inicia la cámara de nuevo para otra foto
-                }}
-                className="text-sm text-blue-600 underline mt-1"
-              >
-                📸 Tomar otra foto
-              </button>
-            </div>
-          )}
-        </div>
+        <PhotoCapture 
+          onCapture={(url) => setFormData(prev => ({ ...prev, foto: url }))} 
+          currentPhoto={formData.foto} 
+          fileNamePrefix="movimiento"
+        />
+
         {error && <p className="text-red-600">{error}</p>}
         <button
           type="submit"

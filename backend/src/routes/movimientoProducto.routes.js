@@ -1,30 +1,24 @@
 import express from 'express';
 import {registrarMovimientoProducto, listarMovimientosProducto } from '../controllers/movimientoProducto.controller.js';
-import { body } from 'express-validator'; // Si usas express-validator
+import { body, validationResult } from 'express-validator';
+import { auth } from '../middlewares/auth.js';
 
 const router = express.Router();
 
+// Proteger rutas con autenticación
+router.use(auth);
+
 // Validadores para movimientos de productos (similar a los de herramientas)
 const movimientoProductoCreateValidator = [
-  body('productoId')
-    .optional({ nullable: true })
-    .isMongoId()
-    .withMessage('ID de producto debe ser un ObjectId válido.'),
-  body('barcode')
-    .optional({ nullable: true })
-    .isString().trim().isLength({ min: 8, max: 8 }).matches(/^[A-Fa-f0-9]{8}$/i)
-    .withMessage('Código de barras debe ser 8 caracteres hexadecimales.'),
+  body('productos')
+    .isArray({ min: 1 })
+    .withMessage('Debe proporcionar al menos un producto.'),
   body('tipo')
     .notEmpty().withMessage('Tipo es requerido.')
     .isIn(['entrada', 'salida', 'ajuste']).withMessage('Tipo debe ser "entrada", "salida" o "ajuste".'),
-  body('cantidad')
-    .notEmpty().withMessage('Cantidad es requerida.')
-    .isInt({ min: 1 }).withMessage('Cantidad debe ser un número entero positivo.'),
-  body('nombreUsuario')
-    .notEmpty().withMessage('Nombre de usuario es requerido.')
-    .isString().trim().isLength({ min: 1 }).withMessage('Nombre de usuario debe tener al menos 1 carácter.'),
   body('nota').optional().isString().trim().isLength({ max: 500 }).withMessage('Nota no puede exceder 500 caracteres.'),
-  body('referencia').optional().isString().trim().isLength({ max: 100 }).withMessage('Referencia no puede exceder 100 caracteres.'),
+  // El frontend envía 'obra', que mapearemos a 'referencia' en el controlador
+  body('obra').optional().isString().trim().isLength({ max: 100 }).withMessage('Obra no puede exceder 100 caracteres.'),
 ];
 
 router.post(

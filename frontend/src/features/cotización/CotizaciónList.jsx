@@ -425,11 +425,15 @@ const CotizaciónList = () => {
                           </>
                         )}
                         
+                        {/* Botón Editar: Disponible siempre que no esté facturada (incluye Aceptada/Rechazada) */}
+                        {!cotizacion.factura && (
+                          <button onClick={() => handleEdit(cotizacion)} className="text-warning-600 hover:text-warning-700 font-medium text-xs">
+                            <FaEdit className="inline-block mr-1" />Editar
+                          </button>
+                        )}
+
                         {(!cotizacion.factura && cotizacion.estado === 'Pendiente') && (
                           <>
-                            <button onClick={() => handleEdit(cotizacion)} className="text-warning-600 hover:text-warning-700 font-medium text-xs">
-                              <FaEdit className="inline-block mr-1" />Editar
-                            </button>
                             <button onClick={() => handleUpdateEstado(cotizacion._id, 'Aceptada')} className="text-success-600 hover:text-success-700 font-medium text-xs">Aceptar</button>
                             <button onClick={() => handleUpdateEstado(cotizacion._id, 'Rechazada')} className="text-danger-600 hover:text-danger-700 font-medium text-xs">Rechazar</button>
                           </>

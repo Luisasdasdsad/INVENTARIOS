@@ -18,10 +18,24 @@ export default function MovimientosList() {
   useEffect(() => {
     const fetchMovimientos = async () => {
       try {
-        console.log('Iniciando fetch de movimientos...');
-        const res = await api.get('/movimientos');
-        console.log('Movimientos cargados:', res.data ? res.data.length : 0);
-        setMovimientos(res.data || []);
+        // Consultar ambos endpoints (herramientas y productos)
+        const [resHerramientas, resProductos] = await Promise.allSettled([
+          api.get('/movimientos'),
+          api.get('/movimientos-productos')
+        ]);
+
+        let combined = [];
+        if (resHerramientas.status === 'fulfilled') combined = [...combined, ...resHerramientas.value.data];
+        if (resProductos.status === 'fulfilled') combined = [...combined, ...resProductos.value.data];
+        
+        if (resProductos.status === 'rejected') {
+          console.error("Fallo al cargar movimientos de productos:", resProductos.reason);
+        }
+
+        // Ordenar por fecha de creación descendente
+        combined.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        setMovimientos(combined);
       } catch (err) {
         console.error('Error en fetchMovimientos:', err);
         setError('Error al cargar movimientos: ' + (err.message || 'Desconocido'));
@@ -92,8 +106,6 @@ export default function MovimientosList() {
 
     generarReporteMovimientosPDF(movimientosFiltrados);
   }
-
-  console.log('Renderizando MovimientosList - Loading:', loading, 'Error:', error, 'Movimientos count:', movimientos.length);
 
   if (loading) {
     return (
@@ -197,8 +209,8 @@ export default function MovimientosList() {
             <label className="block text-xs md:text-sm font-medium mb-1">Desde:</label>
             <input
               type="date"
-              name="fecha"
-              value={filtros.fecha}
+              name="fechaInicio"
+              value={filtros.fechaInicio}
               onChange={handleFiltroChange}
               className="w-full px-3 py-2 border rounded text-sm md:text-base"
             />
@@ -256,6 +268,10 @@ export default function MovimientosList() {
                             {h.herramienta?.nombre || 'Herramienta eliminada'} ({h.cantidad} {h.herramienta?.unidad || '-'})
                           </div>
                         ))
+                      ) : mov.producto ? (
+                        <div className="mb-1">
+                          {mov.producto.nombre || 'Producto eliminado'} ({mov.cantidad} {mov.producto.unidad || '-'})
+                        </div>
                       ) : (
                         mov.herramienta ? mov.herramienta.nombre : 'Herramienta eliminada'
                       )}
@@ -265,9 +281,9 @@ export default function MovimientosList() {
                         <p key={idx} className="text-xs text-gray-600">Código: {h.herramienta?.codigo || 'N/A'}</p>
                       ))
                     ) : (
-                      mov.herramienta && (
-                        <p className="text-xs text-gray-600">Código: {mov.herramienta.codigo}</p>
-                      )
+                      (mov.producto || mov.herramienta) && (
+                        <p className="text-xs text-gray-600">Código: {mov.producto?.barcode || mov.herramienta?.barcode || 'N/A'}</p>
+                      ) 
                     )}
                   </div>
 
@@ -281,6 +297,8 @@ export default function MovimientosList() {
                           mov.cantidad
                         )} {mov.herramientas && mov.herramientas.length > 0 ? (
                           mov.herramientas[0].herramienta?.unidad || '-'
+                        ) : mov.producto ? (
+                          mov.producto.unidad || '-'
                         ) : (
                           mov.herramienta?.unidad || '-'
                         )}
@@ -291,6 +309,17 @@ export default function MovimientosList() {
                       <p>{mov.usuario?.nombre || 'Desconocido'}</p>
                     </div>
                   </div>
+
+                  {(mov.obra || mov.referencia) && (
+                    <div className="mt-2">
+                      {mov.obra && (
+                        <p className="text-xs text-gray-600"><span className="font-medium">Obra:</span> {mov.obra}</p>
+                      )}
+                      {mov.referencia && (
+                        <p className="text-xs text-gray-600"><span className="font-medium">Ref:</span> {mov.referencia}</p>
+                      )}
+                    </div>
+                  )}
 
                   {mov.nota && (
                     <div>
@@ -314,6 +343,7 @@ export default function MovimientosList() {
                     <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unidad</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Obra</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nota</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
@@ -341,6 +371,10 @@ export default function MovimientosList() {
                                   {h.herramienta?.nombre || 'Herramienta eliminada'} ({h.cantidad} {h.herramienta?.unidad || '-'})
                                 </div>
                               ))
+                            ) : mov.producto ? (
+                              <div className="mb-1">
+                                {mov.producto.nombre || 'Producto eliminado'} ({mov.cantidad} {mov.producto.unidad || '-'})
+                              </div>
                             ) : (
                               mov.herramienta ? mov.herramienta.nombre : 'Herramienta eliminada'
                             )}
@@ -359,11 +393,14 @@ export default function MovimientosList() {
                           mov.herramientas.map((h, idx) => (
                             <div key={idx}>{h.herramienta?.unidad || '-'}</div>
                           ))
+                        ) : mov.producto ? (
+                          <div>{mov.producto.unidad || '-'}</div>
                         ) : (
                           mov.herramienta?.unidad || '-'
                         )}
                       </td>
                       <td className="px-4 py-3 text-sm">{mov.usuario?.nombre || 'Desconocido'}</td>
+                      <td className="px-4 py-3 text-sm">{mov.obra || '-'}</td>
                       <td className="px-4 py-3 text-sm whitespace-nowrap">
                         {new Date(mov.createdAt).toLocaleString()}
                       </td>

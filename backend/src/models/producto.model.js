@@ -1,18 +1,18 @@
 import mongoose from 'mongoose';
 
 const productoSchema = new mongoose.Schema({
-  nombre: { type: String, required: true, trim: true },
-  descripcion: { type: String, trim: true },
-  unidad: { type: String },
-  stock: { type: Number, default: 0 },
-  precioUnitario: { type: Number, min: 0, default: 0 },
-  categoria: { type: String },
-  marca: { type: String, trim: true },
-  modelo: { type: String, trim: true },
-  moneda: { type: String, enum: ['SOLES', 'DOLARES'], default: 'SOLES' },
+  nombre: { type: String, required: true },
+  descripcion: { type: String },
+  unidad: { type: String, default: 'unidad' },
+  stock: { type: Number, required: true, default: 0 },
+  precioUnitario: { type: Number, default: 0 },
+  categoria: { type: String, required: true },
+  marca: { type: String },
+  modelo: { type: String },
+  moneda: { type: String, default: 'SOLES' },
+  foto: { type: String },
   barcode: { type: String, unique: true, sparse: true },
-  qrCode: { type: String, unique: true, sparse: true },
-  foto: { type: String }, // añadimos campo foto por consistencia
+  qrCode: { type: String, unique: true, sparse: true }
 }, { timestamps: true });
 
 export default mongoose.model('Producto', productoSchema);
