@@ -110,7 +110,7 @@ const CotizaciónList = () => {
       nombre: "TEAM GAS S.A.C.",
       ruc: "20604956499",
       direccion: "Jr. Coronel Guerra Nro. 152 (Plaza Principal) Junín - Chupaca - Chupaca",
-      telefono: "997030802 - 919289085",
+      telefono: "997030802",
       email: "info@teamgas.com.pe",
     };
   

@@ -126,7 +126,7 @@ const generarReporteCotizacion = async (cotizacion) => {
         <p><b>Razón Social:</b> TEAMGAS SOCIEDAD ANÓNIMA CERRADA</p>
         <p><b>RUC:</b> 20604956499</p>
         <p><b>EMAIL:</b> info@teamgas.pe</p>
-        <p><b>Teléfono:</b> 997030802 - 919289085</p>
+        <p><b>Teléfono:</b> 997030802</p>
         <p><b>Responsable:</b> ${responsable || "N/A"}</p>
       </div>
 
