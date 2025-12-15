@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../../services/api.js';
 
-export default function HerramientaForm({ herramienta, onSuccess, onCancel }) {
+export default function HerramientaForm({ herramienta, herramientasExistentes = [], onSuccess, onCancel }) {
   const [formData, setFormData] = useState({
     nombre: '',
     marca: '',
@@ -238,6 +238,23 @@ export default function HerramientaForm({ herramienta, onSuccess, onCancel }) {
     setLoading(true);
     setError("");
 
+    // --- VALIDACIÓN DE DUPLICADOS ---
+    // Verificar si ya existe una herramienta con el mismo Nombre, Marca y Modelo
+    if (herramientasExistentes.length > 0) {
+      const existe = herramientasExistentes.find(h => 
+        h.nombre.trim().toLowerCase() === formData.nombre.trim().toLowerCase() &&
+        h.marca.trim().toLowerCase() === formData.marca.trim().toLowerCase() &&
+        h.modelo.trim().toLowerCase() === formData.modelo.trim().toLowerCase() &&
+        h._id !== herramienta?._id // Excluir la herramienta actual si estamos editando
+      );
+
+      if (existe) {
+        setError("Ya existe una herramienta registrada con el mismo Nombre, Marca y Modelo.");
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       const data = new FormData();
       Object.entries(formData).forEach(([key, value]) => data.append(key, value));
@@ -256,10 +273,26 @@ export default function HerramientaForm({ herramienta, onSuccess, onCancel }) {
         });
         alert("Herramienta actualizada con éxito.");
       } else {
-        await api.post("/herramientas", data, {
+        const res = await api.post("/herramientas", data, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        alert("Herramienta creada con éxito.");
+
+        // Generación automática de códigos (Barcode y QR)
+        const newId = res.data._id || res.data.data?._id;
+        if (newId) {
+          try {
+            await Promise.all([
+              api.post(`/barcode/generar/${newId}`),
+              api.post(`/qr/herramienta/${newId}`)
+            ]);
+            alert("Herramienta creada con éxito (Códigos generados automáticamente).");
+          } catch (codeErr) {
+            console.error("Error generando códigos automáticos:", codeErr);
+            alert("Herramienta creada, pero hubo un error al generar los códigos automáticamente.");
+          }
+        } else {
+          alert("Herramienta creada con éxito.");
+        }
       }
 
       onSuccess();

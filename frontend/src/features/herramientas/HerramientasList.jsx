@@ -4,7 +4,7 @@ import Modal from "../../components/Modal/Modal";
 import HerramientaForm from "./HerramientaForm";
 import BarcodeDisplay from "../../components/BarcodeDisplay/BarcodeDisplay";
 import QRDisplay from "../../components/BarcodeDisplay/QRDisplay.jsx";
-import { FaEdit, FaTrash, FaBarcode, FaQrcode, FaPlus, FaEye, FaFilePdf, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaEdit, FaTrash, FaBarcode, FaQrcode, FaPlus, FaEye, FaFilePdf, FaChevronLeft, FaChevronRight, FaPrint } from "react-icons/fa";
 import { generarReporteInventario } from "../../utils/generarReporteInventario.js";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -120,6 +120,80 @@ export default function HerramientasList() {
     } finally {
       setGeneratingQR(false);
     }
+  };
+
+  // Función para imprimir etiqueta de Código de Barras
+  const handlePrintBarcode = (herramienta) => {
+    const printWindow = window.open('', '_blank', 'width=400,height=300');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Imprimir Etiqueta</title>
+          <style>
+            @page { size: 50mm 25mm; margin: 0; }
+            body { margin: 0; padding: 0; width: 50mm; height: 25mm; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: Arial, sans-serif; overflow: hidden; }
+            .label-container { text-align: center; width: 96%; height: 96%; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+            .product-name { font-size: 8px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; margin-bottom: 1px; }
+            svg { max-width: 100%; height: auto; max-height: 18mm; }
+          </style>
+          <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+        </head>
+        <body>
+          <div class="label-container">
+            <div class="product-name">${herramienta.nombre}</div>
+            <svg id="barcode"></svg>
+          </div>
+          <script>
+            JsBarcode("#barcode", "${herramienta.barcode}", {
+              format: "CODE128",
+              width: 1.2, /* Más estrecho para que quepa en 50mm */
+              height: 35,
+              displayValue: true,
+              fontSize: 9,
+              margin: 0,
+              textMargin: 0
+            });
+            window.onload = function() { window.print(); window.close(); }
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  // Función para imprimir etiqueta de QR
+  const handlePrintQR = (herramienta) => {
+    const printWindow = window.open('', '_blank', 'width=400,height=300');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Imprimir QR</title>
+          <style>
+            @page { size: 50mm 25mm; margin: 0; }
+            body { margin: 0; padding: 0; width: 50mm; height: 25mm; display: flex; align-items: center; justify-content: center; font-family: Arial, sans-serif; overflow: hidden; }
+            /* Diseño horizontal: QR a la izquierda, Texto a la derecha */
+            .label-container { display: flex; flex-direction: row; align-items: center; width: 96%; height: 90%; }
+            .qr-code { width: 20mm; height: 20mm; flex-shrink: 0; }
+            .info { margin-left: 2mm; flex: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
+            .product-name { font-size: 8px; font-weight: bold; line-height: 1.1; max-height: 15mm; overflow: hidden; word-wrap: break-word; }
+            .qr-text { font-size: 8px; margin-top: 2px; font-family: monospace; white-space: nowrap; }
+          </style>
+        </head>
+        <body>
+          <div class="label-container">
+            <img class="qr-code" src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(herramienta.qrCode)}" />
+            <div class="info">
+                <div class="product-name">${herramienta.nombre}</div>
+                <div class="qr-text">${herramienta.qrCode}</div>
+            </div>
+          </div>
+          <script>
+            window.onload = function() { setTimeout(function() { window.print(); window.close(); }, 500); }
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   const handleShowCodes = (herramienta) => {
@@ -535,6 +609,7 @@ export default function HerramientasList() {
           <div className="max-h-[90vh] overflow-y-auto p-4 md:p-0">
             <HerramientaForm
               herramienta={editingHerramienta}
+              herramientasExistentes={herramientas}
               onSuccess={handleFormSubmit}
               onCancel={() => setShowModal(false)}
             />
@@ -585,6 +660,12 @@ export default function HerramientasList() {
                           className="mx-auto max-w-full"
                         />
                       </div>
+                      <button
+                        onClick={() => handlePrintBarcode(selectedHerramienta)}
+                        className="bg-gray-800 text-white px-3 py-1.5 rounded hover:bg-gray-900 flex items-center justify-center gap-2 mx-auto text-xs"
+                      >
+                        <FaPrint size={12} /> Imprimir Etiqueta
+                      </button>
                     </>
                   ) : (
                     <div className="space-y-2">
@@ -606,11 +687,21 @@ export default function HerramientasList() {
                     <FaQrcode size={14} /> Código QR
                   </h4>
                   {selectedHerramienta.qrCode ? (
+                    <>
                     <QRDisplay 
                       qrCode={selectedHerramienta.qrCode}
                       showActions={false}
                       className="mx-auto" 
                     />
+                    <div className="mt-2">
+                      <button
+                        onClick={() => handlePrintQR(selectedHerramienta)}
+                        className="bg-gray-800 text-white px-3 py-1.5 rounded hover:bg-gray-900 flex items-center justify-center gap-2 mx-auto text-xs"
+                      >
+                        <FaPrint size={12} /> Imprimir Etiqueta
+                      </button>
+                    </div>
+                    </>
                   ) : (
                     <div className="space-y-2">
                       <p className="text-gray-500 italic text-sm">No hay código QR.</p>
