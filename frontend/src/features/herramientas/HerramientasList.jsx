@@ -197,8 +197,8 @@ export default function HerramientasList() {
             .label-container { display: flex; flex-direction: row; align-items: center; width: 96%; height: 90%; }
             .qr-code { width: 20mm; height: 20mm; flex-shrink: 0; }
             .info { margin-left: 2mm; flex: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
-            .product-name { font-size: 8px; font-weight: bold; line-height: 1.1; max-height: 15mm; overflow: hidden; word-wrap: break-word; }
-            .qr-text { font-size: 8px; margin-top: 2px; font-family: monospace; white-space: nowrap; }
+            .product-name { font-size: 9px; font-weight: bold; line-height: 1.1; max-height: 15mm; overflow: hidden; word-wrap: break-word; }
+            .qr-text { font-size: 11px; margin-top: 2px; font-family: monospace; white-space: nowrap; font-weight: bold; }
             
             /* Botones para móvil */
             @media print { .no-print { display: none !important; } }
