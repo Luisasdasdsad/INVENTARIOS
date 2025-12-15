@@ -199,6 +199,7 @@ const CotizaciónList = () => {
         validez: cotizacion.validez,
         observaciones: cotizacion.observaciones || "",
         responsable: cotizacion.usuario?.nombre || "N/A",
+        tipoCambio: cotizacion.tipoCambio,
       });
     } catch (error) {
       console.error("Error al generar el reporte:", error);

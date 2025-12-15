@@ -27,6 +27,8 @@ const Cotización = () => {
   const [numeroCotizacion, setNumeroCotizacion] = useState("");
   const [descuento, setDescuento] = useState(0);
   const [tipoCambio, setTipoCambio] = useState(1);
+  const [tipoCambioSunat, setTipoCambioSunat] = useState(null);
+  const [loadingSunat, setLoadingSunat] = useState(false);
   const [validez, setValidez] = useState(15);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -98,6 +100,10 @@ const Cotización = () => {
       setDescripcionServicio(cotizacionEdit.descripcionServicio || "");
       setNumeroCotizacion(cotizacionEdit.numeroCotizacion);
       setDescuento(cotizacionEdit.descuento || 0);
+      setTipoCambio(cotizacionEdit.tipoCambio || 1);
+      if (cotizacionEdit.moneda === 'DOLARES') {
+        obtenerTipoCambioSunat(false, false); // Obtener referencia SUNAT sin sobrescribir y SIN alerta de error
+      }
       // cotizacionEdit.validez may be stored as "N días" or a number; normalize to integer days
       setValidez(parseInt(cotizacionEdit.validez) || 15);
     }
@@ -142,6 +148,29 @@ const Cotización = () => {
     }
   };
 
+  // === Obtener Tipo de Cambio SUNAT ===
+  const obtenerTipoCambioSunat = async (actualizarEditable = true, showError = true) => {
+    setLoadingSunat(true);
+    try {
+      // Usamos nuestro propio backend como proxy para evitar CORS y problemas de red
+      const res = await api.get('/tipo-cambio');
+      const data = res.data;
+      if (data && data.venta) {
+        setTipoCambioSunat(data.venta);
+        if (actualizarEditable) {
+          setTipoCambio(data.venta);
+        }
+      }
+    } catch (error) {
+      console.error("Error al obtener tipo de cambio SUNAT:", error);
+      if (showError) {
+        alert("No se pudo obtener el T.C. de SUNAT automáticamente. Por favor ingréselo manualmente.");
+      }
+    } finally {
+      setLoadingSunat(false);
+    }
+  };
+
   // === Totales ===
   const calcularTotales = () => {
     // Cálculo del subtotal (suma de valores unitarios * cantidad)
@@ -179,6 +208,7 @@ const Cotización = () => {
       totalGeneral: total,
       descuento,
       moneda,
+      tipoCambio: moneda === 'DOLARES' ? tipoCambio : 1,
       observaciones: observacionesCot,
       // Store as string "N días" to keep backend compatibility
       validez: `${validez} días`,
@@ -349,7 +379,12 @@ const Cotización = () => {
             <label className="text-sm text-gray-600">Moneda</label>
             <select
               value={moneda}
-              onChange={(e) => setMoneda(e.target.value)}
+              onChange={(e) => {
+                setMoneda(e.target.value);
+                if (e.target.value === "DOLARES") {
+                  obtenerTipoCambioSunat(true, false); // Carga automática silenciosa
+                }
+              }}
               className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
             >
               <option value="SOLES">SOLES</option>
@@ -357,8 +392,29 @@ const Cotización = () => {
             </select>
           </div>
           {moneda === 'DOLARES' && (
-            <div>
-              <label className="text-sm text-gray-600">Tipo de Cambio (S/)</label>
+            <>
+              <div>
+                <label className="text-sm text-gray-600 flex justify-between items-center">
+                  T.C. SUNAT (Ref)
+                  <button 
+                    type="button" 
+                    onClick={() => obtenerTipoCambioSunat(true, true)} 
+                    className="text-xs text-blue-600 hover:text-blue-800 underline"
+                    disabled={loadingSunat}
+                  >
+                    {loadingSunat ? "Cargando..." : "Actualizar"}
+                  </button>
+                </label>
+                <input
+                  type="number"
+                  value={tipoCambioSunat || ''}
+                  readOnly
+                  className="w-full border border-gray-300 p-2 rounded-md bg-gray-100 text-gray-500 cursor-not-allowed"
+                  placeholder={loadingSunat ? "Cargando..." : "Sin datos"}
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-600">T.C. a usar</label>
               <input
                 type="number"
                 min="0"
@@ -369,7 +425,8 @@ const Cotización = () => {
                 className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
               />
             </div>
-          )}
+            </>
+            )}
           <div>
             <label className="text-sm text-gray-600">Descuento (S/)</label>
             <input

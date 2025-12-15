@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../services/api.js';
 import { useAuth } from '../../contexts/AuthContext';
-import { FaUser, FaEnvelope, FaLock, FaSave, FaEye, FaEyeSlash, FaUsers, FaEdit, FaPhone, FaMobileAlt, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaLock, FaSave, FaEye, FaEyeSlash, FaUsers, FaEdit, FaPhone, FaMobileAlt, FaMapMarkerAlt, FaTrash } from 'react-icons/fa';
 import Modal from '../../components/Modal/Modal';
 
 export default function PerfilForm() {
@@ -50,7 +50,7 @@ export default function PerfilForm() {
 
   // Cargar usuarios si es admin
   useEffect(() => {
-    if (user?.rol === 'admin') {
+    if (user?.rol === 'admin' || user?.rol === 'superadmin') {
       fetchUsuarios();
     }
   }, [user]);
@@ -87,8 +87,21 @@ export default function PerfilForm() {
     }
   };
 
+  const handleDeleteUsuario = async (userId) => {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.')) {
+      try {
+        await api.delete(`/usuarios/${userId}`);
+        setSuccess('Usuario eliminado exitosamente');
+        fetchUsuarios();
+      } catch (err) {
+        setError(err.response?.data?.msg || 'Error al eliminar usuario');
+      }
+    }
+  };
+
   const getRolLabel = (rol) => {
     switch (rol) {
+      case 'superadmin': return 'Super Admin';
       case 'admin': return 'Administrador'; // Rol válido
       case 'tecnico': return 'Técnico'; // Rol válido
       case 'trabajador': return 'Trabajador'; // Rol válido
@@ -192,7 +205,7 @@ export default function PerfilForm() {
               <FaLock className="inline mr-2" />
               Contraseña
             </button>
-            {user?.rol === 'admin' && (
+            {(user?.rol === 'admin' || user?.rol === 'superadmin') && (
               <button
                 onClick={() => setActiveTab('users')}
                 className={`flex-1 py-4 px-6 text-center font-medium transition-colors ${
@@ -407,13 +420,22 @@ export default function PerfilForm() {
                       <p className="text-sm text-gray-600">{usuario.email}</p>
                       <p className="text-sm text-gray-500">{getRolLabel(usuario.rol)}</p>
                     </div>
-                    <button
-                      onClick={() => handleEditUsuario(usuario)}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
-                    >
-                      <FaEdit size={14} />
-                      Editar
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEditUsuario(usuario)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                      >
+                        <FaEdit size={14} />
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleDeleteUsuario(usuario._id)}
+                        className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2"
+                      >
+                        <FaTrash size={14} />
+                        Eliminar
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

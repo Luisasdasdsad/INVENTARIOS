@@ -57,7 +57,7 @@ const generarReporteOrdenTrabajo = async (ordenTrabajo) => {
 
   const headerWithDetails = `
     <!-- ENCABEZADO -->
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #007bff; padding-bottom: 10px; margin-bottom: 5px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #ffc107; padding-bottom: 10px; margin-bottom: 5px;">
       <div style="display: flex; align-items: center;">
         <img src="/logo.png" alt="Logo" style="height: 70px;">
         <div style="margin-left: 15px;">
@@ -86,7 +86,7 @@ const generarReporteOrdenTrabajo = async (ordenTrabajo) => {
   const infoSection = `
     <!-- INFORMACIÓN PRINCIPAL -->
     <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-      <div style="width: 48%; border: 2px solid #007bff; border-radius: 8px; padding: 5px;">
+      <div style="width: 48%; border: 2px solid #ffc107; border-radius: 8px; padding: 5px;">
         <h4 style="margin-top: 0; color: #444; text-align: center;"><Strong>Cliente</Strong></h4>
         <p><b>Nombre:</b> ${cliente?.nombre ?? 'N/A'}</p>
         <p><b>${cliente?.tipoDoc || 'Documento'}:</b> ${cliente?.tipoDoc === 'RUC' ? (cliente?.ruc || 'N/A') : (cliente?.numero || 'N/A')}</p>
@@ -95,7 +95,7 @@ const generarReporteOrdenTrabajo = async (ordenTrabajo) => {
         <p><b>Teléfono:</b> ${telefonos || '__________________'}</p>
       </div>
 
-      <div style="width: 48%; border: 2px solid #007bff; border-radius: 8px; padding: 5px;">
+      <div style="width: 48%; border: 2px solid #ffc107; border-radius: 8px; padding: 5px;">
         <h4 style="margin-top: 0; color: #444; text-align: center;"><Strong>Técnico Asignado</Strong></h4>
         <p><b>Nombre:</b> ${tecnicoAsignado?.nombre || "N/A"}</p>
         <p><b>Email:</b> ${tecnicoAsignado?.email || "N/A"}</p>
@@ -106,7 +106,7 @@ const generarReporteOrdenTrabajo = async (ordenTrabajo) => {
     </div>
 
     <!-- DATOS DE LA ORDEN -->
-    <div style="border: 2px solid #007bff; border-radius: 8px; padding: 2px; margin-bottom: 5px;">
+    <div style="border: 2px solid #ffc107; border-radius: 8px; padding: 2px; margin-bottom: 5px;">
       <h4 style="margin-top: 0; margin-bottom: 10px; color: #444; text-align: center;"><Strong>Datos de la Orden de Trabajo</Strong></h4>
       <div style="display: flex; justify-content: space-between;">
         <div style="width: 48%;">
@@ -123,7 +123,7 @@ const generarReporteOrdenTrabajo = async (ordenTrabajo) => {
 
   const descripcionSection = descripcionServicio ? `
     <!-- DESCRIPCIÓN DEL SERVICIO -->
-    <div style="border: 1px solid #007bff; padding: 5px; margin-bottom: 10px; width: 100%;">
+    <div style="border: 1px solid #ffc107; padding: 5px; margin-bottom: 10px; width: 100%;">
       <p style="margin: 0; color: #444;"><b>Descripción del Servicio:</b></p>
       <p style="margin: 5px 0 0 0; color: #444; white-space: pre-wrap;">${descripcionServicio}</p>
     </div>
@@ -132,10 +132,10 @@ const generarReporteOrdenTrabajo = async (ordenTrabajo) => {
   const tableHeader = `
     <table style="width: 100%; border-collapse: collapse; font-size: 9px; border: 1px solid #ddd;">
       <thead>
-        <tr style="background: #e3f2fd; color: #333;">
-          <th style="border: 2px solid #007bff; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold; width: 10%;">N°</th>
-          <th style="border: 2px solid #007bff; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold; width: 15%;">CANTIDAD</th>
-          <th style="border: 2px solid #007bff; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold; width: 75%;">PRODUCTOS/MATERIALES</th>
+        <tr style="background: #fff3cd; color: #333;">
+          <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold; width: 10%;">N°</th>
+          <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold; width: 15%;">CANTIDAD</th>
+          <th style="border: 2px solid #ffc107; padding: 3px 2px 13px 2px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: bold; width: 75%;">PRODUCTOS/MATERIALES</th>
         </tr>
       </thead>
       <tbody>
@@ -185,12 +185,12 @@ const generarReporteOrdenTrabajo = async (ordenTrabajo) => {
   const footerSection = `
     <div style="page-break-inside: avoid;">
       <!-- OBSERVACIONES -->
-      <div style="border: 1px solid #007bff; padding: 5px; margin-bottom: 10px; width: 100%;">
+      <div style="border: 1px solid #ffc107; padding: 5px; margin-bottom: 10px; width: 100%;">
         <p style="margin: 0; color: #444;"><b>Observaciones:</b> ${observaciones || "Ninguna"}</p>
       </div>
 
       <!-- INSTRUCCIONES PARA EL TÉCNICO -->
-      <div style="border: 1px solid #007bff; padding: 5px; margin-bottom: 10px; width: 100%;">
+      <div style="border: 1px solid #ffc107; padding: 5px; margin-bottom: 10px; width: 100%;">
         <p style="margin: 0; color: #444;"><b>Instrucciones para el Técnico:</b></p>
         <div style="margin: 5px 0; color: #444;">${formatInstructions(instruccionesTecnico)}</div>
       </div>

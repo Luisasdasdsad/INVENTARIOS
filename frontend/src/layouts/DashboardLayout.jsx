@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate } from "react-router-dom";
-import { FaTools, FaClipboardList, FaExchangeAlt, FaHome, FaSignOutAlt, FaBars, FaTimes, FaUsers, FaFileAlt, FaHistory, FaPlus, FaUser, FaFileInvoiceDollar, FaTruck, FaBell } from "react-icons/fa";
+import { FaTools, FaClipboardList, FaExchangeAlt, FaHome, FaSignOutAlt, FaBars, FaTimes, FaUsers, FaFileAlt, FaHistory, FaPlus, FaUser, FaFileInvoiceDollar, FaTruck, FaBell, FaUserCircle, FaUserCog } from "react-icons/fa";
 import { useAuth } from "../contexts/AuthContext";
 import { useState, useEffect } from "react";
 import { useNotifications } from "../contexts/NotificationContext";
@@ -10,6 +10,7 @@ export default function DashboardLayout() {
   const [isMobile, setIsMobile] = useState(false);
   const { unreadCount, notificaciones, marcarLeida } = useNotifications();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const navigate = useNavigate();
 
   // Detectar si es móvil
@@ -117,7 +118,7 @@ export default function DashboardLayout() {
             </div>
           )}
           {/* Inventario - Admin y Técnico */}
-          {user && (user.rol === 'admin' || user.rol === 'tecnico' || user.rol === 'jefe_inventario') && (
+          {user && (['admin', 'superadmin', 'tecnico', 'jefe_inventario'].includes(user.rol)) && (
             <Link
               to="/herramientas"
               onClick={handleNavClick}
@@ -155,7 +156,7 @@ export default function DashboardLayout() {
           </Link>
 
           {/* Productos - Admin, Responsable de Inventario y Técnico */}
-          {user && (user.rol === 'admin' || user.rol === 'tecnico' || user.rol === 'jefe_inventario') && (
+          {user && (['admin', 'superadmin', 'tecnico', 'jefe_inventario'].includes(user.rol)) && (
             <Link
               to="/productos"
               onClick={handleNavClick}
@@ -187,7 +188,7 @@ export default function DashboardLayout() {
               )}
 
               {/* Nueva Cotización - Solo Admin */}
-              {user.rol === 'admin' && (
+              {(user.rol === 'admin' || user.rol === 'superadmin') && (
                 <Link
                   to="/cotización"
                   onClick={handleNavClick}
@@ -317,7 +318,7 @@ export default function DashboardLayout() {
           {/* Asignar OT eliminado: las OTs se asignan al crear */}
 
           {/* --- SECCIÓN GESTIÓN (Admin) --- */}
-          {user && user.rol === 'admin' && (
+          {user && (user.rol === 'admin' || user.rol === 'superadmin') && (
             <>
               {isSidebarOpen && (
                 <div className="pt-4 pb-2">
@@ -391,7 +392,7 @@ export default function DashboardLayout() {
               </p>
               <p className="font-semibold text-secondary-800">{user.nombre}</p>
               <p className="text-xs text-secondary-500 mt-1">
-                {user.rol === 'admin' ? '👑 Administrador' : user.rol === 'jefe_inventario' ? '📦 Jefe de Inventario' : '🔧 Técnico'}
+                {user.rol === 'superadmin' ? '⚡ Super Admin' : user.rol === 'admin' ? '👑 Administrador' : user.rol === 'jefe_inventario' ? '📦 Jefe de Inventario' : user.rol === 'tecnico' ? '🔧 Técnico' : '👷 Trabajador'}
               </p>
             </div>
           )}
@@ -431,54 +432,92 @@ export default function DashboardLayout() {
             <h2 className="text-lg font-semibold text-secondary-800">Panel de Control</h2>
           </div>
 
-          {/* Área de Notificaciones */}
-          <div className="relative">
-            <button 
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="p-2 text-secondary-600 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-all relative focus:outline-none"
-            >
-              <FaBell size={22} />
-              {unreadCount > 0 && (
-                <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white transform translate-x-1/4 -translate-y-1/4">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
+          <div className="flex items-center gap-3">
+            {/* Área de Notificaciones */}
+            <div className="relative">
+              <button 
+                onClick={() => {
+                  setShowNotifications(!showNotifications);
+                  setShowUserMenu(false);
+                }}
+                className="p-2 text-secondary-600 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-all relative focus:outline-none"
+              >
+                <FaBell size={22} />
+                {unreadCount > 0 && (
+                  <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white transform translate-x-1/4 -translate-y-1/4">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
 
-            {/* Menú Desplegable */}
-            {showNotifications && (
-              <div className="absolute right-0 mt-3 w-80 md:w-96 bg-white rounded-xl shadow-xl border border-secondary-100 z-50 overflow-hidden animate-fade-in-down">
-                <div className="p-4 border-b border-secondary-100 flex justify-between items-center bg-secondary-50">
-                  <h3 className="font-semibold text-secondary-800">Notificaciones</h3>
-                  <span className="text-xs font-medium text-primary-600 bg-primary-50 px-2 py-1 rounded-full">{unreadCount} nuevas</span>
-                </div>
-                <div className="max-h-[400px] overflow-y-auto">
-                  {notificaciones.length === 0 ? (
-                    <div className="p-8 text-center text-secondary-500 text-sm">
-                      <p>No tienes notificaciones pendientes.</p>
-                    </div>
-                  ) : (
-                    notificaciones.map(notif => (
-                      <div 
-                        key={notif._id}
-                        onClick={() => handleNotificationClick(notif)}
-                        className={`p-4 border-b border-secondary-50 cursor-pointer hover:bg-secondary-50 transition-colors flex gap-3 ${!notif.leido ? 'bg-blue-50/50' : ''}`}
-                      >
-                        <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${!notif.leido ? 'bg-primary-500' : 'bg-transparent'}`}></div>
-                        <div>
-                          <p className={`text-sm ${!notif.leido ? 'font-semibold text-secondary-900' : 'text-secondary-700'}`}>
-                            {notif.mensaje}
-                          </p>
-                          <p className="text-xs text-secondary-400 mt-1">
-                            {new Date(notif.createdAt).toLocaleString()}
-                          </p>
-                        </div>
+              {/* Menú Desplegable */}
+              {showNotifications && (
+                <div className="absolute right-0 mt-3 w-80 md:w-96 bg-white rounded-xl shadow-xl border border-secondary-100 z-50 overflow-hidden animate-fade-in-down">
+                  <div className="p-4 border-b border-secondary-100 flex justify-between items-center bg-secondary-50">
+                    <h3 className="font-semibold text-secondary-800">Notificaciones</h3>
+                    <span className="text-xs font-medium text-primary-600 bg-primary-50 px-2 py-1 rounded-full">{unreadCount} nuevas</span>
+                  </div>
+                  <div className="max-h-[400px] overflow-y-auto">
+                    {notificaciones.length === 0 ? (
+                      <div className="p-8 text-center text-secondary-500 text-sm">
+                        <p>No tienes notificaciones pendientes.</p>
                       </div>
-                    ))
-                  )}
+                    ) : (
+                      notificaciones.map(notif => (
+                        <div 
+                          key={notif._id}
+                          onClick={() => handleNotificationClick(notif)}
+                          className={`p-4 border-b border-secondary-50 cursor-pointer hover:bg-secondary-50 transition-colors flex gap-3 ${!notif.leido ? 'bg-blue-50/50' : ''}`}
+                        >
+                          <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${!notif.leido ? 'bg-primary-500' : 'bg-transparent'}`}></div>
+                          <div>
+                            <p className={`text-sm ${!notif.leido ? 'font-semibold text-secondary-900' : 'text-secondary-700'}`}>
+                              {notif.mensaje}
+                            </p>
+                            <p className="text-xs text-secondary-400 mt-1">
+                              {new Date(notif.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+
+            {/* Menú de Usuario */}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setShowUserMenu(!showUserMenu);
+                  setShowNotifications(false);
+                }}
+                className="p-2 text-secondary-600 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-all focus:outline-none"
+                title="Opciones de Usuario"
+              >
+                <FaUserCircle size={24} />
+              </button>
+
+              {showUserMenu && (
+                <div className="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-xl border border-secondary-100 z-50 overflow-hidden animate-fade-in-down">
+                  <div className="py-1">
+                    <button
+                      onClick={() => { setShowUserMenu(false); navigate('/perfil'); }}
+                      className="block w-full text-left px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50 transition-colors"
+                    >
+                      Editar usuario
+                    </button>
+                    <button
+                      onClick={() => { setShowUserMenu(false); logout(); }}
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      Salir
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 

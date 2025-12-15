@@ -17,6 +17,7 @@ import facturaRoutes from './routes/factura.routes.js';
 import proveedorRoutes from './routes/proveedor.routes.js';
 import movimientoProductoRoutes from './routes/movimientoProducto.routes.js';
 import notificacionRoutes from './routes/notificacion.routes.js';
+import https from 'https';
 
 dotenv.config();
 const app = express();
@@ -56,6 +57,27 @@ app.use('/api/proveedores', proveedorRoutes);
 app.use('/api/movimientos-productos', movimientoProductoRoutes);
 
 app.use('/api/notificaciones', notificacionRoutes);
+
+// Endpoint proxy para obtener tipo de cambio (evita CORS)
+app.get('/api/tipo-cambio', (req, res) => {
+  https.get('https://api.apis.net.pe/v1/tipo-cambio-sunat', (resp) => {
+    let data = '';
+    // Un fragmento de datos ha sido recibido.
+    resp.on('data', (chunk) => {
+      data += chunk;
+    });
+    // Toda la respuesta ha sido recibida.
+    resp.on('end', () => {
+      try {
+        res.json(JSON.parse(data));
+      } catch (e) {
+        res.status(500).json({ error: 'Error al procesar datos de SUNAT' });
+      }
+    });
+  }).on("error", (err) => {
+    res.status(500).json({ error: "Error de conexión con SUNAT: " + err.message });
+  });
+});
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB conectado'))
