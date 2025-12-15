@@ -5,7 +5,7 @@ import Notificacion from "../models/notificacion.model.js"; // Importar modelo
 
 export const crearOrdenTrabajo = async (req, res) => {
     try {
-        const { numeroOT, cliente, productos, tecnicoAsignado, cotizacion, descripcionServicio, tareas, herramientas, fechaInicio, fechaFin, ubicacion } = req.body;
+        const { numeroOT, cliente, productos, tecnicoAsignado, cotizacion, descripcionServicio, tareas, herramientas, fechaInicio, fechaFin, ubicacion, observaciones, instruccionesTecnico } = req.body;
 
         // Helper: parse YYYY-MM-DD (from <input type="date">) into a local Date to avoid timezone shifts
         const parseDateLocal = (d) => {
@@ -91,6 +91,8 @@ export const crearOrdenTrabajo = async (req, res) => {
             tareas,
             herramientas,
             ubicacion, // Añadir aquí
+            observaciones,
+            instruccionesTecnico,
             fechaAsignacion: tecnicoAsignado ? new Date() : undefined,
             fechaInicio: parseDateLocal(fechaInicio),
             fechaFin: parseDateLocal(fechaFin)

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
-import { ordenTrabajoService } from './ordenTrabajoService';
 
 export default function CrearOrdenTrabajoManual() {
   const { id } = useParams();
@@ -126,16 +125,25 @@ export default function CrearOrdenTrabajoManual() {
 
     try {
       const payload = {
-        ...form,
+        cliente: form.cliente,
+        tecnicoAsignado: form.tecnicoAsignado,
+        descripcionServicio: form.descripcionServicio,
+        observaciones: form.observaciones,
+        instruccionesTecnico: form.instruccionesTecnico,
+        fechaInicio: form.fechaInicio,
+        fechaFin: form.fechaFin,
+        ubicacion: form.ubicacion,
         productos: form.productos.filter(p => p.producto && p.cantidad > 0),
         herramientas: form.herramientas.filter(h => h.herramienta && h.cantidad > 0),
       };
+
+      console.log("Enviando payload al servidor:", payload); // Verifica aquí si los datos salen bien
 
       if (isEditMode) {
         await api.put(`/ordenes-trabajo/${id}`, payload);
         alert('Orden de trabajo actualizada exitosamente');
       } else {
-        await ordenTrabajoService.crearOrdenTrabajo(payload);
+        await api.post('/ordenes-trabajo', payload);
         alert('Orden de trabajo creada exitosamente');
       }
       navigate('/ordenes-trabajo');
