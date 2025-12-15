@@ -151,10 +151,20 @@ export default function HerramientasList() {
 
           <div class="no-print">
             <button onclick="window.print()">🖨️ Imprimir</button>
+            <button onclick="printRawBt()">📱 RawBT</button>
             <button onclick="window.close()">❌ Cerrar</button>
           </div>
 
           <script>
+            function printRawBt() {
+              var clone = document.documentElement.cloneNode(true);
+              var noPrints = clone.querySelectorAll('.no-print');
+              noPrints.forEach(function(el) { el.remove(); });
+              var html = clone.outerHTML;
+              var url = 'rawbt:data:text/html;base64,' + btoa(unescape(encodeURIComponent(html)));
+              window.location.href = url;
+            }
+
             JsBarcode("#barcode", "${herramienta.barcode}", {
               format: "CODE128",
               width: 1.2, /* Más estrecho para que quepa en 50mm */
@@ -207,10 +217,20 @@ export default function HerramientasList() {
 
           <div class="no-print">
             <button onclick="window.print()">🖨️ Imprimir</button>
+            <button onclick="printRawBt()">📱 RawBT</button>
             <button onclick="window.close()">❌ Cerrar</button>
           </div>
 
           <script>
+            function printRawBt() {
+              var clone = document.documentElement.cloneNode(true);
+              var noPrints = clone.querySelectorAll('.no-print');
+              noPrints.forEach(function(el) { el.remove(); });
+              var html = clone.outerHTML;
+              var url = 'rawbt:data:text/html;base64,' + btoa(unescape(encodeURIComponent(html)));
+              window.location.href = url;
+            }
+
             window.onload = function() { setTimeout(function() { window.print(); }, 500); }
           </script>
         </body>
