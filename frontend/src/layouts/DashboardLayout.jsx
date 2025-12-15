@@ -15,17 +15,19 @@ export default function DashboardLayout() {
 
   // Detectar si es móvil
   useEffect(() => {
-    const checkMobile = () => {
+    const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth < 768) {
-        setIsSidebarOpen(false);
-      }
     };
 
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
+    handleResize();
+    // Solo cerramos el sidebar al cargar la página si es móvil, no en cada resize
+    if (window.innerWidth < 768) {
+      setIsSidebarOpen(false);
+    }
+
+    window.addEventListener('resize', handleResize);
     
-    return () => window.removeEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const toggleSidebar = () => {
@@ -61,7 +63,7 @@ export default function DashboardLayout() {
       )}
 
       {/* Sidebar */}
-      <aside className={`bg-white shadow-large p-6 transition-all duration-300 ease-in-out z-50 border-r border-secondary-200 ${
+      <aside className={`bg-white shadow-large p-6 transition-all duration-300 ease-in-out z-50 border-r border-secondary-200 flex flex-col h-full overflow-y-auto ${
         isMobile
           ? `fixed inset-y-0 left-0 transform ${
               isSidebarOpen ? 'translate-x-0' : '-translate-x-full'

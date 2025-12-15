@@ -135,6 +135,11 @@ export default function HerramientasList() {
             .label-container { text-align: center; width: 96%; height: 96%; display: flex; flex-direction: column; justify-content: center; align-items: center; }
             .product-name { font-size: 8px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; margin-bottom: 1px; }
             svg { max-width: 100%; height: auto; max-height: 18mm; }
+            
+            /* Botones para móvil (no salen en la impresión) */
+            @media print { .no-print { display: none !important; } }
+            .no-print { position: fixed; bottom: 5px; left: 0; width: 100%; text-align: center; background: rgba(255,255,255,0.9); z-index: 100; }
+            .no-print button { padding: 8px 15px; margin: 0 5px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; background: #f0f0f0; cursor: pointer; }
           </style>
           <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
         </head>
@@ -143,6 +148,12 @@ export default function HerramientasList() {
             <div class="product-name">${herramienta.nombre}</div>
             <svg id="barcode"></svg>
           </div>
+
+          <div class="no-print">
+            <button onclick="window.print()">🖨️ Imprimir</button>
+            <button onclick="window.close()">❌ Cerrar</button>
+          </div>
+
           <script>
             JsBarcode("#barcode", "${herramienta.barcode}", {
               format: "CODE128",
@@ -153,7 +164,8 @@ export default function HerramientasList() {
               margin: 0,
               textMargin: 0
             });
-            window.onload = function() { window.print(); window.close(); }
+            // Retraso para asegurar carga y NO cerrar automáticamente en móvil
+            window.onload = function() { setTimeout(function() { window.print(); }, 500); }
           </script>
         </body>
       </html>
@@ -177,6 +189,11 @@ export default function HerramientasList() {
             .info { margin-left: 2mm; flex: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
             .product-name { font-size: 8px; font-weight: bold; line-height: 1.1; max-height: 15mm; overflow: hidden; word-wrap: break-word; }
             .qr-text { font-size: 8px; margin-top: 2px; font-family: monospace; white-space: nowrap; }
+            
+            /* Botones para móvil */
+            @media print { .no-print { display: none !important; } }
+            .no-print { position: fixed; bottom: 5px; left: 0; width: 100%; text-align: center; background: rgba(255,255,255,0.9); z-index: 100; }
+            .no-print button { padding: 8px 15px; margin: 0 5px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; background: #f0f0f0; cursor: pointer; }
           </style>
         </head>
         <body>
@@ -187,8 +204,14 @@ export default function HerramientasList() {
                 <div class="qr-text">${herramienta.qrCode}</div>
             </div>
           </div>
+
+          <div class="no-print">
+            <button onclick="window.print()">🖨️ Imprimir</button>
+            <button onclick="window.close()">❌ Cerrar</button>
+          </div>
+
           <script>
-            window.onload = function() { setTimeout(function() { window.print(); window.close(); }, 500); }
+            window.onload = function() { setTimeout(function() { window.print(); }, 500); }
           </script>
         </body>
       </html>
