@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate } from "react-router-dom";
-import { FaTools, FaClipboardList, FaExchangeAlt, FaHome, FaSignOutAlt, FaBars, FaTimes, FaUsers, FaFileAlt, FaHistory, FaPlus, FaUser, FaFileInvoiceDollar, FaTruck, FaBell, FaUserCircle, FaUserCog } from "react-icons/fa";
+import { FaTools, FaClipboardList, FaExchangeAlt, FaHome, FaSignOutAlt, FaBars, FaTimes, FaUsers, FaFileAlt, FaHistory, FaPlus, FaUser, FaFileInvoiceDollar, FaTruck, FaBell, FaUserCircle, FaUserCog, FaShoppingCart } from "react-icons/fa";
 import { useAuth } from "../contexts/AuthContext";
 import { useState, useEffect } from "react";
 import { useNotifications } from "../contexts/NotificationContext";
@@ -48,9 +48,17 @@ export default function DashboardLayout() {
     }
     setShowNotifications(false);
     
-    // Redirigir siempre a la lista de órdenes de trabajo
-    navigate('/ordenes-trabajo');
+    // Redirigir según el tipo de notificación
+    if (notif.tipo === 'compra') {
+      navigate('/compras');
+    } else {
+      navigate('/ordenes-trabajo');
+    }
   };
+
+  // Calcular conteos específicos para el sidebar
+  const unreadCompras = notificaciones.filter(n => !n.leido && n.tipo === 'compra').length;
+  const unreadOTs = notificaciones.filter(n => !n.leido && n.tipo !== 'compra').length;
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-secondary-50 to-secondary-100">
@@ -120,7 +128,7 @@ export default function DashboardLayout() {
             </div>
           )}
           {/* Inventario - Admin y Técnico */}
-          {user && (['admin', 'superadmin', 'tecnico', 'jefe_inventario'].includes(user.rol)) && (
+          {user && (['admin', 'superadmin', 'tecnico', 'jefe_inventario', 'administracion'].includes(user.rol)) && (
             <Link
               to="/herramientas"
               onClick={handleNavClick}
@@ -158,7 +166,7 @@ export default function DashboardLayout() {
           </Link>
 
           {/* Productos - Admin, Responsable de Inventario y Técnico */}
-          {user && (['admin', 'superadmin', 'tecnico', 'jefe_inventario'].includes(user.rol)) && (
+          {user && (['admin', 'superadmin', 'tecnico', 'jefe_inventario', 'administracion'].includes(user.rol)) && (
             <Link
               to="/productos"
               onClick={handleNavClick}
@@ -190,7 +198,7 @@ export default function DashboardLayout() {
               )}
 
               {/* Nueva Cotización - Solo Admin */}
-              {(user.rol === 'admin' || user.rol === 'superadmin') && (
+              {(user.rol === 'admin' || user.rol === 'superadmin' || user.rol === 'administracion') && (
                 <Link
                   to="/cotización"
                   onClick={handleNavClick}
@@ -307,9 +315,34 @@ export default function DashboardLayout() {
                 {isSidebarOpen && <span className="font-medium">Órdenes de Trabajo</span>}
                 
                 {/* CONTADOR EN SIDEBAR */}
-                {isSidebarOpen && unreadCount > 0 && (
+                {isSidebarOpen && unreadOTs > 0 && (
                   <span className="ml-auto bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
-                    {unreadCount}
+                    {unreadOTs}
+                  </span>
+                )}
+              </Link>
+
+              {/* Compras (Nuevo ítem dentro de Orden de Trabajo) */}
+              <Link
+                to="/compras"
+                onClick={handleNavClick}
+                className={`flex items-center gap-3 hover:bg-orange-50 hover:text-orange-700 transition-all duration-200 rounded-xl ${
+                  !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
+                }`}
+              >
+                {isSidebarOpen ? (
+                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <FaShoppingCart size={16} className="text-orange-600" />
+                  </div>
+                ) : (
+                  <FaShoppingCart size={18} className="text-orange-600" />
+                )}
+                {isSidebarOpen && <span className="font-medium">Compras</span>}
+
+                {/* CONTADOR DE COMPRAS */}
+                {isSidebarOpen && unreadCompras > 0 && (
+                  <span className="ml-auto bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
+                    {unreadCompras}
                   </span>
                 )}
               </Link>
@@ -320,7 +353,7 @@ export default function DashboardLayout() {
           {/* Asignar OT eliminado: las OTs se asignan al crear */}
 
           {/* --- SECCIÓN GESTIÓN (Admin) --- */}
-          {user && (user.rol === 'admin' || user.rol === 'superadmin') && (
+          {user && (user.rol === 'admin' || user.rol === 'superadmin' || user.rol === 'administracion') && (
             <>
               {isSidebarOpen && (
                 <div className="pt-4 pb-2">
@@ -394,7 +427,7 @@ export default function DashboardLayout() {
               </p>
               <p className="font-semibold text-secondary-800">{user.nombre}</p>
               <p className="text-xs text-secondary-500 mt-1">
-                {user.rol === 'superadmin' ? '⚡ Super Admin' : user.rol === 'admin' ? '👑 Administrador' : user.rol === 'jefe_inventario' ? '📦 Jefe de Inventario' : user.rol === 'tecnico' ? '🔧 Técnico' : '👷 Trabajador'}
+                {user.rol === 'superadmin' ? '⚡ Super Admin' : user.rol === 'admin' ? '👑 Administrador' : user.rol === 'jefe_inventario' ? '📦 Jefe de Inventario' : user.rol === 'administracion' ? '💼 Administración' : user.rol === 'tecnico' ? '🔧 Técnico' : '👷 Trabajador'}
               </p>
             </div>
           )}

@@ -207,9 +207,7 @@ export default function HerramientaForm({ herramienta, herramientasExistentes = 
           formDataUpload.append('foto', blob, `herramienta-foto-${Date.now()}.jpg`);
 
           console.log('📤 Subiendo foto al backend...');
-          const response = await api.post('/fotos', formDataUpload, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-          });
+          const response = await api.post('/fotos', formDataUpload);
 
           const fotoUrl = response.data.foto;
           // Guardamos tanto la URL para el formulario como el preview
@@ -262,20 +260,16 @@ export default function HerramientaForm({ herramienta, herramientasExistentes = 
       // Si hay una foto capturada, la agregamos al FormData
       if (foto) {
         data.append("foto", foto);
-      } else if (preview && preview.startsWith('http')) {
-        // Si ya hay una URL de foto (de una herramienta existente), la enviamos como string
-        data.append("fotoUrl", preview);
+      } else {
+        // Si no hay foto nueva, enviamos la URL actual (preview) o cadena vacía si se eliminó
+        data.append("fotoUrl", preview || "");
       }
 
       if (herramienta) {
-        await api.put(`/herramientas/${herramienta._id}`, data, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        await api.put(`/herramientas/${herramienta._id}`, data);
         alert("Herramienta actualizada con éxito.");
       } else {
-        const res = await api.post("/herramientas", data, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        const res = await api.post("/herramientas", data);
 
         // Generación automática de códigos (Barcode y QR)
         const newId = res.data._id || res.data.data?._id;
@@ -511,19 +505,22 @@ export default function HerramientaForm({ herramienta, herramientasExistentes = 
               <p className="text-xs text-gray-500 mt-1">
                 {preview && preview.startsWith('http') ? `URL: ${preview}` : 'Foto lista para guardar'}
               </p>
-              {/* Botón para tomar otra foto */}
-              <button
-                type="button"
-                onClick={() => {
-                  setCapturedImage(null);
-                  setPreview('');
-                  setFoto(null);
-                  startCamera();
-                }}
-                className="text-sm text-blue-600 underline mt-1"
-              >
-                📸 Tomar otra foto
-              </button>
+              <div className="flex justify-center gap-3 mt-2">
+                <button
+                  type="button"
+                  onClick={() => { setCapturedImage(null); setPreview(''); setFoto(null); startCamera(); }}
+                  className="text-sm text-blue-600 underline"
+                >
+                  📸 Cambiar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setCapturedImage(null); setPreview(''); setFoto(null); }}
+                  className="text-sm text-red-600 underline"
+                >
+                  🗑️ Eliminar
+                </button>
+              </div>
             </div>
           )}
 

@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { useSearchParams } from 'react-router-dom';
 import BarcodeScanner from '../../components/BarcodeScanner/BarcodeScanner';
 import EscanerQR from '../../components/EscannerQR/EscannerQR.jsx';
-import axios from 'axios';
 import PhotoCapture from '../../components/PhotoCapture/PhotoCapture';
 
 export default function RegistrarMovimientoPage() {
@@ -343,8 +342,14 @@ const handleBarcodeManualChange = e => {
     }
 
     try {
-      const { nombreUsuario, ...payloadData } = formData; // Excluir nombreUsuario ya que viene del auth
-      
+      // Limpiamos el payload para enviar solo lo necesario (evitamos enviar campos de UI como barcode/qrCode inputs)
+      const payloadData = {
+        tipo: formData.tipo,
+        nota: formData.nota,
+        obra: formData.obra,
+        foto: formData.foto
+      };
+
       const herramientasItems = itemsValidos.filter(i => i.tipo !== 'producto');
       const productosItems = itemsValidos.filter(i => i.tipo === 'producto');
       const promises = [];

@@ -54,7 +54,6 @@ export const crearHerramienta = async (req, res) => {
               { width: 800, height: 600, crop: 'limit', quality: 'auto'},
               { fetch_format: 'auto'},
             ],
-            upload_preset: process.env.UPLOAD_PRESET,
           },
           (error, result) => {
             if (error) reject (error);
@@ -98,12 +97,9 @@ export const actualizarHerramientas = async (req, res) => {
       dataActualizada.cantidad = parseCantidad(req.body.cantidad);
     }
 
-    // Si se proporciona fotoUrl (ya subida a través de /fotos), úsala directamente
-    if (req.body.fotoUrl && req.body.fotoUrl.startsWith('http')) {
-      console.log('Usando foto ya subida para actualización:', req.body.fotoUrl);
-      dataActualizada.foto = req.body.fotoUrl;
-    } else if (req.file) {
-      // Solo subir si no hay fotoUrl y hay archivo
+    // Lógica corregida para actualización de foto
+    if (req.file) {
+      // Caso 1: Se sube una nueva imagen (tiene prioridad)
       const result = await new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
           {
@@ -114,7 +110,6 @@ export const actualizarHerramientas = async (req, res) => {
               { width: 800, height: 600, crop: 'limit', quality: 'auto'},
               { fetch_format: 'auto'},
             ],
-            upload_preset: process.env.UPLOAD_PRESET,
           },
           (error, result) => {
             if (error) reject(error);
@@ -124,6 +119,11 @@ export const actualizarHerramientas = async (req, res) => {
         uploadStream.end(req.file.buffer);
       });
       dataActualizada.foto = result.secure_url;
+    } else if (req.body.fotoUrl !== undefined) {
+      // Caso 2: No hay archivo nuevo, pero se envía fotoUrl.
+      // Si es una URL válida, se mantiene.
+      // Si es un string vacío "", se elimina la foto de la BD.
+      dataActualizada.foto = req.body.fotoUrl;
     }
 
     const actualizada = await Herramienta.findByIdAndUpdate(id, dataActualizada, {

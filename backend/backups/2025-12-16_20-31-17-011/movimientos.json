@@ -1,0 +1,167 @@
+[
+  {
+    "_id": "691dde15fa425d3512f50b20",
+    "herramientas": [
+      {
+        "herramienta": "6904f1628b0881e191d76740",
+        "cantidad": 1,
+        "_id": "691dde15fa425d3512f50b21"
+      }
+    ],
+    "tipo": "entrada",
+    "usuario": "68f7bd456a100e8378f1e9cb",
+    "nota": "",
+    "obra": "ad",
+    "foto": "https://res.cloudinary.com/dbhfp0el3/image/upload/v1763565062/inventario/movimientos/movimiento-1763565063656.jpg",
+    "qrCode": null,
+    "fecha": "2025-11-19T15:11:17.274Z",
+    "createdAt": "2025-11-19T15:11:17.275Z",
+    "updatedAt": "2025-11-19T15:11:17.275Z",
+    "__v": 0
+  },
+  {
+    "_id": "691dde34fa425d3512f50b57",
+    "herramientas": [
+      {
+        "herramienta": "6904f1628b0881e191d76740",
+        "cantidad": 1,
+        "_id": "691dde34fa425d3512f50b58"
+      }
+    ],
+    "tipo": "salida",
+    "usuario": "68f7bd456a100e8378f1e9cb",
+    "nota": "",
+    "obra": "ad",
+    "foto": "https://res.cloudinary.com/dbhfp0el3/image/upload/v1763565102/inventario/movimientos/movimiento-1763565103898.jpg",
+    "qrCode": null,
+    "fecha": "2025-11-19T15:11:48.124Z",
+    "createdAt": "2025-11-19T15:11:48.125Z",
+    "updatedAt": "2025-11-19T15:11:48.125Z",
+    "__v": 0
+  },
+  {
+    "_id": "6932f17da4111f698a6f3648",
+    "herramientas": [
+      {
+        "herramienta": "6917462cbfaba37d25665fc6",
+        "cantidad": 3,
+        "_id": "6932f17da4111f698a6f3649"
+      }
+    ],
+    "tipo": "salida",
+    "usuario": "68f7bd456a100e8378f1e9cb",
+    "nota": "Guantes para Luis, Gary, Alex",
+    "obra": "Cargar fierros Portatanque",
+    "foto": null,
+    "qrCode": null,
+    "fecha": "2025-12-05T14:51:41.361Z",
+    "createdAt": "2025-12-05T14:51:41.362Z",
+    "updatedAt": "2025-12-05T14:51:41.362Z",
+    "__v": 0
+  },
+  {
+    "_id": "693310f6b27d94e8b57cd994",
+    "herramientas": [
+      {
+        "herramienta": "69330ec0b27d94e8b57cd947",
+        "cantidad": 1,
+        "_id": "693310f6b27d94e8b57cd995"
+      },
+      {
+        "herramienta": "691764f361b76b2fc5e07644",
+        "cantidad": 1,
+        "_id": "693310f6b27d94e8b57cd996"
+      }
+    ],
+    "tipo": "salida",
+    "usuario": "68f7bd456a100e8378f1e9cb",
+    "nota": "Epps para Luis",
+    "obra": "Obras",
+    "foto": null,
+    "qrCode": null,
+    "fecha": "2025-12-05T17:05:58.042Z",
+    "createdAt": "2025-12-05T17:05:58.046Z",
+    "updatedAt": "2025-12-05T17:05:58.046Z",
+    "__v": 0
+  },
+  {
+    "_id": "693457441a564870f42eb906",
+    "herramientas": [
+      {
+        "herramienta": "693457141a564870f42eb8e9",
+        "cantidad": 1,
+        "_id": "693457441a564870f42eb907"
+      }
+    ],
+    "tipo": "salida",
+    "usuario": "693315c57f17cf01645ca10f",
+    "nota": "Botas de seguridad de Luis",
+    "obra": "Obras",
+    "foto": null,
+    "qrCode": null,
+    "fecha": "2025-12-06T16:18:12.384Z",
+    "createdAt": "2025-12-06T16:18:12.386Z",
+    "updatedAt": "2025-12-06T16:18:12.386Z",
+    "__v": 0
+  },
+  {
+    "_id": "693998479ef3e6923e3ba6a3",
+    "herramientas": [
+      {
+        "herramienta": "693997319ef3e6923e3ba681",
+        "cantidad": 1,
+        "_id": "693998479ef3e6923e3ba6a4"
+      }
+    ],
+    "tipo": "salida",
+    "usuario": "6938a29fad35bd5a203bb7de",
+    "nota": "",
+    "obra": "Pilcomayo",
+    "foto": null,
+    "qrCode": null,
+    "fecha": "2025-12-10T15:56:55.535Z",
+    "createdAt": "2025-12-10T15:56:55.537Z",
+    "updatedAt": "2025-12-10T15:56:55.537Z",
+    "__v": 0
+  },
+  {
+    "_id": "693c5b2828ba8a80c840e480",
+    "herramientas": [
+      {
+        "herramienta": "693b52f7045d66777f29d77f",
+        "cantidad": 1,
+        "_id": "693c5b2828ba8a80c840e481"
+      }
+    ],
+    "tipo": "salida",
+    "usuario": "68f7bd456a100e8378f1e9cb",
+    "nota": "EJEMPLO",
+    "obra": "ejemplo",
+    "foto": null,
+    "qrCode": null,
+    "fecha": "2025-12-12T18:12:56.993Z",
+    "createdAt": "2025-12-12T18:12:56.993Z",
+    "updatedAt": "2025-12-12T18:12:56.993Z",
+    "__v": 0
+  },
+  {
+    "_id": "693c5d2528ba8a80c840e52c",
+    "herramientas": [
+      {
+        "herramienta": "693b52f7045d66777f29d77f",
+        "cantidad": 1,
+        "_id": "693c5d2528ba8a80c840e52d"
+      }
+    ],
+    "tipo": "entrada",
+    "usuario": "68f7bd456a100e8378f1e9cb",
+    "nota": "as",
+    "obra": "as",
+    "foto": null,
+    "qrCode": null,
+    "fecha": "2025-12-12T18:21:25.809Z",
+    "createdAt": "2025-12-12T18:21:25.810Z",
+    "updatedAt": "2025-12-12T18:21:25.810Z",
+    "__v": 0
+  }
+]

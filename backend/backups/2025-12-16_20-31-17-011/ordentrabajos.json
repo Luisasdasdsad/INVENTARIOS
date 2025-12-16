@@ -1,0 +1,160 @@
+[
+  {
+    "_id": "6939950e3b7480d4713486c0",
+    "numeroOT": "0001",
+    "cotizacion": "6938a897ad35bd5a203bb7f7",
+    "descripcionServicio": "1. instalación de variador de frecuencia abb bomba de gas GLP\n2. instalación de transformadores de aislamiento para combustibles líquidos y  GLP ",
+    "tareas": [
+      {
+        "descripcion": "Transformador de aislamiento 220 voltios 5kva",
+        "cantidad": 2,
+        "_id": "6939950e3b7480d4713486c1"
+      }
+    ],
+    "cliente": "6938a655ad35bd5a203bb7f3",
+    "ubicacion": "Pucara",
+    "productos": [
+      {
+        "producto": "693b22599340221b8f21aafa",
+        "cantidad": 1,
+        "_id": "693b25149340221b8f21ac33"
+      },
+      {
+        "producto": "693b24a99340221b8f21abd7",
+        "cantidad": 2,
+        "_id": "693b25149340221b8f21ac34"
+      }
+    ],
+    "estado": "completado",
+    "tecnicoAsignado": "6938a29fad35bd5a203bb7de",
+    "fechaInicio": "2025-12-12T00:00:00.000Z",
+    "fechaFin": "2025-12-12T00:00:00.000Z",
+    "observaciones": "nota: \n1. el trabajo debe realizar en horas de la mañana para no perder la venta con el cliente. \n2. ",
+    "instruccionesTecnico": "1. utilizar epp y delimitar el area de trabajo con seguridad\n2. tomar fotografías de la situación actual y reportar en caso se encuentren equipos dañados \n3. comunicar al cliente o encargado de los cambios a realizarse ",
+    "herramientas": [],
+    "createdAt": "2025-12-10T15:43:10.086Z",
+    "updatedAt": "2025-12-11T20:09:56.976Z",
+    "__v": 5
+  },
+  {
+    "_id": "693b5d6a5b0683228ee42905",
+    "numeroOT": "0002",
+    "cotizacion": "6938a897ad35bd5a203bb7f7",
+    "descripcionServicio": "Compra de transformador de aislamiento 220 volts",
+    "tareas": [
+      {
+        "descripcion": "Transformador de aislamiento 220 voltios 5kva",
+        "cantidad": 2,
+        "_id": "693b5d6a5b0683228ee42906"
+      }
+    ],
+    "cliente": "6938a655ad35bd5a203bb7f3",
+    "ubicacion": "sdsad",
+    "productos": [],
+    "estado": "completado",
+    "tecnicoAsignado": "6938a29fad35bd5a203bb7de",
+    "fechaInicio": "2025-12-12T00:00:00.000Z",
+    "fechaFin": "2025-12-12T14:16:10.265Z",
+    "observaciones": "asd",
+    "instruccionesTecnico": "",
+    "herramientas": [],
+    "createdAt": "2025-12-12T00:10:18.614Z",
+    "updatedAt": "2025-12-12T14:16:10.265Z",
+    "__v": 0
+  },
+  {
+    "_id": "693b5d9a5b0683228ee42938",
+    "numeroOT": "0003",
+    "descripcionServicio": "servicio correctivo de cambio de pulsador para dispensador weyne",
+    "tareas": [],
+    "herramientas": [
+      {
+        "herramienta": "69120f00a234169157b9e41d",
+        "cantidad": 1,
+        "_id": "693c261c5250c9a75fd4fcb3"
+      }
+    ],
+    "cliente": "68fb9d112f2de0767b39e4d2",
+    "ubicacion": "carreta central margen derecha sicaya ",
+    "productos": [
+      {
+        "producto": "693c24e75250c9a75fd4fc92",
+        "cantidad": 1,
+        "_id": "693c261c5250c9a75fd4fcb4"
+      }
+    ],
+    "estado": "pendiente",
+    "tecnicoAsignado": "6938a29fad35bd5a203bb7de",
+    "fechaAsignacion": "2025-12-12T00:11:06.135Z",
+    "fechaInicio": "2025-12-12T00:00:00.000Z",
+    "fechaFin": "2025-12-12T00:00:00.000Z",
+    "createdAt": "2025-12-12T00:11:06.136Z",
+    "updatedAt": "2025-12-12T14:26:36.852Z",
+    "__v": 2,
+    "instruccionesTecnico": "",
+    "observaciones": "1. Usar los equipos de seguridad (casco con tapones auditivos, zapato de seguridad, guantes, chaleco de seguridad )\n2. Delimitar el área de trabajo.\n3. Toma de fotografías antes de la reparación o cambio. "
+  },
+  {
+    "_id": "693ca1ec54c2a6dac4c37ec1",
+    "numeroOT": "0004",
+    "cotizacion": "693ca1c854c2a6dac4c37e20",
+    "descripcionServicio": "asd",
+    "tareas": [],
+    "herramientas": [
+      {
+        "herramienta": "69178bf4d072f59f66e98614",
+        "cantidad": 1,
+        "_id": "693ca1ec54c2a6dac4c37ec2"
+      }
+    ],
+    "cliente": "68fb9d112f2de0767b39e4d2",
+    "ubicacion": "asd",
+    "productos": [
+      {
+        "producto": "693b24a99340221b8f21abd7",
+        "cantidad": 1,
+        "_id": "693ca1ec54c2a6dac4c37ec3"
+      }
+    ],
+    "estado": "pendiente",
+    "tecnicoAsignado": "6938a29fad35bd5a203bb7de",
+    "fechaInicio": "2025-12-13T00:00:00.000Z",
+    "fechaFin": "2025-12-13T00:00:00.000Z",
+    "observaciones": "asd",
+    "instruccionesTecnico": "asd",
+    "createdAt": "2025-12-12T23:14:52.846Z",
+    "updatedAt": "2025-12-12T23:14:52.846Z",
+    "__v": 0
+  },
+  {
+    "_id": "6940851add76ec09dd637347",
+    "numeroOT": "0006",
+    "descripcionServicio": "MONITOREO AMBIENTAL",
+    "tareas": [],
+    "herramientas": [
+      {
+        "herramienta": "69388f4ebbfdb0920ffdc29e",
+        "cantidad": 1,
+        "_id": "6940965efafb4deee5cfa601"
+      },
+      {
+        "herramienta": "6938907bbbfdb0920ffdc2b5",
+        "cantidad": 1,
+        "_id": "6940965efafb4deee5cfa602"
+      }
+    ],
+    "cliente": "6938a655ad35bd5a203bb7f3",
+    "ubicacion": "PUCARÁ",
+    "productos": [],
+    "estado": "pendiente",
+    "tecnicoAsignado": "6938a29fad35bd5a203bb7de",
+    "fechaAsignacion": "2025-12-15T22:00:58.405Z",
+    "fechaInicio": "2025-12-26T00:00:00.000Z",
+    "fechaFin": "2025-12-26T00:00:00.000Z",
+    "createdAt": "2025-12-15T22:00:58.406Z",
+    "updatedAt": "2025-12-15T23:14:38.040Z",
+    "__v": 1,
+    "instruccionesTecnico": "REALIZAR EL MONITOREO DE ACUERDO A LAS COORDENAS",
+    "observaciones": "EL MONITOREO SE HARÁ CON LA SUPERVISIÓN DE ALEXANDER, GARY Y LUIS"
+  }
+]

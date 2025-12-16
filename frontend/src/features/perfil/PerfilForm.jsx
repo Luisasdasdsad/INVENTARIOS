@@ -106,6 +106,7 @@ export default function PerfilForm() {
       case 'tecnico': return 'Técnico'; // Rol válido
       case 'trabajador': return 'Trabajador'; // Rol válido
       case 'jefe_inventario': return 'Jefe de Inventario'; // Rol válido
+      case 'administracion': return 'Administración'; // Rol válido
       default: return rol;
     }
   };
@@ -506,6 +507,7 @@ export default function PerfilForm() {
                 <option value="tecnico">Técnico</option>
                 <option value="admin">Admin</option>
                 <option value="jefe_inventario">Jefe de Inventario</option>
+                <option value="administracion">Administración</option>
               </select>
             </div>
             <div className="flex gap-2">

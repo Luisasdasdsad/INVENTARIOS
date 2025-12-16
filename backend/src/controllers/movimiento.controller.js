@@ -1,7 +1,7 @@
 import Movimiento from '../models/movimiento.model.js';
 import Herramienta from '../models/herramienta.model.js';
 import { validationResult } from 'express-validator';
-import User from '../models/usuario.model.js';
+import Usuario from '../models/usuario.model.js';
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import mongoose from 'mongoose';

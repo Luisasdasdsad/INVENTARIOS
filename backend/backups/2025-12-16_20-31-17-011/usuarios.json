@@ -1,0 +1,78 @@
+[
+  {
+    "_id": "68f7bd456a100e8378f1e9cb",
+    "nombre": "Luis",
+    "email": "admin@test.com",
+    "password": "$2b$10$nCUwlbgwYeikDhBIX5IDrOQ8S3WpJRGawr5NVCgouwK6XmZlbeFsW",
+    "rol": "admin",
+    "createdAt": "2025-10-21T17:05:09.559Z",
+    "updatedAt": "2025-12-15T17:54:51.809Z",
+    "__v": 0,
+    "celular": "948011237",
+    "direccion": "Av. Los Héroes 750",
+    "telefono": ""
+  },
+  {
+    "_id": "690b83dfb5649a16ce4ee9cf",
+    "nombre": "Alexander",
+    "email": "alexandergg@teamgas.com",
+    "password": "$2b$10$VhzUrP8lNGLQbD/klxhRreTnn6HkUoqiqgg9CPDfoJbaBfL8t9gq.",
+    "rol": "admin",
+    "createdAt": "2025-11-05T17:05:35.220Z",
+    "updatedAt": "2025-12-09T21:52:59.596Z",
+    "__v": 0
+  },
+  {
+    "_id": "690f856969e3c41e528b0bde",
+    "nombre": "Gary",
+    "email": "garytg@teamgas.com",
+    "password": "$2b$10$FHZFwEFydjo87Wb6sScWIeQ7QcQOsy0KZ9qyttWhSPGTofEqIDg4u",
+    "rol": "admin",
+    "createdAt": "2025-11-08T18:01:13.676Z",
+    "updatedAt": "2025-11-08T18:01:13.676Z",
+    "__v": 0
+  },
+  {
+    "_id": "6911f85a9fe36175b0fbcfcf",
+    "nombre": "Rosario",
+    "email": "rosariotg@teamgas.com",
+    "password": "$2b$10$.v30Kg3yx2RFwBsKqVZEmePiN9gO3MOZDfKryHIOzGfvvkHl98M2O",
+    "rol": "admin",
+    "createdAt": "2025-11-10T14:36:10.435Z",
+    "updatedAt": "2025-11-10T14:36:10.435Z",
+    "__v": 0
+  },
+  {
+    "_id": "69128ebaed6ab6a97487f143",
+    "nombre": "Jhoselyn",
+    "email": "jhoselyntg@teamgas.com",
+    "password": "$2b$10$iFVu76U..Q8YPrzY.7bRWO4Pj9QGwGboxmFJ.0aOcc/UM9QQZW1NK",
+    "rol": "administracion",
+    "createdAt": "2025-11-11T01:17:46.442Z",
+    "updatedAt": "2025-12-16T18:40:14.430Z",
+    "__v": 0
+  },
+  {
+    "_id": "693315c57f17cf01645ca10f",
+    "nombre": "Jefe de Inventario",
+    "email": "jefe_inventario@teamgas.pe",
+    "password": "$2b$10$1J6oB9HU1xVi6/HXMh3d/uMQl5a4TFOG9yQDhfjllcoLckwXNbb4.",
+    "rol": "jefe_inventario",
+    "createdAt": "2025-12-05T17:26:29.155Z",
+    "updatedAt": "2025-12-05T17:26:29.155Z",
+    "__v": 0
+  },
+  {
+    "_id": "6938a29fad35bd5a203bb7de",
+    "nombre": "Dilber",
+    "email": "Soporte.tecnico@teamgas.pe",
+    "password": "$2b$10$9DCtJKAhH5phmGJcsVQ/O.FDkacQJGEQIzHhNQhLw1HQS6NSIku/y",
+    "rol": "tecnico",
+    "createdAt": "2025-12-09T22:28:47.692Z",
+    "updatedAt": "2025-12-15T15:38:24.493Z",
+    "__v": 0,
+    "celular": "924068785",
+    "direccion": "",
+    "telefono": ""
+  }
+]

@@ -14,22 +14,30 @@ export const subirFoto = async (req, res) => {
 
     // Determinar el tipo basado en el nombre del archivo (ej: herramienta-foto-... o movimiento-foto-...)
     const filename = req.file.originalname;
-    const prefix = filename.split('-')[0]; // "herramienta" o "movimiento"
-    const folder = prefix === 'herramienta' ? 'inventario/herramientas' : prefix === 'movimiento' ? 'inventario/movimientos' : prefix === 'producto' ? 'inventario/productos' : 'inventario/fotos';
+    const prefix = filename.split('-')[0].toLowerCase(); 
+    
+    let folder = 'inventario/fotos'; // Carpeta por defecto
+    if (prefix === 'herramienta' || prefix === 'herramientas') folder = 'inventario/herramientas';
+    else if (prefix === 'movimiento') folder = 'inventario/movimientos';
+    else if (prefix === 'producto') folder = 'inventario/productos';
+    else if (['compra', 'cotizacion', 'factura'].includes(prefix)) folder = 'inventario/compras'; // Nueva carpeta ordenada
+
+    // Si es documento, permitimos mayor resolución para leer el texto
+    const isDocument = ['compra', 'cotizacion', 'factura'].includes(prefix);
 
     // Subir a Cloudinary
     const result = await new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
-          resource_type: 'image',
+          resource_type: 'image', // Forzamos 'image' para evitar errores 404 con 'auto'
           folder: folder,
           public_id: `${prefix}-${Date.now()}`,
           transformation: [
             {
-            width: 800,
-            height: 600,
+            width: isDocument ? 2000 : 1280, // Aumentamos calidad (antes 800x600)
+            height: isDocument ? 2000 : 1280,
             crop: 'limit',
-            quality: 'auto'
+            quality: 'auto:best' // Mejor calidad de compresión
             },
             { fetch_format: 'auto'}
           ]

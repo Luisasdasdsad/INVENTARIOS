@@ -1,0 +1,16 @@
+[
+  {
+    "_id": "69418a4fdfc294b5748fb42a",
+    "producto": "693b24a99340221b8f21abd7",
+    "tipo": "salida",
+    "cantidad": 2,
+    "usuario": "68f7bd456a100e8378f1e9cb",
+    "nota": "",
+    "obra": "Pucará",
+    "foto": "https://res.cloudinary.com/dbhfp0el3/image/upload/v1765902917/inventario/movimientos/movimiento-1765902917647.jpg",
+    "fecha": "2025-12-16T16:35:27.496Z",
+    "createdAt": "2025-12-16T16:35:27.497Z",
+    "updatedAt": "2025-12-16T16:35:27.497Z",
+    "__v": 0
+  }
+]

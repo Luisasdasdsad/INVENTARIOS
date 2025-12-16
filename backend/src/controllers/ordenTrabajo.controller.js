@@ -107,7 +107,8 @@ export const crearOrdenTrabajo = async (req, res) => {
                     usuario: tecnicoAsignado,
                     tipo: 'asignacion_ot',
                     mensaje: `Se te ha asignado la Orden de Trabajo N° ${numero}`,
-                    referenciaId: nuevaOT._id
+                    referenciaId: nuevaOT._id,
+                    referenciaModelo: 'OrdenTrabajo'
                 });
             }
 
@@ -223,7 +224,8 @@ export const asignarTecnico = async (req, res) => {
                 usuario: tecnicoId,
                 tipo: 'asignacion_ot',
                 mensaje: `Se te ha asignado la Orden de Trabajo N° ${ot.numeroOT}`,
-                referenciaId: ot._id
+                referenciaId: ot._id,
+                referenciaModelo: 'OrdenTrabajo'
             });
         }
 
@@ -378,7 +380,8 @@ export const crearDesdeCotizacion = async (req, res) => {
                     usuario: tecnicoId,
                     tipo: 'asignacion_ot',
                     mensaje: `Se te ha asignado la Orden de Trabajo N° ${numeroOT} (vía Cotización)`,
-                    referenciaId: nuevaOT._id
+                    referenciaId: nuevaOT._id,
+                    referenciaModelo: 'OrdenTrabajo'
                 });
             }
 

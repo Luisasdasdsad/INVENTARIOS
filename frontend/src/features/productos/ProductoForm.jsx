@@ -64,10 +64,8 @@ export default function ProductoForm({ producto, onSuccess, onCancel }) {
       const data = new FormData();
       Object.entries(formData).forEach(([key, value]) => data.append(key, value));
 
-      // Si hay una URL de foto, la enviamos como fotoUrl
-      if (preview) {
-        data.append("fotoUrl", preview); // El backend debe soportar recibir la URL si la imagen ya se subió
-      }
+      // Si hay una URL de foto, la enviamos. Si está vacía, enviamos "" para que el backend sepa que debe borrarla.
+      data.append("fotoUrl", preview || "");
 
       if (producto) {
         await api.put(`/productos/${producto._id}`, data, {

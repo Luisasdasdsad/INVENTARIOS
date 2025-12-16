@@ -1,0 +1,519 @@
+[
+  {
+    "_id": "690f784069e3c41e528b0b08",
+    "cliente": "68fb9d112f2de0767b39e4d2",
+    "usuario": "690f781b69e3c41e528b0af7",
+    "productos": [
+      {
+        "descripcion": "sdfdsf",
+        "cantidad": 1,
+        "unidad": "und",
+        "precioUnitario": 20,
+        "igv": 3.5999999999999996,
+        "vUnit": 16.4,
+        "total": 20,
+        "_id": "690f784069e3c41e528b0b09"
+      }
+    ],
+    "fecha": "2025-11-08T00:00:00.000Z",
+    "totalGeneral": 20,
+    "descuento": 0,
+    "moneda": "SOLES",
+    "observaciones": "ninguna",
+    "numeroCotizacion": "0001",
+    "createdAt": "2025-11-08T17:05:04.473Z",
+    "updatedAt": "2025-11-08T17:05:04.473Z",
+    "__v": 0
+  },
+  {
+    "_id": "691cb5a674c3d217d10a7d12",
+    "cliente": "691cb3f874c3d217d10a7d08",
+    "usuario": "690f856969e3c41e528b0bde",
+    "productos": [
+      {
+        "descripcion": "INSTALACION DE TUBERIAS DE GLP ",
+        "cantidad": 1,
+        "unidad": "UND",
+        "precioUnitario": 13500,
+        "igv": 2430,
+        "vUnit": 11070,
+        "total": 13500,
+        "_id": "691cb70774c3d217d10a7d57"
+      },
+      {
+        "descripcion": "Sensor detector de gas",
+        "cantidad": 1,
+        "unidad": "unidad",
+        "precioUnitario": 300,
+        "igv": 54,
+        "vUnit": 246,
+        "total": 300,
+        "_id": "691cb70774c3d217d10a7d58"
+      },
+      {
+        "descripcion": "KIT DE HERRAMIENTAS 1 - Stanley Maletín",
+        "cantidad": 1,
+        "unidad": "unidad",
+        "precioUnitario": 120,
+        "igv": 21.599999999999998,
+        "vUnit": 98.4,
+        "total": 120,
+        "_id": "691cb70774c3d217d10a7d59"
+      },
+      {
+        "descripcion": "ALQUILER DE - Esmeriladora - Dewalt DCG440 X DIA",
+        "cantidad": 5,
+        "unidad": "unidad",
+        "precioUnitario": 100,
+        "igv": 18,
+        "vUnit": 82,
+        "total": 500,
+        "_id": "691cb70774c3d217d10a7d5a"
+      },
+      {
+        "descripcion": "asd",
+        "cantidad": 50,
+        "unidad": "unidad",
+        "precioUnitario": 12,
+        "igv": 2.16,
+        "vUnit": 9.84,
+        "total": 600,
+        "_id": "691cb70774c3d217d10a7d5b"
+      }
+    ],
+    "fecha": "2025-11-02T00:00:00.000Z",
+    "totalGeneral": 15019.9,
+    "descuento": 0.1,
+    "moneda": "DOLARES",
+    "observaciones": "",
+    "numeroCotizacion": "0005",
+    "createdAt": "2025-11-18T18:06:30.758Z",
+    "updatedAt": "2025-11-18T18:12:23.854Z",
+    "__v": 0
+  },
+  {
+    "_id": "691cb7cc74c3d217d10a7d7b",
+    "cliente": "691cb78574c3d217d10a7d68",
+    "usuario": "690f856969e3c41e528b0bde",
+    "productos": [
+      {
+        "descripcion": "INSTALACION DE TANQUE DE GLP",
+        "cantidad": 1,
+        "unidad": "",
+        "precioUnitario": 8600.9,
+        "igv": 1548.1619999999998,
+        "vUnit": 7052.737999999999,
+        "total": 8600.9,
+        "_id": "691cb7cc74c3d217d10a7d7c"
+      },
+      {
+        "descripcion": "Baterias 9A - Dewalt N582019",
+        "cantidad": 1,
+        "unidad": "unidad",
+        "precioUnitario": 15.78,
+        "igv": 2.8404,
+        "vUnit": 12.939599999999999,
+        "total": 15.78,
+        "_id": "691cb7cc74c3d217d10a7d7d"
+      }
+    ],
+    "fecha": "2025-11-18T00:00:00.000Z",
+    "totalGeneral": 8527.079999999998,
+    "descuento": 89.6,
+    "moneda": "SOLES",
+    "observaciones": "LA INSTALACION SE REALIZARA EL DIA MARTE 25/08/11",
+    "numeroCotizacion": "0006",
+    "createdAt": "2025-11-18T18:15:40.894Z",
+    "updatedAt": "2025-11-18T18:15:40.894Z",
+    "__v": 0
+  },
+  {
+    "_id": "691d0b4e0d847accd31f155c",
+    "cliente": "691d0ac40d847accd31f1558",
+    "usuario": "690f856969e3c41e528b0bde",
+    "productos": [
+      {
+        "descripcion": "sdcv s",
+        "cantidad": 80.5,
+        "unidad": "kg",
+        "precioUnitario": 45.65,
+        "igv": 8.216999999999999,
+        "vUnit": 37.433,
+        "total": 3674.825,
+        "_id": "691d0b4e0d847accd31f155d"
+      },
+      {
+        "descripcion": "alquiler- Esmeriladora - Dewalt DCG440",
+        "cantidad": 5,
+        "unidad": "dia",
+        "precioUnitario": 100,
+        "igv": 18,
+        "vUnit": 82,
+        "total": 500,
+        "_id": "691d0b4e0d847accd31f155e"
+      },
+      {
+        "descripcion": "Sensor detector de gas",
+        "cantidad": 50,
+        "unidad": "unidad",
+        "precioUnitario": 300,
+        "igv": 54,
+        "vUnit": 246,
+        "total": 15000,
+        "_id": "691d0b4e0d847accd31f155f"
+      }
+    ],
+    "fecha": "2025-11-19T00:00:00.000Z",
+    "totalGeneral": 19115.925,
+    "descuento": 58.9,
+    "moneda": "DOLARES",
+    "observaciones": "",
+    "numeroCotizacion": "0007",
+    "validez": "5 días",
+    "createdAt": "2025-11-19T00:11:58.620Z",
+    "updatedAt": "2025-11-19T00:11:58.620Z",
+    "__v": 0
+  },
+  {
+    "_id": "691e13ddeebd25086371cd89",
+    "cliente": "691d0ac40d847accd31f1558",
+    "usuario": "690f856969e3c41e528b0bde",
+    "productos": [
+      {
+        "descripcion": "asd",
+        "cantidad": 2,
+        "unidad": "unidad",
+        "precioUnitario": 15.99,
+        "igv": 2.8782,
+        "vUnit": 13.1118,
+        "total": 31.98,
+        "_id": "691e13ddeebd25086371cd8a"
+      },
+      {
+        "descripcion": "Taladro percutor  - Dewalt DCD796-2",
+        "cantidad": 5.5,
+        "unidad": "unidad",
+        "precioUnitario": 23.7,
+        "igv": 4.266,
+        "vUnit": 19.433999999999997,
+        "total": 130.35,
+        "_id": "691e13ddeebd25086371cd8b"
+      }
+    ],
+    "fecha": "2025-11-19T00:00:00.000Z",
+    "totalGeneral": 162.32999999999998,
+    "descuento": 0,
+    "moneda": "SOLES",
+    "observaciones": "",
+    "numeroCotizacion": "0008",
+    "validez": "1 días",
+    "createdAt": "2025-11-19T19:00:45.262Z",
+    "updatedAt": "2025-11-19T19:00:45.262Z",
+    "__v": 0
+  },
+  {
+    "_id": "691fa646b0dbc79e370dc358",
+    "cliente": "691fa5e0b0dbc79e370dc354",
+    "usuario": "69128ebaed6ab6a97487f143",
+    "productos": [
+      {
+        "descripcion": "ELECTROBOMBA MULTIETAPICA PETROLAMP \nPROCEDENCIA TURCA CON MOTOR DE 7.5 HP APRUEBA \nDE EXPLOSION PROCEDENCIA AMERICANO MARCA \nWEG",
+        "cantidad": 1,
+        "unidad": "UND",
+        "precioUnitario": 7500,
+        "igv": 1350,
+        "vUnit": 6150,
+        "total": 7500,
+        "_id": "691fa646b0dbc79e370dc359"
+      }
+    ],
+    "fecha": "2025-11-05T00:00:00.000Z",
+    "totalGeneral": 7500,
+    "descuento": 0,
+    "moneda": "SOLES",
+    "observaciones": "",
+    "numeroCotizacion": "0014",
+    "validez": "15 días",
+    "createdAt": "2025-11-20T23:37:42.682Z",
+    "updatedAt": "2025-11-20T23:37:42.682Z",
+    "__v": 0
+  },
+  {
+    "_id": "69273ab4c53ccd4ff1ce8c5f",
+    "cliente": "6904e5d98de8e91f8c27b4bc",
+    "usuario": "68f7bd456a100e8378f1e9cb",
+    "productos": [
+      {
+        "descripcion": "Sensor detector de gas",
+        "cantidad": 1,
+        "unidad": "unidad",
+        "precioUnitario": 300,
+        "igv": 54,
+        "vUnit": 246,
+        "total": 300,
+        "_id": "69273ab4c53ccd4ff1ce8c60"
+      }
+    ],
+    "fecha": "2025-11-26T00:00:00.000Z",
+    "totalGeneral": 300,
+    "descuento": 0,
+    "moneda": "SOLES",
+    "observaciones": "",
+    "descripcionServicio": "COLOCAR SENSORES DE GASES",
+    "numeroCotizacion": "0016",
+    "validez": "15 días",
+    "createdAt": "2025-11-26T17:36:52.855Z",
+    "updatedAt": "2025-12-04T20:27:47.930Z",
+    "__v": 0,
+    "estado": "Facturada"
+  },
+  {
+    "_id": "69288059fab7865dd66cd516",
+    "cliente": "690b7ea0b5649a16ce4ee9c5",
+    "usuario": "69128ebaed6ab6a97487f143",
+    "productos": [
+      {
+        "descripcion": "TRANSFORMADOR DE VOLTAJE 5 KVA",
+        "cantidad": 1,
+        "unidad": "",
+        "precioUnitario": 600,
+        "igv": 108,
+        "vUnit": 492,
+        "total": 600,
+        "_id": "69288086fab7865dd66cd528"
+      }
+    ],
+    "fecha": "2025-11-27T00:00:00.000Z",
+    "totalGeneral": 600,
+    "descuento": 0,
+    "moneda": "DOLARES",
+    "observaciones": "",
+    "numeroCotizacion": "0017",
+    "validez": "15 días",
+    "createdAt": "2025-11-27T16:46:17.782Z",
+    "updatedAt": "2025-11-27T16:47:02.450Z",
+    "__v": 0
+  },
+  {
+    "_id": "692892bafbc7b3191e979332",
+    "cliente": "691fa5e0b0dbc79e370dc354",
+    "usuario": "69128ebaed6ab6a97487f143",
+    "productos": [
+      {
+        "descripcion": "ELECTROBOMBA LPG MOD TBA 317 TRAVAINI ACOPLADO CON MOTOR WEG 7.5HP 1800RPM A PRUEBA DE EXPLOSION",
+        "cantidad": 1,
+        "unidad": "UND",
+        "precioUnitario": 7500,
+        "igv": 1350,
+        "vUnit": 6150,
+        "total": 7500,
+        "_id": "692892bafbc7b3191e979333"
+      }
+    ],
+    "fecha": "2025-11-27T00:00:00.000Z",
+    "totalGeneral": 7500,
+    "descuento": 0,
+    "moneda": "DOLARES",
+    "observaciones": "",
+    "numeroCotizacion": "0018",
+    "validez": "15 días",
+    "createdAt": "2025-11-27T18:04:42.701Z",
+    "updatedAt": "2025-11-27T18:04:42.701Z",
+    "__v": 0
+  },
+  {
+    "_id": "692f0db0243032e515bf0a14",
+    "cliente": "692f0ce3243032e515bf0a10",
+    "usuario": "69128ebaed6ab6a97487f143",
+    "productos": [
+      {
+        "descripcion": "Tanque de combustible de 10 mil galones con 03 compartimientos\n• Radio del tanque 2.3 metro\n• Certificado de fabricación\n• Placa de fabricación\n• Tabla de aforo\n\n\n\nNOTA: EL TANQUE SE ENTREGA CON PINTURA EPOXICA Y ARENADO",
+        "cantidad": 1,
+        "unidad": "UND",
+        "precioUnitario": 37000,
+        "igv": 6660,
+        "vUnit": 30340,
+        "total": 37000,
+        "_id": "692f2a4fbf1be0be2048a61f"
+      }
+    ],
+    "fecha": "2025-12-02T00:00:00.000Z",
+    "totalGeneral": 37000,
+    "descuento": 0,
+    "moneda": "SOLES",
+    "observaciones": "EL PRECIO NO INCLUYE EL TRANSPORTE Y LA ENTREGA DEL BIEN SE REALIZARÁ EN EL TALLER DE FABRICACIÓN.                                                                                                           ",
+    "descripcionServicio": "",
+    "numeroCotizacion": "0019",
+    "validez": "4 días",
+    "createdAt": "2025-12-02T16:02:56.212Z",
+    "updatedAt": "2025-12-02T18:05:03.345Z",
+    "__v": 0
+  },
+  {
+    "_id": "6934553611d554e4805e2972",
+    "cliente": "68fb9d112f2de0767b39e4d2",
+    "usuario": "69128ebaed6ab6a97487f143",
+    "productos": [
+      {
+        "descripcion": "TANQUE DE GLP ",
+        "cantidad": 1,
+        "unidad": "UND",
+        "precioUnitario": 22000,
+        "igv": 3960,
+        "vUnit": 18040,
+        "total": 22000,
+        "_id": "6934553611d554e4805e2973"
+      }
+    ],
+    "fecha": "2025-12-06T00:00:00.000Z",
+    "totalGeneral": 22000,
+    "descuento": 0,
+    "moneda": "DOLARES",
+    "observaciones": "",
+    "descripcionServicio": "",
+    "numeroCotizacion": "0020",
+    "validez": "15 días",
+    "createdAt": "2025-12-06T16:09:26.036Z",
+    "updatedAt": "2025-12-06T16:09:26.036Z",
+    "__v": 0
+  },
+  {
+    "_id": "69389dd6ad35bd5a203bb673",
+    "cliente": "68fb9d112f2de0767b39e4d2",
+    "usuario": "690b83dfb5649a16ce4ee9cf",
+    "productos": [
+      {
+        "descripcion": "MANTENIMIENTO DE TANQUES DE COMBUSTIBLE ",
+        "cantidad": 1,
+        "unidad": "UND",
+        "precioUnitario": 1500,
+        "igv": 270,
+        "vUnit": 1230,
+        "total": 1500,
+        "_id": "69389dd6ad35bd5a203bb674"
+      }
+    ],
+    "fecha": "2025-12-09T00:00:00.000Z",
+    "totalGeneral": 1500,
+    "descuento": 0,
+    "moneda": "SOLES",
+    "observaciones": "NOTA: ES NECESARIO QUE EL TANQUE DE COMBUSTIBLE NO TEGA UNA CANTIDAD MAYOR A 250 GALONES",
+    "descripcionServicio": "mantenimiento de tanques de combutible. ",
+    "numeroCotizacion": "0021",
+    "validez": "4 días",
+    "estado": "Facturada",
+    "createdAt": "2025-12-09T22:08:22.019Z",
+    "updatedAt": "2025-12-09T22:15:01.951Z",
+    "__v": 0
+  },
+  {
+    "_id": "6938a897ad35bd5a203bb7f7",
+    "cliente": "6938a655ad35bd5a203bb7f3",
+    "usuario": "690b83dfb5649a16ce4ee9cf",
+    "productos": [
+      {
+        "descripcion": "Transformador de aislamiento 220 voltios 5kva",
+        "cantidad": 2,
+        "unidad": "UND",
+        "precioUnitario": 600,
+        "igv": 108,
+        "vUnit": 492,
+        "total": 1200,
+        "_id": "6938aa69ad35bd5a203bb83e"
+      }
+    ],
+    "fecha": "2025-12-09T00:00:00.000Z",
+    "totalGeneral": 1200,
+    "descuento": 0,
+    "moneda": "DOLARES",
+    "observaciones": "Nota: \n1. El cambio se realizara en  un periodo de 24 horas una ves confirmada la llegara del producto a nuestros almacenes.",
+    "descripcionServicio": "Compra de transformador de aislamiento 220 volts",
+    "numeroCotizacion": "0022",
+    "validez": "4 días",
+    "estado": "Facturada",
+    "createdAt": "2025-12-09T22:54:15.775Z",
+    "updatedAt": "2025-12-09T23:05:08.140Z",
+    "__v": 0
+  },
+  {
+    "_id": "693a082f26d50d0fd384e448",
+    "cliente": "693a07c826d50d0fd384e43b",
+    "usuario": "69128ebaed6ab6a97487f143",
+    "productos": [
+      {
+        "descripcion": "CAPACIDAD NOMINAL 5000GALONES\nDIAMETRO 2500mm\nPRESION DE DISEÑO 250 PSI\nPRESION DE PRUEBA 325 PSI\nESPECIFICACIONES Construido de acuerdo a Normas ASME Sección VIII div. I AÑO 2023\nMATERIAL CUERPO Plancha ASME SA-612 16.00mm\nMATERIAL CABEZALES Plancha ASTM A36 12.00mm\nINSPECCION Prueba Visual, Prueba Hidrostatica, Prueba Dimensional, Prueba de tintes, Prueba Radiograficа\nCONEXIONES Conexiones Roscadas NPT para todos los instrumentos\nINSTRUMENTOS Y VÁLVULAS: Incluye 01 Válvula de Seguridad 2\", 01 Válvula de Drenaje 1 1/4\", 01 Válvula de Nivel\n3/4\", 01 Termómetro 1/2\", 01 Válvula de Exceso de Flujo 1-1/4\", 02 Válvula de Exceso de Flujo 3/4\", 01 Válvula Interna\nValve 2\", 01 Válvula Check 2\", 02 Manómetros 0-300 PSI, 01 Copla Telemedición, 01 Manhole Cilindrico (Las valvulas\nseran marca Rego o Fisher)\nACCESORIOS: Incluye 01 Domo Protector de Valvulas, Patas de Apoyo al tanque",
+        "cantidad": 1,
+        "unidad": "und",
+        "precioUnitario": 20000,
+        "igv": 3600,
+        "vUnit": 16400,
+        "total": 20000,
+        "_id": "693a085e26d50d0fd384e47f"
+      }
+    ],
+    "fecha": "2025-12-10T00:00:00.000Z",
+    "totalGeneral": 20000,
+    "descuento": 0,
+    "moneda": "DOLARES",
+    "observaciones": "ACABADO Arenado y Pintado con ultramastic (coaltar) negro.",
+    "descripcionServicio": "",
+    "numeroCotizacion": "0024",
+    "validez": "15 días",
+    "estado": "Pendiente",
+    "createdAt": "2025-12-10T23:54:23.830Z",
+    "updatedAt": "2025-12-10T23:55:10.240Z",
+    "__v": 0
+  },
+  {
+    "_id": "6940244865fa00228269e790",
+    "cliente": "68fb9d112f2de0767b39e4d2",
+    "usuario": "68f7bd456a100e8378f1e9cb",
+    "productos": [
+      {
+        "descripcion": "asd",
+        "cantidad": 1,
+        "unidad": "und",
+        "precioUnitario": 100,
+        "igv": 18,
+        "vUnit": 82,
+        "total": 100,
+        "_id": "69409a0ffafb4deee5cfa7e3"
+      },
+      {
+        "descripcion": "Pulsador IEC 3g",
+        "cantidad": 1,
+        "unidad": "unidad",
+        "precioUnitario": 800,
+        "igv": 144,
+        "vUnit": 656,
+        "total": 800,
+        "producto": "693c24e75250c9a75fd4fc92",
+        "_id": "69409a0ffafb4deee5cfa7e4"
+      },
+      {
+        "descripcion": "Esmeriladora - Dewalt DCG440",
+        "cantidad": 1,
+        "unidad": "unidad",
+        "precioUnitario": 0,
+        "igv": 0,
+        "vUnit": 0,
+        "total": 0,
+        "herramienta": "69121ba3537537a6ee37be5e",
+        "_id": "69409a0ffafb4deee5cfa7e5"
+      }
+    ],
+    "fecha": "2025-12-15T00:00:00.000Z",
+    "totalGeneral": 900,
+    "descuento": 0,
+    "moneda": "DOLARES",
+    "observaciones": "asd",
+    "descripcionServicio": "",
+    "numeroCotizacion": "0026",
+    "validez": "15 días",
+    "estado": "Aceptada",
+    "createdAt": "2025-12-15T15:07:52.732Z",
+    "updatedAt": "2025-12-15T23:30:23.011Z",
+    "__v": 0,
+    "tipoCambio": 3.22
+  }
+]

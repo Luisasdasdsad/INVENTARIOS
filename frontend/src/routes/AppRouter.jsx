@@ -20,6 +20,7 @@ import ClienteList from "../features/clientes/ClienteList";
 import PerfilForm from "../features/perfil/PerfilForm";
 import ProveedorList from "../features/proveedores/ProveedorList";
 import FacturaList from "../features/facturas/FacturaList";
+import ComprasList from "../features/compras/ComprasList";
 
 export default function AppRouter() {
   return (
@@ -41,6 +42,7 @@ export default function AppRouter() {
             <Route path="movimientos" element={<MovimientosList />} />
             <Route path="movimientos/registrar" element={<RegistrarMovimientoPage />} />
             <Route path="perfil" element={<PerfilForm />} />
+            <Route path="compras" element={<ComprasList />} />
 
             {/* 🔄 Cotizaciones separadas en dos rutas */}
             <Route path="cotizaciones" element={<CotizaciónList />} /> {/* Mis cotizaciones editables */}
@@ -53,10 +55,10 @@ export default function AppRouter() {
           </Route>
 
           {/* Rutas Protegidas con Roles Específicos */}
-          <Route path="/" element={<PrivateRoute allowedRoles={['admin', 'tecnico', 'jefe_inventario']} />}>
+          <Route path="/" element={<PrivateRoute allowedRoles={['admin', 'tecnico', 'jefe_inventario', 'administracion']} />}>
           <Route path="productos" element={<ProductoList />} />
           </Route>
-          <Route path="/" element={<PrivateRoute allowedRoles={['admin']} />}>
+          <Route path="/" element={<PrivateRoute allowedRoles={['admin', 'superadmin', 'administracion']} />}>
           <Route path="clientes" element={<ClienteList />} />
           <Route path="proveedores" element={<ProveedorList />} />
           <Route path="cotizaciones" element={<Cotización />} />
