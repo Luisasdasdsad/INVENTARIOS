@@ -67,19 +67,21 @@ export default function ProductoForm({ producto, onSuccess, onCancel }) {
       // Si hay una URL de foto, la enviamos. Si está vacía, enviamos "" para que el backend sepa que debe borrarla.
       data.append("fotoUrl", preview || "");
 
+      let response;
       if (producto) {
-        await api.put(`/productos/${producto._id}`, data, {
+        response = await api.put(`/productos/${producto._id}`, data, {
           headers: { "Content-Type": "multipart/form-data" },
         });
         alert("Producto actualizado con éxito.");
       } else {
-        await api.post("/productos", data, {
+        response = await api.post("/productos", data, {
           headers: { "Content-Type": "multipart/form-data" },
         });
         alert("Producto creado con éxito.");
       }
 
-      onSuccess();
+      // Pasamos la respuesta (que contiene el producto creado/actualizado) al callback
+      onSuccess(response.data);
     } catch (err) {
       setError("Error al guardar el producto: " + (err.response?.data?.msg || err.message));
     } finally {

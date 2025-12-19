@@ -4,7 +4,7 @@ import Modal from "../../components/Modal/Modal";
 import ProductoForm from "./ProductoForm";
 import BarcodeDisplay from "../../components/BarcodeDisplay/BarcodeDisplay";
 import QRDisplay from "../../components/BarcodeDisplay/QRDisplay.jsx";
-import { FaEdit, FaTrash, FaBarcode, FaQrcode, FaPlus, FaEye, FaFilePdf } from "react-icons/fa";
+import { FaEdit, FaTrash, FaBarcode, FaQrcode, FaPlus, FaEye, FaFilePdf, FaPrint } from "react-icons/fa";
 import { generarReporteProductos } from "../../utils/generarReporteProductos.js";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -20,6 +20,8 @@ export default function ProductoList() {
   const [generatingQR, setGeneratingQR] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoriaFilter, setCategoriaFilter] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const { user } = useAuth(); // Corregido: useAuth devuelve un objeto
   const isTecnico = user?.rol === 'tecnico';
 
@@ -41,10 +43,23 @@ export default function ProductoList() {
     fetchProductos();
   }, []);
 
+  // Resetear a la página 1 cuando cambian los filtros de búsqueda
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, categoriaFilter]);
+
   const filteredProductos = productos.filter(p =>
     p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
     (categoriaFilter === '' || p.categoria === categoriaFilter)
   );
+
+  // Lógica de paginación
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentProductos = filteredProductos.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredProductos.length / itemsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const handleAddProducto = () => {
     setEditingProducto(null);
@@ -70,7 +85,19 @@ export default function ProductoList() {
     }
   };
 
-  const handleFormSubmit = () => {
+  const handleFormSubmit = async (response) => {
+    // Extraer el producto de la respuesta (puede venir directo o en una propiedad 'producto')
+    const createdProducto = response?.producto || response;
+
+    // Si se recibe el producto creado y no estamos editando, generamos códigos automáticamente
+    if (createdProducto && createdProducto._id && !editingProducto) {
+      try {
+        if (!createdProducto.barcode) await api.post(`/productos/generar-barcode/${createdProducto._id}`);
+        if (!createdProducto.qrCode) await api.post(`/qr/producto/${createdProducto._id}`);
+      } catch (err) {
+        console.error("Error al generar códigos automáticos:", err);
+      }
+    }
     fetchProductos();
     setShowModal(false);
   };
@@ -148,6 +175,120 @@ export default function ProductoList() {
     }
   };
 
+  // Función para imprimir etiqueta de Código de Barras
+  const handlePrintBarcode = (producto) => {
+    const printWindow = window.open('', '_blank', 'width=400,height=300');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Imprimir Etiqueta</title>
+          <style>
+            @page { size: 50mm 25mm; margin: 0; }
+            body { margin: 0; padding: 0; width: 50mm; height: 25mm; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: Arial, sans-serif; overflow: hidden; }
+            .label-container { text-align: center; width: 96%; height: 96%; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+            .product-name { font-size: 8px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; margin-bottom: 1px; }
+            svg { max-width: 100%; height: auto; max-height: 18mm; }
+            
+            /* Botones para móvil (no salen en la impresión) */
+            @media print { .no-print { display: none !important; } }
+            .no-print { position: fixed; bottom: 5px; left: 0; width: 100%; text-align: center; background: rgba(255,255,255,0.9); z-index: 100; }
+            .no-print button { padding: 8px 15px; margin: 0 5px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; background: #f0f0f0; cursor: pointer; }
+          </style>
+          <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+        </head>
+        <body>
+          <div class="label-container">
+            <div class="product-name">${producto.nombre}</div>
+            <svg id="barcode"></svg>
+          </div>
+
+          <div class="no-print">
+            <button onclick="window.print()">🖨️ Imprimir</button>
+            <button onclick="printRawBt()">📱 RawBT</button>
+            <button onclick="window.close()">❌ Cerrar</button>
+          </div>
+
+          <script>
+            function printRawBt() {
+              var clone = document.documentElement.cloneNode(true);
+              var noPrints = clone.querySelectorAll('.no-print');
+              noPrints.forEach(function(el) { el.remove(); });
+              var html = clone.outerHTML;
+              var url = 'rawbt:data:text/html;base64,' + btoa(unescape(encodeURIComponent(html)));
+              window.location.href = url;
+            }
+
+            JsBarcode("#barcode", "${producto.barcode}", {
+              format: "CODE128",
+              width: 1.2,
+              height: 35,
+              displayValue: true,
+              fontSize: 9,
+              margin: 0,
+              textMargin: 0
+            });
+            window.onload = function() { setTimeout(function() { window.print(); }, 500); }
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  // Función para imprimir etiqueta de QR
+  const handlePrintQR = (producto) => {
+    const printWindow = window.open('', '_blank', 'width=400,height=300');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Imprimir QR</title>
+          <style>
+            @page { size: 50mm 25mm; margin: 0; }
+            body { margin: 0; padding: 0; width: 50mm; height: 25mm; display: flex; align-items: center; justify-content: center; font-family: Arial, sans-serif; overflow: hidden; }
+            .label-container { display: flex; flex-direction: row; align-items: center; width: 96%; height: 90%; }
+            .qr-code { width: 20mm; height: 20mm; flex-shrink: 0; }
+            .info { margin-left: 2mm; flex: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
+            .product-name { font-size: 9px; font-weight: bold; line-height: 1.1; max-height: 15mm; overflow: hidden; word-wrap: break-word; }
+            .qr-text { font-size: 11px; margin-top: 2px; font-family: monospace; white-space: nowrap; font-weight: bold; }
+            
+            @media print { .no-print { display: none !important; } }
+            .no-print { position: fixed; bottom: 5px; left: 0; width: 100%; text-align: center; background: rgba(255,255,255,0.9); z-index: 100; }
+            .no-print button { padding: 8px 15px; margin: 0 5px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; background: #f0f0f0; cursor: pointer; }
+          </style>
+        </head>
+        <body>
+          <div class="label-container">
+            <img class="qr-code" src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(producto.qrCode)}" />
+            <div class="info">
+                <div class="product-name">${producto.nombre}</div>
+                <div class="qr-text">${producto.qrCode}</div>
+            </div>
+          </div>
+
+          <div class="no-print">
+            <button onclick="window.print()">🖨️ Imprimir</button>
+            <button onclick="printRawBt()">📱 RawBT</button>
+            <button onclick="window.close()">❌ Cerrar</button>
+          </div>
+
+          <script>
+            function printRawBt() {
+              var clone = document.documentElement.cloneNode(true);
+              var noPrints = clone.querySelectorAll('.no-print');
+              noPrints.forEach(function(el) { el.remove(); });
+              var html = clone.outerHTML;
+              var url = 'rawbt:data:text/html;base64,' + btoa(unescape(encodeURIComponent(html)));
+              window.location.href = url;
+            }
+
+            window.onload = function() { setTimeout(function() { window.print(); }, 500); }
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   if (loading) return <div className="text-center p-4 md:p-8 text-gray-600">Cargando productos...</div>;
   if (error) return <div className="text-center p-4 md:p-8 text-red-500 bg-red-50 rounded-md m-2 md:m-4">Error: {error}</div>;
 
@@ -223,7 +364,7 @@ export default function ProductoList() {
         <div className="space-y-3 md:space-y-4">
           {/* Mobile: Cards Mejoradas */}
           <div className="md:hidden space-y-3">
-            {filteredProductos.map((p) => (
+            {currentProductos.map((p) => (
               <div key={p._id} className="bg-white p-3 rounded-lg shadow-sm border divide-y divide-gray-200">
                 <div className="space-y-2 mb-3">
                   <h3 className="text-base font-bold text-gray-800">{p.nombre}</h3>
@@ -324,7 +465,7 @@ export default function ProductoList() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredProductos.map((p) => (
+                  {currentProductos.map((p) => (
                     <tr key={p._id} className="hover:bg-blue-50 transition-colors duration-150">
                       <td className="px-4 py-3 whitespace-nowrap font-medium text-gray-900 text-sm">{p.nombre}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm">{p.categoria || '-'}</td>
@@ -403,6 +544,43 @@ export default function ProductoList() {
               </table>
             </div>
           </div>
+
+          {/* Paginación */}
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-4 md:mt-6 overflow-x-auto pb-2">
+              <nav className="flex items-center gap-1">
+                <button
+                  onClick={() => paginate(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 rounded-md border border-gray-300 bg-white text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Anterior
+                </button>
+                
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <button
+                    key={i + 1}
+                    onClick={() => paginate(i + 1)}
+                    className={`px-3 py-1 rounded-md border text-sm min-w-[32px] ${
+                      currentPage === i + 1
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white border-gray-300 hover:bg-gray-50 text-gray-700'
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+
+                <button
+                  onClick={() => paginate(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 rounded-md border border-gray-300 bg-white text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Siguiente
+                </button>
+              </nav>
+            </div>
+          )}
         </div>
       )}
 
@@ -454,6 +632,12 @@ export default function ProductoList() {
                           className="mx-auto max-w-full"
                         />
                       </div>
+                      <button
+                        onClick={() => handlePrintBarcode(selectedProducto)}
+                        className="bg-gray-800 text-white px-3 py-1.5 rounded hover:bg-gray-900 flex items-center justify-center gap-2 mx-auto text-xs"
+                      >
+                        <FaPrint size={12} /> Imprimir Etiqueta
+                      </button>
                     </>
                   ) : (
                     <div className="space-y-2">
@@ -475,11 +659,21 @@ export default function ProductoList() {
                     <FaQrcode size={14} /> Código QR
                   </h4>
                   {selectedProducto.qrCode ? (
-                    <QRDisplay
-                      qrCode={selectedProducto.qrCode}
-                      showActions={false}
-                      className="mx-auto"
-                    />
+                    <>
+                      <QRDisplay
+                        qrCode={selectedProducto.qrCode}
+                        showActions={false}
+                        className="mx-auto"
+                      />
+                      <div className="mt-2">
+                        <button
+                          onClick={() => handlePrintQR(selectedProducto)}
+                          className="bg-gray-800 text-white px-3 py-1.5 rounded hover:bg-gray-900 flex items-center justify-center gap-2 mx-auto text-xs"
+                        >
+                          <FaPrint size={12} /> Imprimir Etiqueta
+                        </button>
+                      </div>
+                    </>
                   ) : (
                     <div className="space-y-2">
                       <p className="text-gray-500 italic text-sm">No hay código QR.</p>

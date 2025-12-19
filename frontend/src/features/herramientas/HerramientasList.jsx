@@ -83,7 +83,19 @@ export default function HerramientasList() {
     }
   };
 
-  const handleFormSubmit = () => {
+  const handleFormSubmit = async (response) => {
+    // Extraer la herramienta de la respuesta
+    const createdHerramienta = response?.herramienta || response;
+
+    // Verificación de respaldo: Si se creó y faltan códigos, intentar generarlos aquí
+    if (createdHerramienta && createdHerramienta._id && !editingHerramienta) {
+      try {
+        if (!createdHerramienta.barcode) await api.post(`/barcode/generar/${createdHerramienta._id}`);
+        if (!createdHerramienta.qrCode) await api.post(`/qr/herramienta/${createdHerramienta._id}`);
+      } catch (err) {
+        console.error("Error al verificar códigos automáticos:", err);
+      }
+    }
     fetchHerramientas();
     setShowModal(false);
   };

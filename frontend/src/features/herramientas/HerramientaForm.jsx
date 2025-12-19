@@ -265,11 +265,13 @@ export default function HerramientaForm({ herramienta, herramientasExistentes = 
         data.append("fotoUrl", preview || "");
       }
 
+      let response;
       if (herramienta) {
-        await api.put(`/herramientas/${herramienta._id}`, data);
+        response = await api.put(`/herramientas/${herramienta._id}`, data);
         alert("Herramienta actualizada con éxito.");
       } else {
-        const res = await api.post("/herramientas", data);
+        response = await api.post("/herramientas", data);
+        const res = response; // Mantener referencia para lógica existente
 
         // Generación automática de códigos (Barcode y QR)
         const newId = res.data._id || res.data.data?._id;
@@ -289,7 +291,7 @@ export default function HerramientaForm({ herramienta, herramientasExistentes = 
         }
       }
 
-      onSuccess();
+      onSuccess(response.data);
     } catch (err) {
       setError("Error al guardar la herramienta: " + (err.response?.data?.msg || err.message));
     } finally {
