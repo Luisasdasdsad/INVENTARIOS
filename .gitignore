@@ -20,3 +20,11 @@ logs
 .DS_Store
 Thumbs.db
 
+# Backups de Base de Datos
+backups/
+backend/backups/
+
+# Pruebas y Archivos Temporales
+pruebas/
+temp/
+coverage/

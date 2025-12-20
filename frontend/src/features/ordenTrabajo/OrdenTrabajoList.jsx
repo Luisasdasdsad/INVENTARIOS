@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import api from "../../services/api";
 import { FaSearch, FaPlay, FaCheck, FaClock, FaPrint, FaPlus, FaTrash, FaEdit, FaWhatsapp, FaEnvelope } from "react-icons/fa";
 import { useAuth } from "../../contexts/AuthContext";
+import { toast } from 'react-hot-toast';
 
 // Formatear fechas ignorando desplazamientos de zona horaria: usar la porción YYYY-MM-DD
 const formatLocalDate = (d) => {
@@ -56,9 +57,10 @@ const OrdenTrabajoList = () => {
       setOrdenes(ordenes.map(orden =>
         orden._id === id ? { ...orden, estado: nuevoEstado } : orden
       ));
+      toast.success(`Estado actualizado a: ${nuevoEstado.replace('_', ' ')}`);
     } catch (err) {
       console.error("Error al cambiar estado:", err);
-      alert(err.response?.data?.message || "Error al cambiar estado");
+      toast.error(err.response?.data?.message || "Error al cambiar estado");
     }
   };
 
@@ -68,9 +70,10 @@ const OrdenTrabajoList = () => {
         await api.delete(`/ordenes-trabajo/${id}`);
         // Actualizar el estado para remover la orden eliminada de la lista
         setOrdenes(ordenes.filter(orden => orden._id !== id));
+        toast.success("Orden eliminada correctamente");
       } catch (err) {
         console.error("Error al eliminar la orden:", err);
-        alert(err.response?.data?.message || "Error al eliminar la orden de trabajo");
+        toast.error(err.response?.data?.message || "Error al eliminar la orden de trabajo");
       }
     }
   };
@@ -81,9 +84,10 @@ const OrdenTrabajoList = () => {
       const res = await api.get(`/ordenes-trabajo/${orden._id}`);
       const { default: generarReporte } = await import("../../utils/generarReporteOrdenTrabajo");
       generarReporte(res.data);
+      toast.success("Reporte generado");
     } catch (err) {
       console.error("Error al generar reporte:", err);
-      alert("Error al generar el reporte de la orden de trabajo");
+      toast.error("Error al generar el reporte");
     }
   };
 

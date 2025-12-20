@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import api from '../../services/api';
-import { FaCamera, FaFileUpload, FaTrash, FaTimes } from 'react-icons/fa';
+import { FaCamera, FaFileUpload, FaTrash, FaTimes, FaBolt } from 'react-icons/fa';
 
 export default function PhotoCapture({ onCapture, currentPhoto, fileNamePrefix = "captura" }) {
   const [showCamera, setShowCamera] = useState(false);
@@ -9,6 +9,8 @@ export default function PhotoCapture({ onCapture, currentPhoto, fileNamePrefix =
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [stream, setStream] = useState(null);
+  const [torchSupported, setTorchSupported] = useState(false);
+  const [torchOn, setTorchOn] = useState(false);
 
   // Manejar el stream de video al abrir/cerrar cámara
   useEffect(() => {
@@ -31,6 +33,15 @@ export default function PhotoCapture({ onCapture, currentPhoto, fileNamePrefix =
       setStream(newStream);
       setShowCamera(true);
       setError('');
+
+      // Detectar soporte de Flash/Linterna
+      const track = newStream.getVideoTracks()[0];
+      if (track && track.getCapabilities) {
+        const capabilities = track.getCapabilities();
+        if (capabilities.torch) {
+          setTorchSupported(true);
+        }
+      }
     } catch (err) {
       setError('No se pudo acceder a la cámara. Verifique permisos.');
       console.error(err);
@@ -39,10 +50,34 @@ export default function PhotoCapture({ onCapture, currentPhoto, fileNamePrefix =
 
   const stopCamera = () => {
     if (stream) {
+      // Apagar flash si está encendido antes de detener para evitar errores
+      if (torchOn) {
+        const track = stream.getVideoTracks()[0];
+        if (track) {
+           track.applyConstraints({ advanced: [{ torch: false }] }).catch(() => {});
+        }
+      }
       stream.getTracks().forEach(track => track.stop());
       setStream(null);
     }
     setShowCamera(false);
+    setTorchOn(false);
+    setTorchSupported(false);
+  };
+
+  const toggleTorch = async () => {
+    if (!stream) return;
+    const track = stream.getVideoTracks()[0];
+    if (!track) return;
+
+    try {
+      await track.applyConstraints({
+        advanced: [{ torch: !torchOn }]
+      });
+      setTorchOn(!torchOn);
+    } catch (err) {
+      console.error("Error al alternar flash:", err);
+    }
   };
 
   const uploadFile = async (file) => {
@@ -123,6 +158,19 @@ export default function PhotoCapture({ onCapture, currentPhoto, fileNamePrefix =
           <div className="text-center">
             <div className="relative bg-black rounded overflow-hidden mb-3">
               <video ref={videoRef} autoPlay muted playsInline className="w-full max-h-[300px] object-contain" />
+              
+              {torchSupported && (
+                <button
+                  type="button"
+                  onClick={toggleTorch}
+                  className={`absolute top-2 right-2 p-3 rounded-full shadow-md transition-colors z-10 ${
+                    torchOn ? 'bg-yellow-400 text-black' : 'bg-black/40 text-white hover:bg-black/60'
+                  }`}
+                  title="Alternar Flash"
+                >
+                  <FaBolt size={18} />
+                </button>
+              )}
             </div>
             <div className="flex justify-center gap-3">
               <button type="button" onClick={capturePhoto} disabled={loading} className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 flex items-center gap-2">

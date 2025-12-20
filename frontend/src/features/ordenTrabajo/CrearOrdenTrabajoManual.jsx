@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
+import { toast } from 'react-hot-toast';
 
 export default function CrearOrdenTrabajoManual() {
   const { id } = useParams();
@@ -73,7 +74,7 @@ export default function CrearOrdenTrabajoManual() {
         }
       } catch (error) {
         console.error("Error cargando datos:", error);
-        alert("No se pudieron cargar los datos necesarios.");
+        toast.error("No se pudieron cargar los datos necesarios.");
       } finally {
         setLoading(false);
       }
@@ -106,12 +107,12 @@ export default function CrearOrdenTrabajoManual() {
   const submit = async (e) => {
     e.preventDefault();
     if (!form.cliente) {
-      alert('Debes seleccionar un cliente');
+      toast.error('Debes seleccionar un cliente');
       return;
     }
 
     if (!form.fechaInicio || !form.fechaFin) {
-      alert("Debes seleccionar una fecha de inicio y una fecha de fin.");
+      toast.error("Debes seleccionar una fecha de inicio y una fecha de fin.");
       return;
     }
 
@@ -119,7 +120,7 @@ export default function CrearOrdenTrabajoManual() {
     const fechaFin = new Date(form.fechaFin);
 
     if (fechaFin < fechaInicio) {
-      alert("La fecha de fin no puede ser anterior a la fecha de inicio.");
+      toast.error("La fecha de fin no puede ser anterior a la fecha de inicio.");
       return;
     }
 
@@ -141,16 +142,16 @@ export default function CrearOrdenTrabajoManual() {
 
       if (isEditMode) {
         await api.put(`/ordenes-trabajo/${id}`, payload);
-        alert('Orden de trabajo actualizada exitosamente');
+        toast.success('Orden de trabajo actualizada exitosamente');
       } else {
         await api.post('/ordenes-trabajo', payload);
-        alert('Orden de trabajo creada exitosamente');
+        toast.success('Orden de trabajo creada exitosamente');
       }
       navigate('/ordenes-trabajo');
     } catch (error) {
       console.error('Error guardando la orden:', error);
       const serverMsg = error.response?.data?.message || 'Ocurrió un error.';
-      alert('Error: ' + serverMsg);
+      toast.error('Error: ' + serverMsg);
     }
   };
   

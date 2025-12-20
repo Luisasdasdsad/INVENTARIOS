@@ -6,6 +6,7 @@ import { useSearchParams } from 'react-router-dom';
 import BarcodeScanner from '../../components/BarcodeScanner/BarcodeScanner';
 import EscanerQR from '../../components/EscannerQR/EscannerQR.jsx';
 import PhotoCapture from '../../components/PhotoCapture/PhotoCapture';
+import { toast } from 'react-hot-toast';
 
 export default function RegistrarMovimientoPage() {
   const [searchParams] = useSearchParams();
@@ -311,8 +312,9 @@ const handleBarcodeManualChange = e => {
   console.log('🔍 QR Detectado:', qrCode);
   try {
     setError('');  // Limpia si tienes
-    alert('Buscando herramienta...');  // Loading simple
+    const toastId = toast.loading('Buscando herramienta...');
     const herramienta = await fetchHerramientaByQR(qrCode);
+    toast.dismiss(toastId);
     if (herramienta) {
       // Agregar a herramientas seleccionadas
       setHerramientasSeleccionadas(prev => [...prev, {
@@ -333,7 +335,7 @@ const handleBarcodeManualChange = e => {
       }));
 
       const msg = `✅ Agregada: ${herramienta.nombre} - Stock: ${herramienta.cantidad}`;
-      alert(msg);
+      toast.success(msg);
       console.log('✅ Herramienta agregada:', herramienta);
     } else {
       throw new Error('No encontrada');
@@ -342,7 +344,7 @@ const handleBarcodeManualChange = e => {
     console.error('❌ QR Process Error:', err.message);
     const msg = '❌ ' + err.message;
     setError(msg);
-    alert(msg);
+    toast.error(msg);
   } finally {
     setIsScanning(false);
     setShowEscanerQR(false);  // Cierra modal
@@ -449,7 +451,7 @@ const handleBarcodeManualChange = e => {
 
       await Promise.all(promises);
 
-      alert('Movimiento registrado con éxito');
+      toast.success('Movimiento registrado con éxito');
       navigate('/movimientos');
     } catch (err) {
       setError(err.response?.data?.msg || 'Error al registrar movimiento');

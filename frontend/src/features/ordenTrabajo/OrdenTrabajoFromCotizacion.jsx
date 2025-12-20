@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FaSearch, FaSave } from "react-icons/fa";
 import api from "../../services/api";
 import { ordenTrabajoService } from "./ordenTrabajoService";
+import { toast } from 'react-hot-toast';
 
 const OrdenTrabajoFromCotizacion = () => {
   const navigate = useNavigate();
@@ -55,7 +56,7 @@ const OrdenTrabajoFromCotizacion = () => {
       setHerramientasDB(herramientasRes.data);
     } catch (error) {
       console.error("Error cargando datos:", error);
-      alert("Error al cargar los datos necesarios");
+      toast.error("Error al cargar los datos necesarios");
     }
   };
 
@@ -143,13 +144,13 @@ const OrdenTrabajoFromCotizacion = () => {
     e.preventDefault();
 
     if (!selectedCotizacion || !formData.tecnicoId) {
-      alert("Debe seleccionar una cotización y un técnico");
+      toast.error("Debe seleccionar una cotización y un técnico");
       return;
     }
 
     // Validación de fechas
     if (!formData.fechaInicio || !formData.fechaFin) {
-      alert("Debe seleccionar una fecha de inicio y una fecha de fin.");
+      toast.error("Debe seleccionar una fecha de inicio y una fecha de fin.");
       return;
     }
 
@@ -157,7 +158,7 @@ const OrdenTrabajoFromCotizacion = () => {
     const fechaFin = new Date(formData.fechaFin);
 
     if (fechaFin < fechaInicio) {
-      alert("La fecha de fin no puede ser anterior a la fecha de inicio.");
+      toast.error("La fecha de fin no puede ser anterior a la fecha de inicio.");
       return;
     }
 
@@ -176,14 +177,14 @@ const OrdenTrabajoFromCotizacion = () => {
         herramientasSeleccionadas.filter(h => h.herramienta && h.cantidad > 0)
       );
 
-      alert("Orden de trabajo creada exitosamente desde la cotización");
+      toast.success("Orden de trabajo creada exitosamente");
       navigate("/ordenes-trabajo");
     } catch (error) {
       console.error("Error creando OT:", error);
       // Mostrar información más detallada para depuración
       const serverData = error.response?.data;
       const message = serverData?.message || serverData || error.message || "Error al crear la orden de trabajo";
-      alert(`Error al crear la orden de trabajo: ${typeof message === 'object' ? JSON.stringify(message) : message}`);
+      toast.error(`Error: ${typeof message === 'object' ? JSON.stringify(message) : message}`);
     } finally {
       setLoading(false);
     }

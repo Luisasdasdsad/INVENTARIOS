@@ -1,8 +1,9 @@
 import { Outlet, Link, useNavigate } from "react-router-dom";
-import { FaTools, FaClipboardList, FaExchangeAlt, FaHome, FaSignOutAlt, FaBars, FaTimes, FaUsers, FaFileAlt, FaHistory, FaPlus, FaUser, FaFileInvoiceDollar, FaTruck, FaBell, FaUserCircle, FaUserCog, FaShoppingCart } from "react-icons/fa";
+import { FaTools, FaClipboardList, FaExchangeAlt, FaHome, FaSignOutAlt, FaBars, FaTimes, FaUsers, FaFileAlt, FaHistory, FaPlus, FaUser, FaFileInvoiceDollar, FaTruck, FaBell, FaUserCircle, FaUserCog, FaShoppingCart, FaCalendarAlt } from "react-icons/fa";
 import { useAuth } from "../contexts/AuthContext";
 import { useState, useEffect } from "react";
 import { useNotifications } from "../contexts/NotificationContext";
+import { Toaster } from 'react-hot-toast';
 
 export default function DashboardLayout() {
   const { logout, user } = useAuth();
@@ -62,6 +63,15 @@ export default function DashboardLayout() {
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-secondary-50 to-secondary-100">
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: { background: '#363636', color: '#fff' },
+          success: { style: { background: '#10B981', color: '#fff' } },
+          error: { style: { background: '#EF4444', color: '#fff' } },
+        }}
+      />
       {/* Overlay para móvil */}
       {isMobile && isSidebarOpen && (
         <div
@@ -320,6 +330,24 @@ export default function DashboardLayout() {
                     {unreadOTs}
                   </span>
                 )}
+              </Link>
+
+              {/* Calendario de Trabajo */}
+              <Link
+                to="/ordenes-trabajo/calendario"
+                onClick={handleNavClick}
+                className={`flex items-center gap-3 hover:bg-indigo-50 hover:text-indigo-700 transition-all duration-200 rounded-xl ${
+                  !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
+                }`}
+              >
+                {isSidebarOpen ? (
+                  <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                    <FaCalendarAlt size={16} className="text-indigo-600" />
+                  </div>
+                ) : (
+                  <FaCalendarAlt size={18} className="text-indigo-600" />
+                )}
+                {isSidebarOpen && <span className="font-medium">Calendario</span>}
               </Link>
 
               {/* Compras (Nuevo ítem dentro de Orden de Trabajo) */}
