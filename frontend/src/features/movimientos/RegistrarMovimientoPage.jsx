@@ -27,7 +27,6 @@ export default function RegistrarMovimientoPage() {
 
   // Estado para manejar múltiples herramientas
   const [herramientasSeleccionadas, setHerramientasSeleccionadas] = useState([]);
-  const [tipoSeleccion, setTipoSeleccion] = useState('herramienta'); // 'herramienta' | 'producto'
 
   const [error, setError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -38,6 +37,8 @@ export default function RegistrarMovimientoPage() {
   const [isScanning, setIsScanning] = useState(false); // Controla si el scanner está activo
   const [qrProcessing, setQrProcessing] = useState(false); // Previene procesamiento múltiple de QR
   const barcodeProcessingRef = useRef(false); // Previene procesamiento múltiple de barcode
+  const barcodeSearchTimeoutRef = useRef(null); // Ref para debounce de búsqueda manual Barcode
+  const qrSearchTimeoutRef = useRef(null); // Ref para debounce de búsqueda manual QR
 
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -72,9 +73,38 @@ export default function RegistrarMovimientoPage() {
     const codigo = barcode?.trim()?.toUpperCase();
     if (!codigo) throw new Error('Código de barras vacío');
 
-    // ✅ Validar formato: exactamente 8 caracteres hexadecimales
-    if (codigo.length !== 8 || !/^[A-F0-9]{8}$/i.test(codigo)) {
-      throw new Error('Código de barras no válido. Debe ser exactamente 8 caracteres hexadecimales (A-F, 0-9)');
+    // Validación relajada: Permitir cualquier código con longitud mínima para buscar
+    if (codigo.length < 3) return null; 
+
+    // 1. BÚSQUEDA LOCAL (Prioridad: Herramientas y Productos cargados)
+    const toolLocal = herramientas.find(h => h.barcode === codigo);
+    if (toolLocal) {
+      setHerramientasSeleccionadas(prev => [...prev, {
+        ...toolLocal,
+        herramienta: toolLocal._id,
+        barcode: codigo,
+        qrCode: '',
+        cantidad: 1,
+        tipo: 'herramienta'
+      }]);
+      setFormData(prev => ({ ...prev, herramienta: '', barcode: '', qrCode: '' }));
+      console.log(`✅ Herramienta encontrada localmente: ${toolLocal.nombre}`);
+      return toolLocal;
+    }
+
+    const prodLocal = productos.find(p => p.barcode === codigo);
+    if (prodLocal) {
+      setHerramientasSeleccionadas(prev => [...prev, {
+        ...prodLocal,
+        producto: prodLocal._id,
+        barcode: codigo,
+        qrCode: '',
+        cantidad: 1,
+        tipo: 'producto'
+      }]);
+      setFormData(prev => ({ ...prev, herramienta: '', barcode: '', qrCode: '' }));
+      console.log(`✅ Producto encontrado localmente: ${prodLocal.nombre}`);
+      return prodLocal;
     }
 
     console.log('🔍 API Call: /barcode/buscar/' + codigo);
@@ -211,41 +241,60 @@ export default function RegistrarMovimientoPage() {
 const handleBarcodeManualChange = e => {
     const barcode = e.target.value.toUpperCase();
     setFormData(prev => ({ ...prev, barcode }));
-    if (barcode.length === 8 && /^[A-F0-9]{8}$/i.test(barcode)) {
-      fetchHerramientaByBarcode(barcode);
-    } else if (barcode.length > 0) {
-      setError('Código debe ser 8 caracteres hexadecimales (A-F,0-9)');
-      setFormData(prev => ({ ...prev, herramienta: '' }));
-    } else {
-      setError('');
-      setFormData(prev => ({ ...prev, herramienta: '' }));
+    
+    // Limpiar timeout anterior
+    if (barcodeSearchTimeoutRef.current) clearTimeout(barcodeSearchTimeoutRef.current);
+
+    // Debounce para búsqueda manual (espera 500ms a que termines de escribir o escanear)
+    if (barcode.length >= 3) {
+      barcodeSearchTimeoutRef.current = setTimeout(() => {
+        fetchHerramientaByBarcode(barcode).catch(() => {}); // Catch silencioso para no llenar de errores mientras escribe
+      }, 500);
     }
+    setFormData(prev => ({ ...prev, herramienta: '' }));
+  };
+
+  // Función auxiliar de búsqueda (sin efectos secundarios de estado de escaneo)
+  const searchQR = async (qrCode) => {
+    const qrUpper = qrCode?.trim()?.toUpperCase();
+    if (!qrUpper) return null;
+
+    // 1. BÚSQUEDA LOCAL
+    const toolLocal = herramientas.find(h => h.qrCode === qrUpper);
+    if (toolLocal) return { ...toolLocal, tipo: 'herramienta' };
+
+    const prodLocal = productos.find(p => p.qrCode === qrUpper);
+    if (prodLocal) return { ...prodLocal, tipo: 'producto' };
+
+    // 2. API
+    console.log('🔍 API Call: /qr/buscar/' + qrCode);
+    const response = await api.get(`/qr/buscar/${qrCode}`);
+    console.log('✅ API Respuesta:', response.data);
+    return response.data;
   };
 
   const fetchHerramientaByQR = async (qrCode) => {
-  if (isScanning) {
-    console.log('⏳ Procesando QR anterior – Ignorando...');
-    return null;
-  }
-  setIsScanning(true);
-  try {
-    console.log('🔍 API Call: /qr/buscar/' + qrCode);
-    const response = await api.get(`/qr/buscar/${qrCode}`);  // ← FIX: Correct endpoint is /qr/buscar, not /barcode/buscar-qr
-    console.log('✅ API Respuesta:', response.data);
-    return response.data;  // { _id, nombre, cantidad, ... }
-  } catch (error) {
-    console.error('❌ API Error:', error.response?.status, error.response?.data?.error || error.message);
-    if (error.response?.status === 404) {
-      throw new Error('Herramienta no encontrada por este QR');
-    } else if (error.response?.status === 500) {
-      throw new Error('Error en el servidor – Verifica el QR o contacta admin');
-    } else {
-      throw new Error('Error de conexión – Intenta escanear de nuevo');
+    if (isScanning) {
+      console.log('⏳ Procesando QR anterior – Ignorando...');
+      return null;
     }
-  } finally {
-    setTimeout(() => setIsScanning(false), 2000);  // Debounce 2s
-  }
-};
+    setIsScanning(true);
+
+    try {
+      return await searchQR(qrCode);
+    } catch (error) {
+      console.error('❌ API Error:', error.response?.status, error.response?.data?.error || error.message);
+      if (error.response?.status === 404) {
+        throw new Error('Herramienta no encontrada por este QR');
+      } else if (error.response?.status === 500) {
+        throw new Error('Error en el servidor – Verifica el QR o contacta admin');
+      } else {
+        throw new Error('Error de conexión – Intenta escanear de nuevo');
+      }
+    } finally {
+      setTimeout(() => setIsScanning(false), 2000);  // Debounce 2s
+    }
+  };
 
 
   const handleEscanerQRError = (err) => {
@@ -267,11 +316,12 @@ const handleBarcodeManualChange = e => {
     if (herramienta) {
       // Agregar a herramientas seleccionadas
       setHerramientasSeleccionadas(prev => [...prev, {
-        ...herramienta,
+        ...herramienta, // Spread incluye propiedades como _id, nombre, etc.
+        [herramienta.tipo === 'producto' ? 'producto' : 'herramienta']: herramienta._id, // Asignar ID al campo correcto
         qrCode: qrCode.toUpperCase(),
         barcode: '',
         cantidad: 1, // Default cantidad
-        tipo: 'herramienta'
+        tipo: herramienta.tipo || 'herramienta' // Usar el tipo detectado o default
       }]);
 
       // Limpiar formData para permitir agregar más
@@ -303,12 +353,28 @@ const handleBarcodeManualChange = e => {
   const handleManualQRChange = (e) => {
     const qr = e.target.value.toUpperCase();
     setFormData(prev => ({ ...prev, qrCode: qr }));
-    // Valida formato (QR- + chars hex) – busca auto si válido
-    if (qr.startsWith('QR-') && qr.length >= 15 && /^[QR-][A-F0-9]{12,}$/i.test(qr)) {
-      fetchHerramientaByQR(qr);
-    } else if (qr.length > 0 && !qr.startsWith('QR-')) {
-      setError('Código QR debe empezar con "QR-" seguido de caracteres hexadecimales');
-      setFormData(prev => ({ ...prev, herramienta: '' }));
+    
+    if (qrSearchTimeoutRef.current) clearTimeout(qrSearchTimeoutRef.current);
+
+    if (qr.length >= 5) {
+      qrSearchTimeoutRef.current = setTimeout(async () => {
+        try {
+          const item = await searchQR(qr);
+          if (item) {
+            setHerramientasSeleccionadas(prev => [...prev, {
+              ...item,
+              [item.tipo === 'producto' ? 'producto' : 'herramienta']: item._id,
+              qrCode: item.qrCode || qr,
+              barcode: '',
+              cantidad: 1,
+              tipo: item.tipo || 'herramienta'
+            }]);
+            setFormData(prev => ({ ...prev, qrCode: '', herramienta: '' }));
+          }
+        } catch (err) {
+          // Ignorar errores mientras escribe (ej. 404)
+        }
+      }, 500);
     } else {
       setError('');
       setFormData(prev => ({ ...prev, herramienta: '' }));
@@ -524,32 +590,6 @@ const handleBarcodeManualChange = e => {
           <span className="flex items-center text-gray-500">o</span>
         </div>
 
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-2">Tipo de Selección</label>
-          <div className="flex space-x-4">
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                value="herramienta"
-                checked={tipoSeleccion === 'herramienta'}
-                onChange={() => setTipoSeleccion('herramienta')}
-                className="form-radio text-blue-600"
-              />
-              <span className="ml-2">Herramienta</span>
-            </label>
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                value="producto"
-                checked={tipoSeleccion === 'producto'}
-                onChange={() => setTipoSeleccion('producto')}
-                className="form-radio text-blue-600"
-              />
-              <span className="ml-2">Producto</span>
-            </label>
-          </div>
-        </div>
-
         <select
           name="herramienta"
           value={formData.herramienta}
@@ -557,16 +597,21 @@ const handleBarcodeManualChange = e => {
           className="w-full border p-2 rounded"
           disabled={!!formData.barcode || loading}
         >
-          <option value="">{tipoSeleccion === 'herramienta' ? 'Seleccione herramienta' : 'Seleccione producto'}</option>
-          {tipoSeleccion === 'herramienta' ? herramientas.map(h => (
-            <option key={h._id} value={h._id}>
-              {h.nombre} ({h.codigo}) - Cantidad: {h.cantidad}
-            </option>
-          )) : productos.map(p => (
-            <option key={p._id} value={p._id}>
-              {p.nombre} - Stock: {p.stock} {p.unidad}
-            </option>
-          ))}
+          <option value="">Seleccione un ítem (Herramienta o Producto)</option>
+          <optgroup label="Herramientas">
+            {herramientas.map(h => (
+              <option key={h._id} value={h._id}>
+                {h.nombre} {h.codigo ? `(${h.codigo})` : ''} - Cantidad: {h.cantidad}
+              </option>
+            ))}
+          </optgroup>
+          <optgroup label="Productos">
+            {productos.map(p => (
+              <option key={p._id} value={p._id}>
+                {p.nombre} - Stock: {p.stock} {p.unidad}
+              </option>
+            ))}
+          </optgroup>
         </select>
       </div>
 
