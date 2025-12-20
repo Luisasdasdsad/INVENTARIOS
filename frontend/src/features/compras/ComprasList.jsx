@@ -250,7 +250,7 @@ export default function ComprasList() {
                 {items.map((item, idx) => (
                   <div key={idx} className="mb-4 p-4 border rounded-lg bg-white shadow-sm relative">
                     {/* Fila 1: Nombre y Descripción (Más amplio) */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <div className="grid grid-cols-1 gap-4 mb-3">
                       <div>
                         <label className="text-xs font-bold text-gray-700">Nombre del Ítem</label>
                         <input type="text" value={item.nombre} onChange={e => handleItemChange(idx, 'nombre', e.target.value)} 
@@ -258,8 +258,8 @@ export default function ComprasList() {
                       </div>
                       <div>
                         <label className="text-xs font-bold text-gray-700">Descripción Detallada</label>
-                        <input type="text" value={item.descripcion} onChange={e => handleItemChange(idx, 'descripcion', e.target.value)} 
-                          className="w-full border rounded p-2 text-sm mt-1" placeholder="Ej. Tipo I, 42.5kg" disabled={modalStep !== 'crear' && modalStep !== 'editar'} />
+                        <textarea value={item.descripcion} onChange={e => handleItemChange(idx, 'descripcion', e.target.value)} 
+                          className="w-full border rounded p-2 text-sm mt-1" placeholder="Ej. Tipo I, 42.5kg" rows={2} disabled={modalStep !== 'crear' && modalStep !== 'editar'} />
                       </div>
                     </div>
                     
