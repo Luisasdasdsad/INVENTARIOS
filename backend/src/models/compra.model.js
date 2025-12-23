@@ -1,7 +1,9 @@
-import mongoose from 'mongoose';
+    import mongoose from 'mongoose';
 
 const compraSchema = new mongoose.Schema({
-    titulo: { type: String, required: true },
+    nombreObra: { type: String, required: true }, // Nombre del proyecto principal
+    asunto: { type: String, required: true }, // Título específico de la compra
+    archivoSolicitudUrl: { type: String }, // Archivo adjunto con la lista de items (PDF/Excel)
     codigo: { type: String, unique: true },
     estado: { type: String, enum: [ 'pendiente', 'cotizado', 'aprobado', 'rechazado', 'comprado' ], default: 'pendiente' },
     
@@ -20,12 +22,13 @@ const compraSchema = new mongoose.Schema({
     prioridad: { type: String, enum: [ 'baja', 'media', 'alta' ], default: 'media' },
     cotizador: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario" },
     proveedor: { type: mongoose.Schema.Types.ObjectId, ref: "Proveedor" },
+    cotizacion: { type: mongoose.Schema.Types.ObjectId, ref: "Cotizacion" }, // Enlace a la cotización de origen
     sustentoCotizacionUrl: { type: String },
     montoTotalEstimado: { type: Number },
 
     aprobador: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario" },
     fechaAprobacion: { type: Date },
-    comentariosAprobacion: { type: String },
+    comentarios: { type: String },
 
     comprador: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario" },
     numeroFactura: { type: String },

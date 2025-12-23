@@ -51,7 +51,7 @@ const OrdenTrabajoFromCotizacion = () => {
       // Filtrar solo cotizaciones Aceptadas o Facturadas para evitar error 400 en el backend
       setCotizaciones(cotizacionesArray.filter(c => ['Aceptada', 'Facturada'].includes(c.estado)));
       // Filtrar técnicos
-      setTecnicos(usuariosRes.data.filter(user => user.rol === "tecnico"));
+      setTecnicos(usuariosRes.data.filter(user => ['tecnico', 'ingeniero', 'admin'].includes(user.rol)));
       setProductosDB(productosRes.data);
       setHerramientasDB(herramientasRes.data);
     } catch (error) {
@@ -322,10 +322,16 @@ const OrdenTrabajoFromCotizacion = () => {
 
             {/* Técnico asignado */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Técnico Asignado *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Responsable Asignado *</label>
               <select name="tecnicoId" value={formData.tecnicoId} onChange={handleInputChange} className="input-field" required>
-                <option value="">Seleccionar técnico</option>
-                {tecnicos.map(tecnico => (<option key={tecnico._id} value={tecnico._id}>{tecnico.nombre}</option>))}
+                <option value="">Seleccionar responsable</option>
+                {tecnicos.map(tecnico => (
+                  <option key={tecnico._id} value={tecnico._id}>
+                    {tecnico.nombre} - {tecnico.rol === 'admin' ? 'Administrador' : 
+                                       tecnico.rol === 'ingeniero' ? 'Ingeniero' : 
+                                       'Técnico'}
+                  </option>
+                ))}
               </select>
             </div>
 

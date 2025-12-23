@@ -44,7 +44,7 @@ export default function CrearOrdenTrabajoManual() {
         if (cRes.status === 'fulfilled') setClientes(cRes.value.data);
         if (pRes.status === 'fulfilled') setProductosDB(pRes.value.data);
         if (hRes.status === 'fulfilled') setHerramientasDB(hRes.value.data);
-        if (uRes.status === 'fulfilled') setTecnicos(uRes.value.data.filter(u => u.rol === 'tecnico'));
+        if (uRes.status === 'fulfilled') setTecnicos(uRes.value.data.filter(u => ['tecnico', 'ingeniero', 'admin'].includes(u.rol)));
 
         if (isEditMode) {
           const otRes = await api.get(`/ordenes-trabajo/${id}`);
@@ -173,10 +173,16 @@ export default function CrearOrdenTrabajoManual() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Técnico asignado</label>
+            <label className="block text-sm font-medium text-gray-700">Responsable asignado</label>
             <select name="tecnicoAsignado" value={form.tecnicoAsignado} onChange={handleInputChange} className="input-field mt-1">
               <option value="">Sin asignar</option>
-              {tecnicos.map(t => <option key={t._id} value={t._id}>{t.nombre}</option>)}
+              {tecnicos.map(t => (
+                <option key={t._id} value={t._id}>
+                  {t.nombre} - {t.rol === 'admin' ? 'Administrador' : 
+                                t.rol === 'ingeniero' ? 'Ingeniero' : 
+                                'Técnico'}
+                </option>
+              ))}
             </select>
           </div>
           <div>

@@ -128,6 +128,68 @@ export default function CalendarioOrdenesPage() {
     return days;
   };
 
+  // Renderizado vista móvil (Agenda)
+  const renderMobileAgenda = () => {
+    const daysInMonth = getDaysInMonth(currentDate);
+    const agendaItems = [];
+    let hasOrders = false;
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+      const isToday = isSameDay(date, new Date());
+
+      const dayOrdenes = ordenes.filter(ot => 
+        isDateInRange(date, ot.fechaInicio, ot.fechaFin)
+      );
+
+      if (dayOrdenes.length > 0) {
+        hasOrders = true;
+        agendaItems.push(
+          <div key={day} className="mb-4 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className={`px-4 py-2 border-b border-gray-100 flex justify-between items-center ${isToday ? 'bg-blue-50' : 'bg-gray-50'}`}>
+              <span className={`font-semibold capitalize ${isToday ? 'text-blue-700' : 'text-gray-700'}`}>
+                {date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric' })}
+              </span>
+              {isToday && <span className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">HOY</span>}
+            </div>
+            <div className="divide-y divide-gray-100">
+              {dayOrdenes.map(ot => (
+                <Link 
+                  to={`/ordenes-trabajo/${ot._id}`} 
+                  key={ot._id} 
+                  className="block p-3 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex justify-between items-start mb-1">
+                    <span className="font-bold text-indigo-600 text-sm">#{ot.numeroOT}</span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase font-bold ${
+                      ot.estado === 'completado' ? 'bg-green-100 text-green-800' :
+                      ot.estado === 'en_proceso' ? 'bg-blue-100 text-blue-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {ot.estado?.replace('_', ' ')}
+                    </span>
+                  </div>
+                  <div className="text-sm font-medium text-gray-900">{ot.cliente?.nombre || 'Cliente'}</div>
+                  <div className="text-xs text-gray-500 mt-1 line-clamp-2">{ot.descripcionServicio}</div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        );
+      }
+    }
+
+    if (!hasOrders) {
+      return (
+        <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
+          <p className="text-gray-500">No hay órdenes programadas para este mes.</p>
+        </div>
+      );
+    }
+
+    return <div className="space-y-2">{agendaItems}</div>;
+  };
+
   const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
   if (loading) return <div className="flex justify-center items-center h-64"><FaSpinner className="animate-spin text-blue-600 text-2xl" /></div>;
@@ -172,7 +234,7 @@ export default function CalendarioOrdenesPage() {
       </div>
 
       {/* Grid Calendario */}
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+      <div className="hidden md:block bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <div className="min-w-[800px]"> {/* Ancho mínimo para evitar deformación en móvil */}
             {/* Cabecera Días */}
@@ -190,6 +252,11 @@ export default function CalendarioOrdenesPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Agenda (Móvil) */}
+      <div className="md:hidden">
+        {renderMobileAgenda()}
       </div>
     </div>
   );

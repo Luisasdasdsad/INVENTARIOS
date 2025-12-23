@@ -146,7 +146,74 @@ const FacturaList = () => {
           No se han generado facturas aún.
         </div>
       ) : (
-        <div className="overflow-x-auto bg-white shadow-soft rounded-lg border border-secondary-200">
+        <>
+          {/* Vista Móvil: Tarjetas */}
+          <div className="md:hidden space-y-4">
+            {filteredFacturas.map((factura) => (
+              <div key={factura._id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <span className="text-sm font-bold text-gray-900 block">{factura.numeroFactura}</span>
+                    <span className="text-xs text-gray-500">{new Date(factura.fechaEmision).toLocaleDateString()}</span>
+                  </div>
+                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                    factura.estado === 'Pagada' ? 'bg-green-100 text-green-800' :
+                    factura.estado === 'Anulada' ? 'bg-red-100 text-red-800' :
+                    'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {factura.estado}
+                  </span>
+                </div>
+
+                <div className="mb-4 space-y-1">
+                  <p className="text-sm text-gray-700"><span className="font-semibold">Cliente:</span> {factura.cliente?.nombre || '-'}</p>
+                  <p className="text-sm text-gray-700"><span className="font-semibold">Total:</span> {new Intl.NumberFormat('es-PE', { style: 'currency', currency: factura.moneda === 'SOLES' ? 'PEN' : 'USD' }).format(factura.totalGeneral)}</p>
+                </div>
+
+                <div className="border-t border-gray-100 pt-3">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-xs text-gray-500 font-medium">Estado SUNAT</span>
+                    <span className={`flex items-center gap-1 text-xs font-bold ${
+                      factura.estadoSunat === 'Aceptada' ? 'text-green-600' :
+                      factura.estadoSunat === 'Rechazada' ? 'text-red-600' :
+                      'text-gray-600'
+                    }`}>
+                      {factura.estadoSunat === 'Aceptada' && <FaCheckCircle />}
+                      {factura.estadoSunat === 'Rechazada' && <FaTimesCircle />}
+                      {factura.estadoSunat === 'Pendiente de Envío' && <FaHourglassHalf />}
+                      {factura.estadoSunat}
+                    </span>
+                  </div>
+
+                  <div className="flex gap-2">
+                    {factura.estadoSunat === 'Pendiente de Envío' && (
+                      <button
+                        onClick={() => handleEnviarSunat(factura._id)}
+                        className="flex-1 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 text-xs font-medium flex items-center justify-center gap-1 min-h-[36px]"
+                      >
+                        <FaPaperPlane /> Enviar
+                      </button>
+                    )}
+                    {factura.estadoSunat === 'Aceptada' ? (
+                      <a href={factura.enlacePdf || '#'} target="_blank" rel="noopener noreferrer" className="flex-1 bg-white text-blue-600 border border-blue-200 py-2 rounded-md hover:bg-blue-50 text-xs font-medium flex items-center justify-center gap-1 min-h-[36px]">
+                        <FaFilePdf /> Ver PDF
+                      </a>
+                    ) : (
+                      <button
+                        onClick={() => handleImprimirFactura(factura._id)}
+                        className="flex-1 bg-white text-gray-700 border border-gray-300 py-2 rounded-md hover:bg-gray-50 text-xs font-medium flex items-center justify-center gap-1 min-h-[36px]"
+                      >
+                        <FaFilePdf /> Preliminar
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Vista Escritorio: Tabla */}
+          <div className="hidden md:block overflow-x-auto bg-white shadow-soft rounded-lg border border-secondary-200">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-secondary-100 text-secondary-800">
               <tr>
@@ -222,7 +289,8 @@ const FacturaList = () => {
               ))}
             </tbody>
           </table>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

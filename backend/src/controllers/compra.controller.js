@@ -11,24 +11,38 @@ const generarCodigo = async () => {
 
 export const crearRequerimiento = async (req, res) => {
     try {
-        const { items } = req.body;
+        const { items, archivoSolicitudUrl } = req.body;
 
         // --- VALIDACIONES DE ENTRADA ---
-        if (!items || !Array.isArray(items) || items.length === 0) {
-            return res.status(400).json({ msg: "El requerimiento debe tener al menos un ítem." });
+        const hasItems = items && Array.isArray(items) && items.length > 0;
+        const hasFile = !!archivoSolicitudUrl;
+
+        if (!hasItems && !hasFile) {
+            return res.status(400).json({ msg: "El requerimiento debe tener al menos un ítem o un archivo adjunto." });
         }
-        if (items.some(i => !i.nombre || i.cantidad <= 0)) {
+        if (hasItems && items.some(i => !i.nombre || i.cantidad <= 0)) {
             return res.status(400).json({ msg: "Todos los items deben tener nombre y cantidad mayor a 0." });
         }
 
         const codigo = await generarCodigo();
+
+        // Sanitizar body: eliminar cotizacion si es string vacío para evitar CastError de Mongoose
+        const data = { ...req.body };
+        if (!data.cotizacion) delete data.cotizacion;
+
         const nuevaCompra = new Compra({
-            ...req.body,
+            ...data,
             codigo,
             solicitante: req.user.id,
             estado: 'pendiente'
         });
         await nuevaCompra.save();
+
+        // Poblar datos para devolver al frontend inmediatamente
+        const compraPoblada = await Compra.findById(nuevaCompra._id)
+            .populate('solicitante', 'nombre')
+            .populate('proveedor', 'nombre')
+            .populate('cotizacion', 'numeroCotizacion descripcionServicio');
 
         // 🔔 NOTIFICACIÓN: Avisar a Administración y Logística que hay un nuevo requerimiento
         try {
@@ -43,7 +57,7 @@ export const crearRequerimiento = async (req, res) => {
             if (notificaciones.length > 0) await Notificacion.insertMany(notificaciones);
         } catch (err) { console.error("Error notificando:", err); }
 
-        res.status(201).json(nuevaCompra);
+        res.status(201).json(compraPoblada);
     } catch (error) {
         res.status(500).json({ msg: "Error al crear requerimiento", error: error.message });
     }
@@ -54,6 +68,7 @@ export const getCompras = async (req, res) => {
         const compras = await Compra.find()
             .populate('solicitante', 'nombre')
             .populate('proveedor', 'nombre')
+            .populate('cotizacion', 'numeroCotizacion descripcionServicio') // Poblar la cotización
             .sort({ createdAt: -1 });
         res.json(compras);
     } catch (error) {
@@ -83,7 +98,10 @@ export const registrarCotizacion = async (req, res) => {
             montoTotalEstimado,
             cotizador: req.user.id,
             estado: 'cotizado'
-        }, { new: true });
+        }, { new: true })
+        .populate('solicitante', 'nombre')
+        .populate('proveedor', 'nombre')
+        .populate('cotizacion', 'numeroCotizacion descripcionServicio');
 
         // 🔔 NOTIFICACIÓN: Avisar a Gerencia (Jefe Manuel/Admin) para aprobar
         try {
@@ -120,8 +138,11 @@ export const evaluarCompra = async (req, res) => {
             estado: decision,
             aprobador: req.user.id,
             fechaAprobacion: new Date(),
-            comentariosAprobacion: comentarios
-        }, { new: true });
+            comentarios: comentarios
+        }, { new: true })
+        .populate('solicitante', 'nombre')
+        .populate('proveedor', 'nombre')
+        .populate('cotizacion', 'numeroCotizacion descripcionServicio');
 
         // 🔔 NOTIFICACIÓN: Avisar al Solicitante (Pedro/Jose) y al Cotizador (Cesar) el resultado
         try {
@@ -164,7 +185,10 @@ export const registrarFacturaCompra = async (req, res) => {
             numeroFactura,
             facturaUrl,
             montoFinal
-        }, { new: true });
+        }, { new: true })
+        .populate('solicitante', 'nombre')
+        .populate('proveedor', 'nombre')
+        .populate('cotizacion', 'numeroCotizacion descripcionServicio');
 
         // 🔔 NOTIFICACIÓN: Avisar al Solicitante que ya se compró
         try {
@@ -188,7 +212,7 @@ export const registrarFacturaCompra = async (req, res) => {
 export const actualizarRequerimiento = async (req, res) => {
     try {
         const { id } = req.params;
-        const { items, titulo, prioridad } = req.body;
+        const { items, nombreObra, asunto, prioridad } = req.body;
 
         const compra = await Compra.findById(id);
         if (!compra) return res.status(404).json({ msg: "Requerimiento no encontrado" });
@@ -202,7 +226,10 @@ export const actualizarRequerimiento = async (req, res) => {
             return res.status(400).json({ msg: "El requerimiento debe tener al menos un ítem." });
         }
 
-        const compraActualizada = await Compra.findByIdAndUpdate(id, { items, titulo, prioridad }, { new: true });
+        const compraActualizada = await Compra.findByIdAndUpdate(id, { items, nombreObra, asunto, prioridad }, { new: true })
+            .populate('solicitante', 'nombre')
+            .populate('proveedor', 'nombre')
+            .populate('cotizacion', 'numeroCotizacion descripcionServicio');
         res.json(compraActualizada);
     } catch (error) {
         res.status(500).json({ msg: "Error al actualizar requerimiento", error: error.message });

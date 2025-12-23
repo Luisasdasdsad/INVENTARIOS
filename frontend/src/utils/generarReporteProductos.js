@@ -82,5 +82,5 @@ export const generarReporteProductos = (productosFiltrados = []) => {
   );
 
   // 🔹 Guardar PDF
-  doc.save(`reporte_productos_${fecha}.pdf`);
+  doc.save(`Reporte_Productos_${fecha}.pdf`);
 };

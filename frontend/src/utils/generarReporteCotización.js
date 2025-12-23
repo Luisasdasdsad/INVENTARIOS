@@ -73,14 +73,9 @@ const generarReporteCotizacion = async (cotizacion) => {
   const formattedIGV = formatCurrencyAbs(igv);
   const formattedTotal = formatCurrencyAbs(total);
 
-  const maxFirstPage = 21;
-  const firstProducts = productos.slice(0, maxFirstPage);
-  const remainingProducts = productos.slice(maxFirstPage);
-  const hasMultiplePages = remainingProducts.length > 0;
-
   const headerWithDetails = `
     <!-- ENCABEZADO -->
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #ffc107; padding-bottom: 10px; margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #ffc107; padding-bottom: 5px; margin-bottom: 2px;">
       <div style="display: flex; align-items: center;">
         <img src="/fondocotizacion.png" alt="Logo" style="height: 70px;">
         <div style="margin-left: 15px;">
@@ -98,12 +93,12 @@ const generarReporteCotizacion = async (cotizacion) => {
 
   const headerWithoutDetails = `
     <!-- ENCABEZADO -->
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #ffc107; padding-bottom: 10px; margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #ffc107; padding-bottom: 5px; margin-bottom: 2px;">
       <div style="display: flex; align-items: center;">
         <img src="/fondocotizacion.png" alt="Logo" style="height: 70px;">
         <div style="margin-left: 15px;">
           <h3 style="margin: 0; color: #333; font-size: 16px;">TEAMGAS</h3>
-          <p style="margin: 2px 0; font-size: 12px;">Email: teamgas.fulltec@gmail.com</p>
+          <p style="margin: 2px 0; font-size: 12px;">Email: info@teamgas.pe</p>
           <p style="margin: 2px 0; font-size: 12px;">Web: www.teamgas.pe</p>
         </div>
       </div>
@@ -120,7 +115,7 @@ const generarReporteCotizacion = async (cotizacion) => {
 
   const infoSection = `
     <!-- INFORMACIÓN PRINCIPAL -->
-    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
       <div style="width: 48%; border: 2px solid #ffc107; border-radius: 8px; padding: 5px;">
         <h4 style="margin-top: 0; color: #444; text-align: center;"><Strong>Emisor</Strong></h4>
         <p><b>Razón Social:</b> TEAMGAS SOCIEDAD ANÓNIMA CERRADA</p>
@@ -172,7 +167,9 @@ const generarReporteCotizacion = async (cotizacion) => {
       <tbody>
   `;
 
-  const generateTableRows = (prods, startIndex = 0, padTo8 = false) => {
+  const generateTableRows = (prods, startIndex = 0) => {
+    let occupiedSpace = 0; // Estimación de espacio vertical ocupado
+
     const rows = prods.map((p, idx) => {
       const index = startIndex + idx + 1;
       const pUnit = isNaN(parseFloat(p.precioUnit)) ? 0 : parseFloat(p.precioUnit);
@@ -180,6 +177,14 @@ const generarReporteCotizacion = async (cotizacion) => {
       const igvUnit = pUnit * 0.18;
       const vUnit = pUnit - igvUnit;
       const totalItem = cantidad * pUnit;
+
+      // Heurística: Calcular altura visual basada en longitud de texto y saltos de línea
+      const desc = p.descripcion || '';
+      const lineBreaks = (desc.match(/\n/g) || []).length;
+      const estimatedLinesByLength = Math.ceil(desc.length / 60); // Aprox 60 caracteres por línea
+      const itemHeight = Math.max(1, lineBreaks + 1, estimatedLinesByLength);
+      occupiedSpace += itemHeight;
+
       return `
         <tr>
           <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${index}</td>
@@ -192,20 +197,26 @@ const generarReporteCotizacion = async (cotizacion) => {
           <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">${totalItem.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
         </tr>`;
     });
-    if (padTo8 && rows.length < 8) {
-      const emptyRows = Array(8 - rows.length).fill().map(() => `
+
+    // Rellenar con filas vacías SOLO si el contenido ocupa menos de 8 líneas visuales
+    const minRows = 8;
+    if (occupiedSpace < minRows) {
+      const emptyRowsCount = minRows - Math.floor(occupiedSpace);
+      for (let i = 0; i < emptyRowsCount; i++) {
+        rows.push(`
         <tr>
           <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">&nbsp;</td>
           <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">&nbsp;</td>
           <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">&nbsp;</td>
-          <td style="border-right: 1px solid #ddd; padding: 2px; text-align: left;">&nbsp;</td>
+          <td style="border-right: 1px solid #ddd; padding: 6px; text-align: left;">&nbsp;</td>
           <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">&nbsp;</td>
           <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">&nbsp;</td>
           <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">&nbsp;</td>
           <td style="border-right: 1px solid #ddd; padding: 2px; text-align: center;">&nbsp;</td>
         </tr>`);
-      rows.push(...emptyRows);
+      }
     }
+
     return rows.join("");
   };
 
@@ -226,25 +237,25 @@ const generarReporteCotizacion = async (cotizacion) => {
       </div>
 
       <!-- OBSERVACIONES -->
-      <div style="border: 1px solid #ffc107; padding: 5px; margin-bottom: 10px; width: 100%;">
+      <div style="border: 1px solid #ffc107; padding: 5px; margin-bottom: 2px; width: 100%;">
         <p style="margin: 0; color: #444; white-space: pre-wrap;">Observaciones: ${observaciones || "Ninguna"}</p>
       </div>
 
       <!-- TOTALES Y CUENTAS BANCARIAS -->
-      <div class="no-break" style="page-break-inside: avoid; display: flex; justify-content: space-between; margin-bottom: 20px;">
-        <div style="width: 35%; padding: 10px; font-size: 11px;">
-          <div style="margin-bottom: 8px;">
-            <p style="margin: 0 0 4px 0; font-weight: bold; color: #002A8D; font-size: 11px;">Banco de Crédito del Perú</p>
+      <div class="no-break" style="page-break-inside: avoid; display: flex; justify-content: space-between; margin-bottom: 0;">
+        <div style="width: 35%; padding: 5px; font-size: 11px;">
+          <div style="margin-bottom: 4px;">
+            <p style="margin: 0 0 2px 0; font-weight: bold; color: #002A8D; font-size: 11px;">Banco de Crédito del Perú</p>
             <p style="margin: 2px 0;"><b>CTA:</b> 355-7891445-0-21</p>
             <p style="margin: 2px 0;"><b>CCI:</b> 00235500789144502164</p>
           </div>
           <div>
-            <p style="margin: 0 0 4px 0; font-weight: bold; color: #00A651; font-size: 11px;">Interbank</p>
+            <p style="margin: 0 0 2px 0; font-weight: bold; color: #00A651; font-size: 11px;">Interbank</p>
             <p style="margin: 2px 0;"><b>Cuenta corriente en dólares:</b> 003-500-003004600486-64</p>
             <p style="margin: 2px 0;"><b>Titular:</b> TEAM GAS SAC</p>
           </div>
           ${(tipoCambio || (moneda && moneda.toUpperCase().includes("DOL"))) ? `
-          <div style="margin-top: 10px;">
+          <div style="margin-top: 2px;">
             <p style="margin: 0; font-weight: bold;">Tipo de Cambio:</p>
             <p style="margin: 0;">S/ ${parseFloat(tipoCambio || 0).toFixed(2)} por Dólar</p>
           </div>
@@ -266,56 +277,51 @@ const generarReporteCotizacion = async (cotizacion) => {
           </table>
         </div>
       </div>
-
-      <!-- PIE -->
-      <div style="text-align: center; font-size: 12px; color: #666;">
-        <p style="margin: 0;">Gracias por su preferencia</p>
-      </div>
     </div>
   `;
 
+  // --- LÓGICA DE PAGINACIÓN ---
+  const maxFirstPage = 13;
+  const maxNextPages = 25; // Caben más items en páginas siguientes porque el encabezado es pequeño
+  const pages = [];
+
+  // 1. Primera página
+  pages.push({
+    items: productos.slice(0, maxFirstPage),
+    startIndex: 0,
+    isFirst: true
+  });
+
+  // 2. Páginas siguientes (bucle para soportar N páginas)
+  let currentIdx = maxFirstPage;
+  while (currentIdx < productos.length) {
+    pages.push({
+      items: productos.slice(currentIdx, currentIdx + maxNextPages),
+      startIndex: currentIdx,
+      isFirst: false
+    });
+    currentIdx += maxNextPages;
+  }
+
   let htmlContent = '';
 
-  if (!hasMultiplePages) {
-    // Single page
-    htmlContent = `
-      <div class="no-break" style="font-family: 'Arial', sans-serif; font-size: 12px; padding: 20px; border-radius: 12px; background: #fff; width: 210mm; box-sizing: border-box; page-break-inside: avoid;">
-        ${headerWithDetails}
-        ${companyTitle}
-        ${infoSection}
-        <div style="margin-bottom: 20px;">
+  pages.forEach((page, index) => {
+    const isLastPage = index === pages.length - 1;
+    
+    htmlContent += `
+      <div style="font-family: 'Arial', sans-serif; font-size: 12px; padding: 20px; border-radius: 12px; background: #fff; width: 210mm; box-sizing: border-box; ${!isLastPage ? 'page-break-after: always;' : ''}">
+        ${page.isFirst ? headerWithDetails : headerWithoutDetails}
+        ${page.isFirst ? companyTitle : ''}
+        ${page.isFirst ? infoSection : ''}
+        <div style="margin-bottom: 5px;">
           ${tableHeader}
-          ${generateTableRows(firstProducts, 0, true)}
+          ${generateTableRows(page.items, page.startIndex)}
           </tbody></table>
         </div>
-        ${footerSection}
+        ${isLastPage ? footerSection : ''}
       </div>
     `;
-  } else {
-    // Multiple pages
-    htmlContent = `
-      <div style="font-family: 'Arial', sans-serif; font-size: 12px; padding: 20px; border-radius: 12px; background: #fff; width: 210mm; box-sizing: border-box;">
-        ${headerWithDetails}
-        ${companyTitle}
-        ${infoSection}
-        <div style="margin-bottom: 20px;">
-          ${tableHeader}
-          ${generateTableRows(firstProducts, 0, true)}
-          </tbody></table>
-        </div>
-        <div style="page-break-after: always;"></div>
-      </div>
-      <div style="font-family: 'Arial', sans-serif; font-size: 12px; padding: 20px; border-radius: 12px; background: #fff; width: 210mm; box-sizing: border-box;">
-        ${headerWithoutDetails}
-        <div style="margin-bottom: 20px;">
-          ${tableHeader}
-          ${generateTableRows(remainingProducts, firstProducts.length, false)}
-          </tbody></table>
-        </div>
-        ${footerSection}
-      </div>
-    `;
-  }
+  });
 
   const element = document.createElement("div");
   element.innerHTML = htmlContent;

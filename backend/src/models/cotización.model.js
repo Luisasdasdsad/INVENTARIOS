@@ -42,6 +42,13 @@ cotizacionSchema.virtual('factura', {
   justOne: true // We expect only one invoice per quotation
 });
 
+// Virtual property to link to Compras (Requerimientos)
+cotizacionSchema.virtual('compras', {
+  ref: 'Compra',
+  localField: '_id',
+  foreignField: 'cotizacion'
+});
+
 // To include virtuals in res.json(), you need to set this schema option
 cotizacionSchema.set('toJSON', { virtuals: true });
 cotizacionSchema.set('toObject', { virtuals: true });

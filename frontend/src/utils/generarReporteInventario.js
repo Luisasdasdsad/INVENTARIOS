@@ -88,5 +88,5 @@ export const generarReporteInventario = (herramientasFiltradas = []) => {
   );
 
   // 🔹 Guardar PDF
-  doc.save(`reporte_inventario_${fecha}.pdf`);
+  doc.save(`Reporte_Inventario_${fecha}.pdf`);
 };

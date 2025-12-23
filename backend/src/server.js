@@ -19,6 +19,8 @@ import movimientoProductoRoutes from './routes/movimientoProducto.routes.js';
 import notificacionRoutes from './routes/notificacion.routes.js';
 import https from 'https';
 import compraRoutes from "./routes/compra.routes.js";
+import uploadRoutes from './routes/upload.routes.js';
+import eventoRoutes from './routes/evento.routes.js';
 
 dotenv.config();
 const app = express();
@@ -60,6 +62,10 @@ app.use('/api/movimientos-productos', movimientoProductoRoutes);
 app.use('/api/notificaciones', notificacionRoutes);
 
 app.use("/api/compras", compraRoutes);
+
+app.use('/api/upload', uploadRoutes);
+
+app.use('/api/eventos', eventoRoutes);
 
 // Endpoint proxy para obtener tipo de cambio (evita CORS)
 app.get('/api/tipo-cambio', (req, res) => {

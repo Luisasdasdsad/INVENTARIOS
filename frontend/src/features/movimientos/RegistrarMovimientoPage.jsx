@@ -61,13 +61,13 @@ export default function RegistrarMovimientoPage() {
     setQrProcessing(false);
   }, [showEscanerQR]);
 
-  const fetchHerramientaByBarcode = async (barcode) => {
-  if (isScanning) {
+  const fetchHerramientaByBarcode = async (barcode, isManual = false) => {
+  if (!isManual && isScanning) {
     console.log('⏳ Procesando escaneo anterior – Ignorando...');
     return null;
   }
 
-  setIsScanning(true);
+  if (!isManual) setIsScanning(true);
   setError('');
 
   try {
@@ -151,7 +151,9 @@ export default function RegistrarMovimientoPage() {
     }
   } finally {
     // 🔁 Debounce 2s igual que QR
-    setTimeout(() => setIsScanning(false), 2000);
+    if (!isManual) {
+      setTimeout(() => setIsScanning(false), 2000);
+    }
   }
 };
 
@@ -249,7 +251,7 @@ const handleBarcodeManualChange = e => {
     // Debounce para búsqueda manual (espera 500ms a que termines de escribir o escanear)
     if (barcode.length >= 3) {
       barcodeSearchTimeoutRef.current = setTimeout(() => {
-        fetchHerramientaByBarcode(barcode).catch(() => {}); // Catch silencioso para no llenar de errores mientras escribe
+        fetchHerramientaByBarcode(barcode, true).catch(() => {}); // Catch silencioso para no llenar de errores mientras escribe
       }, 500);
     }
     setFormData(prev => ({ ...prev, herramienta: '' }));
@@ -274,15 +276,30 @@ const handleBarcodeManualChange = e => {
     return response.data;
   };
 
-  const fetchHerramientaByQR = async (qrCode) => {
-    if (isScanning) {
+  const fetchHerramientaByQR = async (qrCode, isManual = false) => {
+    if (!isManual && isScanning) {
       console.log('⏳ Procesando QR anterior – Ignorando...');
       return null;
     }
-    setIsScanning(true);
+    
+    if (!isManual) setIsScanning(true);
 
     try {
-      return await searchQR(qrCode);
+      const herramienta = await searchQR(qrCode);
+      
+      if (herramienta) {
+        setHerramientasSeleccionadas(prev => [...prev, {
+          ...herramienta,
+          [herramienta.tipo === 'producto' ? 'producto' : 'herramienta']: herramienta._id,
+          qrCode: herramienta.qrCode || qrCode,
+          barcode: '',
+          cantidad: 1,
+          tipo: herramienta.tipo || 'herramienta'
+        }]);
+        setFormData(prev => ({ ...prev, qrCode: '', herramienta: '', barcode: '' }));
+      }
+
+      return herramienta;
     } catch (error) {
       console.error('❌ API Error:', error.response?.status, error.response?.data?.error || error.message);
       if (error.response?.status === 404) {
@@ -293,7 +310,9 @@ const handleBarcodeManualChange = e => {
         throw new Error('Error de conexión – Intenta escanear de nuevo');
       }
     } finally {
-      setTimeout(() => setIsScanning(false), 2000);  // Debounce 2s
+      if (!isManual) {
+        setTimeout(() => setIsScanning(false), 2000);  // Debounce 2s
+      }
     }
   };
 
@@ -316,23 +335,6 @@ const handleBarcodeManualChange = e => {
     const herramienta = await fetchHerramientaByQR(qrCode);
     toast.dismiss(toastId);
     if (herramienta) {
-      // Agregar a herramientas seleccionadas
-      setHerramientasSeleccionadas(prev => [...prev, {
-        ...herramienta, // Spread incluye propiedades como _id, nombre, etc.
-        [herramienta.tipo === 'producto' ? 'producto' : 'herramienta']: herramienta._id, // Asignar ID al campo correcto
-        qrCode: qrCode.toUpperCase(),
-        barcode: '',
-        cantidad: 1, // Default cantidad
-        tipo: herramienta.tipo || 'herramienta' // Usar el tipo detectado o default
-      }]);
-
-      // Limpiar formData para permitir agregar más
-      setFormData(prev => ({
-        ...prev,
-        herramienta: '',
-        qrCode: '',
-        barcode: '',
-      }));
 
       const msg = `✅ Agregada: ${herramienta.nombre} - Stock: ${herramienta.cantidad}`;
       toast.success(msg);
@@ -361,18 +363,7 @@ const handleBarcodeManualChange = e => {
     if (qr.length >= 5) {
       qrSearchTimeoutRef.current = setTimeout(async () => {
         try {
-          const item = await searchQR(qr);
-          if (item) {
-            setHerramientasSeleccionadas(prev => [...prev, {
-              ...item,
-              [item.tipo === 'producto' ? 'producto' : 'herramienta']: item._id,
-              qrCode: item.qrCode || qr,
-              barcode: '',
-              cantidad: 1,
-              tipo: item.tipo || 'herramienta'
-            }]);
-            setFormData(prev => ({ ...prev, qrCode: '', herramienta: '' }));
-          }
+          await fetchHerramientaByQR(qr, true);
         } catch (err) {
           // Ignorar errores mientras escribe (ej. 404)
         }

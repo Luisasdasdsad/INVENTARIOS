@@ -96,7 +96,7 @@ const generarReporteOrdenTrabajo = async (ordenTrabajo) => {
       </div>
 
       <div style="width: 48%; border: 2px solid #ffc107; border-radius: 8px; padding: 5px;">
-        <h4 style="margin-top: 0; color: #444; text-align: center;"><Strong>Técnico Asignado</Strong></h4>
+        <h4 style="margin-top: 0; color: #444; text-align: center;"><Strong>Responsable Asignado</Strong></h4>
         <p><b>Nombre:</b> ${tecnicoAsignado?.nombre || "N/A"}</p>
         <p><b>Email:</b> ${tecnicoAsignado?.email || "N/A"}</p>
         <p><b>Teléfono:</b> ${telefonosTecnico || '__________________'}</p>
@@ -189,9 +189,9 @@ const generarReporteOrdenTrabajo = async (ordenTrabajo) => {
         <p style="margin: 0; color: #444;"><b>Observaciones:</b> ${observaciones || "Ninguna"}</p>
       </div>
 
-      <!-- INSTRUCCIONES PARA EL TÉCNICO -->
+      <!-- INSTRUCCIONES PARA EL RESPONSABLE -->
       <div style="border: 1px solid #ffc107; padding: 5px; margin-bottom: 10px; width: 100%;">
-        <p style="margin: 0; color: #444;"><b>Instrucciones para el Técnico:</b></p>
+        <p style="margin: 0; color: #444;"><b>Instrucciones para el Responsable:</b></p>
         <div style="margin: 5px 0; color: #444;">${formatInstructions(instruccionesTecnico)}</div>
       </div>
 
@@ -207,7 +207,7 @@ const generarReporteOrdenTrabajo = async (ordenTrabajo) => {
                   <td style="width: 40%; text-align: center; vertical-align: top;">
                       <div style="border-bottom: 1px solid #333; height: 70px; margin: 0 auto 5px auto;"></div>
                       <div style="font-weight: bold; font-size: 11px;">${tecnicoAsignado?.nombre || '________________'}</div>
-                      <div style="font-size: 10px; color: #666;">TÉCNICO RESPONSABLE</div>
+                      <div style="font-size: 10px; color: #666;">RESPONSABLE</div>
                   </td>
                   <td style="width: 20%;"></td>
                   <td style="width: 40%; text-align: center; vertical-align: top;">

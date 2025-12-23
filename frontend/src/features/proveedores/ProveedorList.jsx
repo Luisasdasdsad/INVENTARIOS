@@ -134,27 +134,71 @@ const ProveedorList = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <h2 className="text-2xl font-bold text-secondary-800">Proveedores</h2>
         <div className="flex flex-wrap gap-3 w-full sm:w-auto">
-          <div className="relative flex-grow sm:flex-grow-0 sm:w-64 md:w-72">
+          <div className="relative flex-grow sm:flex-grow-0 w-full sm:w-64 md:w-72">
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-400" />
             <input
               type="text"
               placeholder="Buscar por nombre o RUC..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-3 py-2 border rounded-lg w-full text-sm"
+              className="pl-10 pr-3 py-2 border rounded-lg w-full text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
             />
           </div>
           {/* 3. Botón para exportar */}
-          <button onClick={handleExportExcel} className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2 text-sm font-semibold">
+          <button onClick={handleExportExcel} className="flex-1 sm:flex-none justify-center bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2 text-sm font-semibold min-h-[40px]">
             <FaFileExcel /> Exportar
           </button>
-          <button onClick={() => { setEditingProveedor(null); setShowForm(true); }} className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 flex items-center gap-2 text-sm font-semibold">
+          <button onClick={() => { setEditingProveedor(null); setShowForm(true); }} className="flex-1 sm:flex-none justify-center bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 flex items-center gap-2 text-sm font-semibold min-h-[40px]">
             <FaPlus /> Nuevo
           </button>
         </div>
       </div>
 
-      <div className="overflow-x-auto bg-white shadow-soft rounded-lg border">
+      {/* Vista Móvil: Tarjetas */}
+      <div className="md:hidden space-y-4">
+        {filteredProveedores.length > 0 ? (
+          filteredProveedores.map((proveedor) => (
+            <div key={proveedor._id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="text-base font-bold text-gray-900">{proveedor.nombre}</h3>
+                <span className="px-2 py-1 text-xs font-semibold bg-teal-100 text-teal-800 rounded-full">{proveedor.categoria}</span>
+              </div>
+              
+              <div className="text-sm text-gray-600 space-y-1">
+                {proveedor.ruc && <p><span className="font-semibold">RUC:</span> {proveedor.ruc}</p>}
+                {proveedor.direccion && <p><span className="font-semibold">Dirección:</span> {proveedor.direccion}</p>}
+                {proveedor.email && <p><span className="font-semibold">Email:</span> {proveedor.email}</p>}
+                {proveedor.descripcion && <p className="text-xs italic mt-1 bg-gray-50 p-2 rounded">{proveedor.descripcion}</p>}
+                
+                {/* Teléfonos */}
+                {Array.isArray(proveedor.telefono) && proveedor.telefono.length > 0 && (
+                   <div className="flex flex-wrap gap-2 mt-2">
+                     {proveedor.telefono.map((tel, index) => (
+                       <a key={index} href={`https://wa.me/${tel.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded text-xs font-medium border border-green-100">
+                         <FaWhatsapp /> {tel}
+                       </a>
+                     ))}
+                   </div>
+                )}
+              </div>
+
+              <div className="flex gap-2 pt-4 mt-2 border-t border-gray-100">
+                <button onClick={() => handleEdit(proveedor)} className="flex-1 flex items-center justify-center gap-1 bg-blue-50 text-blue-600 py-2 rounded-md hover:bg-blue-100 text-sm font-medium">
+                  <FaEdit /> Editar
+                </button>
+                <button onClick={() => handleDeleteProveedor(proveedor._id)} className="flex-1 flex items-center justify-center gap-1 bg-red-50 text-red-600 py-2 rounded-md hover:bg-red-100 text-sm font-medium">
+                  <FaTrash /> Eliminar
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+           <div className="text-center py-12 text-secondary-600 bg-gray-50 rounded-lg border border-dashed">No se encontraron proveedores.</div>
+        )}
+      </div>
+
+      {/* Vista Escritorio: Tabla */}
+      <div className="hidden md:block overflow-x-auto bg-white shadow-soft rounded-lg border">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-secondary-100">
             <tr>

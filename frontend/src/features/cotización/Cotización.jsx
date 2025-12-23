@@ -31,6 +31,8 @@ const Cotización = () => {
   const [loadingSunat, setLoadingSunat] = useState(false);
   const [validez, setValidez] = useState(15);
   const [isEditing, setIsEditing] = useState(false);
+  const [busquedaCliente, setBusquedaCliente] = useState("");
+  const [mostrarResultados, setMostrarResultados] = useState(false);
 
   // === Cargar clientes y productos ===
   useEffect(() => {
@@ -65,7 +67,7 @@ const Cotización = () => {
     fetchProductos();
     fetchHerramientas();
 
-    // 🆕 Cargar el siguiente número de cotización si es una nueva
+    // Cargar el siguiente número de cotización si es una nueva
     const fetchNextNumber = async () => {
       if (!cotizacionEdit) {
         try {
@@ -81,6 +83,7 @@ const Cotización = () => {
     if (cotizacionEdit) {
       setIsEditing(true);
       setClienteSeleccionado(cotizacionEdit.cliente._id);
+      setBusquedaCliente(cotizacionEdit.cliente.nombre || "");
       setProductos(
         cotizacionEdit.productos.map((p) => ({
           cantidad: p.cantidad,
@@ -229,7 +232,7 @@ const Cotización = () => {
         setNumeroCotizacion(response.data.numeroCotizacion); // Mantener por si acaso
         alert("Cotización guardada exitosamente");
       }
-      // ✅ Redireccionar después de guardar
+      // Redireccionar después de guardar
       navigate('/cotizaciones'); 
     } catch (error) {
       console.error("Error al guardar cotización:", error);
@@ -294,6 +297,7 @@ const Cotización = () => {
       setClientes([...clientes, clienteActualizado]);
     }
     setClienteSeleccionado(clienteActualizado._id);
+    setBusquedaCliente(clienteActualizado.nombre);
   };
 
   const handleEditarCliente = () => {
@@ -303,6 +307,9 @@ const Cotización = () => {
       setModalCliente(true);
     }
   };
+
+  // Calcular totales para mostrar en la interfaz
+  const { subtotal, descuentoAmount, igv, total } = calcularTotales();
 
   // === Render principal ===
   return (
@@ -315,32 +322,67 @@ const Cotización = () => {
       <section className="bg-white border rounded-xl shadow-sm p-4 mb-6">
         <h2 className="font-semibold text-gray-700 mb-3 text-lg">Cliente</h2>
         <div className="flex flex-col sm:flex-row gap-3">
-          <select
-            className="border border-gray-300 p-2 rounded-md flex-1 focus:ring-2 focus:ring-blue-500"
-            value={clienteSeleccionado}
-            onChange={(e) => setClienteSeleccionado(e.target.value)}
-          >
-            <option value="">Seleccionar Cliente</option>
-            {clientes.map((c) => (
-              <option key={c._id} value={c._id}>
-                {c.nombre}
-              </option>
-            ))}
-          </select>
-          <div className="flex gap-2">
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
+              placeholder="Buscar por nombre o RUC/DNI..."
+              value={busquedaCliente}
+              onChange={(e) => {
+                setBusquedaCliente(e.target.value);
+                setMostrarResultados(true);
+                setClienteSeleccionado(""); // Limpiar selección al escribir para obligar a seleccionar de la lista
+              }}
+              onFocus={() => setMostrarResultados(true)}
+              onBlur={() => setTimeout(() => setMostrarResultados(false), 200)}
+            />
+            {mostrarResultados && (
+              <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto mt-1">
+                {clientes.filter(c => 
+                  c.nombre.toLowerCase().includes(busquedaCliente.toLowerCase()) || 
+                  (c.ruc && c.ruc.includes(busquedaCliente)) ||
+                  (c.numero && c.numero.includes(busquedaCliente))
+                ).length > 0 ? (
+                  clientes.filter(c => 
+                    c.nombre.toLowerCase().includes(busquedaCliente.toLowerCase()) || 
+                    (c.ruc && c.ruc.includes(busquedaCliente)) ||
+                    (c.numero && c.numero.includes(busquedaCliente))
+                  ).map((c) => (
+                    <div
+                      key={c._id}
+                      className="p-2 hover:bg-gray-100 cursor-pointer text-sm text-gray-700 border-b last:border-b-0"
+                      onClick={() => {
+                        setClienteSeleccionado(c._id);
+                        setBusquedaCliente(c.nombre);
+                        setMostrarResultados(false);
+                      }}
+                    >
+                      <div className="font-medium">{c.nombre}</div>
+                      <div className="text-xs text-gray-500">
+                        {c.tipoDoc === 'RUC' ? `RUC: ${c.ruc}` : `DNI: ${c.numero}`}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-2 text-sm text-gray-500">No se encontraron clientes</div>
+                )}
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2 w-full sm:w-auto">
             <button
               onClick={() => {
                 setClienteEdit(null);
                 setModalCliente(true);
               }}
-              className="flex items-center justify-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-black font-medium px-4 py-2 rounded-lg shadow-sm transition-colors text-sm"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-black font-medium px-4 py-2 rounded-lg shadow-sm transition-colors text-sm min-h-[44px]"
             >
               <FaPlus size={14} /> Nuevo
             </button>
             {clienteSeleccionado && (
               <button
                 onClick={handleEditarCliente}
-                className="flex items-center justify-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-black font-medium px-4 py-2 rounded-lg shadow-sm transition-colors text-sm"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-black font-medium px-4 py-2 rounded-lg shadow-sm transition-colors text-sm min-h-[44px]"
               >
                 <FaEdit size={14} /> Editar
               </button>
@@ -352,7 +394,7 @@ const Cotización = () => {
       {/* --- Datos de Cotización --- */}
       <section className="bg-white border rounded-xl shadow-sm p-4 mb-6">
         <h2 className="font-semibold text-gray-700 mb-3 text-lg">Información</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
             <label className="text-sm text-gray-600">Fecha</label>
             <input
@@ -451,7 +493,7 @@ const Cotización = () => {
               className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <div className="col-span-4">
+          <div className="col-span-2 md:col-span-4">
             <label className="text-sm text-gray-600">Descripción del Servicio</label>
             <textarea
               rows="2"
@@ -613,6 +655,94 @@ const Cotización = () => {
             </tbody>
           </table>
         </div>
+
+        {/* --- Controles para Agregar Productos (Movido aquí) --- */}
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+          <h3 className="text-sm font-medium text-gray-700 mb-3">Agregar Ítem</h3>
+          <div className="flex flex-col md:flex-row gap-3">
+            <select
+              className="flex-1 border p-2 rounded-md focus:ring-2 focus:ring-blue-500 text-sm"
+              onChange={(e) => {
+                const prod = productosDB.find((p) => p._id === e.target.value);
+                if (prod) {
+                  const pUnit = prod.precioUnitario || 0;
+                  const cantidad = 1;
+                  const igv = pUnit * 0.18;
+                  const vUnit = pUnit - igv;
+                  const total = pUnit * cantidad;
+                  setProductos([
+                    ...productos,
+                    { cantidad, unidad: prod.unidad || "", descripcion: prod.nombre || "", vUnit, igv, pUnit, total, producto: prod._id },
+                  ]);
+                }
+                e.target.value = "";
+              }}
+            >
+              <option value="">Seleccionar Producto del Inventario</option>
+              {productosDB.map((p) => (
+                <option key={p._id} value={p._id}>
+                  {p.nombre} - S/ {p.precioUnitario}
+                </option>
+              ))}
+            </select>
+
+            <select
+              className="flex-1 border p-2 rounded-md focus:ring-2 focus:ring-blue-500 text-sm"
+              onChange={(e) => {
+                const herramienta = herramientasDB.find((h) => h._id === e.target.value);
+                if (herramienta) {
+                  const pUnit = herramienta.precio || 0;
+                  const cantidad = 1;
+                  const igv = pUnit * 0.18;
+                  const vUnit = pUnit - igv;
+                  const total = pUnit * cantidad;
+                  const descripcion = `${herramienta.nombre} - ${herramienta.marca} ${herramienta.modelo}`;
+                  setProductos([
+                    ...productos,
+                    { cantidad, unidad: herramienta.unidad || "", descripcion, vUnit, igv, pUnit, total, herramienta: herramienta._id },
+                  ]);
+                }
+                e.target.value = "";
+              }}
+            >
+              <option value="">Seleccionar Herramienta</option>
+              {herramientasDB.map((h) => (
+                <option key={h._id} value={h._id}>
+                  {h.nombre} - {h.marca} {h.modelo} - S/ {h.precio}
+                </option>
+              ))}
+            </select>
+
+            <button
+              onClick={agregarProducto}
+              className="flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+            >
+              <FaPlus size={14} /> Manual
+            </button>
+          </div>
+        </div>
+
+        {/* --- Totales --- */}
+        <div className="mt-6 flex justify-end border-t pt-4">
+          <div className="w-full md:w-1/3 space-y-2">
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>Subtotal:</span>
+              <span>{moneda === 'DOLARES' ? '$' : 'S/'} {subtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>Descuento:</span>
+              <span>- {moneda === 'DOLARES' ? '$' : 'S/'} {descuentoAmount.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>IGV (18%):</span>
+              <span>{moneda === 'DOLARES' ? '$' : 'S/'} {igv.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-lg font-bold text-gray-800 border-t pt-2 mt-2">
+              <span>Total:</span>
+              <span>{moneda === 'DOLARES' ? '$' : 'S/'} {total.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section className="bg-white border rounded-xl shadow-sm p-4 mb-6">
@@ -627,71 +757,11 @@ const Cotización = () => {
       </section>
 
       {/* --- Acciones --- */}
-      <div className="flex flex-wrap gap-3 justify-end">
-        <select
-          className="border p-2 rounded-md focus:ring-2 focus:ring-blue-500"
-          onChange={(e) => {
-            const prod = productosDB.find((p) => p._id === e.target.value);
-            if (prod) {
-              const pUnit = prod.precioUnitario || 0;
-              const cantidad = 1;
-              const igv = pUnit * 0.18;
-              const vUnit = pUnit - igv;
-              const total = pUnit * cantidad;
-              setProductos([
-                ...productos,
-                { cantidad, unidad: prod.unidad || "", descripcion: prod.nombre || "", vUnit, igv, pUnit, total, producto: prod._id },
-              ]);
-            }
-            e.target.value = "";
-          }}
-        >
-          <option value="">Seleccionar Producto</option>
-          {productosDB.map((p) => (
-            <option key={p._id} value={p._id}>
-              {p.nombre} - S/ {p.precioUnitario}
-            </option>
-          ))}
-        </select>
-
-        <select
-          className="border p-2 rounded-md focus:ring-2 focus:ring-blue-500"
-          onChange={(e) => {
-            const herramienta = herramientasDB.find((h) => h._id === e.target.value);
-            if (herramienta) {
-              const pUnit = herramienta.precio || 0;
-              const cantidad = 1;
-              const igv = pUnit * 0.18;
-              const vUnit = pUnit - igv;
-              const total = pUnit * cantidad;
-              const descripcion = `${herramienta.nombre} - ${herramienta.marca} ${herramienta.modelo}`;
-              setProductos([
-                ...productos,
-                { cantidad, unidad: herramienta.unidad || "", descripcion, vUnit, igv, pUnit, total, herramienta: herramienta._id },
-              ]);
-            }
-            e.target.value = "";
-          }}
-        >
-          <option value="">Seleccionar Herramienta</option>
-          {herramientasDB.map((h) => (
-            <option key={h._id} value={h._id}>
-              {h.nombre} - {h.marca} {h.modelo} - S/ {h.precio}
-            </option>
-          ))}
-        </select>
-
-        <button
-          onClick={agregarProducto}
-          className="flex items-center justify-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-black font-medium px-4 py-2 rounded-lg shadow-sm transition-colors text-sm"
-        >
-          <FaPlus size={14} /> Producto Manual
-        </button>
-
+      <div className="flex flex-col sm:flex-row flex-wrap gap-3 justify-end">
         <button
           onClick={guardarCotizacion}
           disabled={!clienteSeleccionado}
-          className={`px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors ${
+          className={`w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors min-h-[44px] ${
             clienteSeleccionado
               ? "bg-yellow-500 hover:bg-yellow-600 text-black"
               : "bg-gray-300 text-gray-500 cursor-not-allowed"
@@ -703,7 +773,7 @@ const Cotización = () => {
         <button
           onClick={generarPDF}
           disabled={!clienteSeleccionado || !numeroCotizacion || productos.length === 0}
-          className={`px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors ${
+          className={`w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors min-h-[44px] ${
             clienteSeleccionado && numeroCotizacion && productos.length > 0
               ? "bg-yellow-500 hover:bg-yellow-600 text-black"
               : "bg-gray-300 text-gray-500 cursor-not-allowed"

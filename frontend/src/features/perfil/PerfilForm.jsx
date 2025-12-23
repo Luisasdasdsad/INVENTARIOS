@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../services/api.js';
 import { useAuth } from '../../contexts/AuthContext';
-import { FaUser, FaEnvelope, FaLock, FaSave, FaEye, FaEyeSlash, FaUsers, FaEdit, FaPhone, FaMobileAlt, FaMapMarkerAlt, FaTrash } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaLock, FaSave, FaEye, FaEyeSlash, FaUsers, FaEdit, FaPhone, FaMobileAlt, FaMapMarkerAlt, FaTrash, FaSearch } from 'react-icons/fa';
 import Modal from '../../components/Modal/Modal';
 
 export default function PerfilForm() {
@@ -13,6 +13,7 @@ export default function PerfilForm() {
   const [usuarios, setUsuarios] = useState([]);
   const [selectedUsuario, setSelectedUsuario] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [userSearch, setUserSearch] = useState('');
 
   // Estado para perfil
   const [profileData, setProfileData] = useState({
@@ -180,10 +181,10 @@ export default function PerfilForm() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <div className="bg-white rounded-xl shadow-sm border">
-        <div className="border-b">
-          <div className="flex">
+    <div className="max-w-3xl mx-auto p-4 md:p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="border-b overflow-x-auto">
+          <div className="flex min-w-max md:min-w-0">
             <button
               onClick={() => setActiveTab('profile')}
               className={`flex-1 py-4 px-6 text-center font-medium transition-colors ${
@@ -222,7 +223,7 @@ export default function PerfilForm() {
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 md:p-6">
           {error && (
             <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
               {error}
@@ -412,26 +413,49 @@ export default function PerfilForm() {
 
           {activeTab === 'users' && (
             <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-900">Gestión de Usuarios</h3>
-              <div className="space-y-2">
-                {usuarios.map((usuario) => (
-                  <div key={usuario._id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                    <div>
-                      <p className="font-medium text-gray-900">{usuario.nombre}</p>
-                      <p className="text-sm text-gray-600">{usuario.email}</p>
-                      <p className="text-sm text-gray-500">{getRolLabel(usuario.rol)}</p>
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-2">
+                <h3 className="text-lg font-medium text-gray-900">Gestión de Usuarios</h3>
+                <div className="relative w-full sm:w-64">
+                  <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <input 
+                    type="text" 
+                    placeholder="Buscar usuario..." 
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                {usuarios.filter(u => 
+                  u.nombre.toLowerCase().includes(userSearch.toLowerCase()) || 
+                  u.email.toLowerCase().includes(userSearch.toLowerCase())
+                ).map((usuario) => (
+                  <div key={usuario._id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-sm transition-shadow bg-gray-50 sm:bg-white">
+                    <div className="flex items-center gap-3 mb-3 sm:mb-0">
+                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg flex-shrink-0">
+                        {usuario.nombre.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{usuario.nombre}</p>
+                        <p className="text-sm text-gray-600">{usuario.email}</p>
+                        <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-gray-200 text-gray-700 mt-1 font-medium">
+                          {getRolLabel(usuario.rol)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 w-full sm:w-auto">
                       <button
                         onClick={() => handleEditUsuario(usuario)}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                        className="flex-1 sm:flex-none justify-center bg-white border border-blue-200 text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-50 flex items-center gap-2 text-sm transition-colors font-medium"
                       >
                         <FaEdit size={14} />
                         Editar
                       </button>
                       <button
                         onClick={() => handleDeleteUsuario(usuario._id)}
-                        className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2"
+                        className="flex-1 sm:flex-none justify-center bg-white border border-red-200 text-red-600 px-3 py-2 rounded-lg hover:bg-red-50 flex items-center gap-2 text-sm transition-colors font-medium"
                       >
                         <FaTrash size={14} />
                         Eliminar

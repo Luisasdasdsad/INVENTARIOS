@@ -4,8 +4,8 @@ import Modal from "../../components/Modal/Modal";
 import ProductoForm from "./ProductoForm";
 import BarcodeDisplay from "../../components/BarcodeDisplay/BarcodeDisplay";
 import QRDisplay from "../../components/BarcodeDisplay/QRDisplay.jsx";
-import { FaEdit, FaTrash, FaBarcode, FaQrcode, FaPlus, FaEye, FaFilePdf, FaPrint } from "react-icons/fa";
-import { generarReporteProductos } from "../../utils/generarReporteProductos.js";
+import { FaEdit, FaTrash, FaBarcode, FaQrcode, FaPlus, FaEye, FaPrint, FaFileExcel } from "react-icons/fa";
+import * as XLSX from 'xlsx';
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function ProductoList() {
@@ -175,6 +175,24 @@ export default function ProductoList() {
     }
   };
 
+  const handleExportExcel = () => {
+    const dataToExport = filteredProductos.map(p => ({
+      Nombre: p.nombre,
+      Categoría: p.categoria,
+      Stock: p.stock,
+      Unidad: p.unidad,
+      'Precio Unitario': p.precioUnitario,
+      Descripción: p.descripcion,
+      Barcode: p.barcode,
+      QR: p.qrCode
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Productos");
+    XLSX.writeFile(wb, "Reporte_Productos.xlsx");
+  };
+
   // Función para imprimir etiqueta de Código de Barras
   const handlePrintBarcode = (producto) => {
     const printWindow = window.open('', '_blank', 'width=400,height=300');
@@ -326,10 +344,10 @@ export default function ProductoList() {
           {!isTecnico && ( // Ocultar si es técnico
             <>
               <button
-                onClick={() => generarReporteProductos(filteredProductos)}
-                className="flex items-center justify-center gap-2 bg-red-600 text-white px-3 py-2 md:px-4 md:py-2 rounded-md hover:bg-red-700 transition-colors min-h-[44px] w-full sm:w-auto text-xs md:text-sm"
+                onClick={handleExportExcel}
+                className="flex items-center justify-center gap-2 bg-emerald-600 text-white px-3 py-2 md:px-4 md:py-2 rounded-md hover:bg-emerald-700 transition-colors min-h-[44px] w-full sm:w-auto text-xs md:text-sm"
               >
-                <FaFilePdf size={14} /> Generar Reporte
+                <FaFileExcel size={14} /> Exportar Excel
               </button>
               <button
                 onClick={handleGenerateMassiveBarcodes}

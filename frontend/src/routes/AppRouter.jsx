@@ -23,6 +23,7 @@ import PerfilForm from "../features/perfil/PerfilForm";
 import ProveedorList from "../features/proveedores/ProveedorList";
 import FacturaList from "../features/facturas/FacturaList";
 import ComprasList from "../features/compras/ComprasList";
+import Agenda from "../features/agenda/Agenda";
 
 export default function AppRouter() {
   return (
@@ -45,6 +46,7 @@ export default function AppRouter() {
             <Route path="movimientos/registrar" element={<RegistrarMovimientoPage />} />
             <Route path="perfil" element={<PerfilForm />} />
             <Route path="compras" element={<ComprasList />} />
+            <Route path="agenda" element={<Agenda />} />
 
             {/* 🔄 Cotizaciones separadas en dos rutas */}
             <Route path="cotizaciones" element={<CotizaciónList />} /> {/* Mis cotizaciones editables */}

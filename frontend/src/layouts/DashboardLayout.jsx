@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate } from "react-router-dom";
-import { FaTools, FaClipboardList, FaExchangeAlt, FaHome, FaSignOutAlt, FaBars, FaTimes, FaUsers, FaFileAlt, FaHistory, FaPlus, FaUser, FaFileInvoiceDollar, FaTruck, FaBell, FaUserCircle, FaUserCog, FaShoppingCart, FaCalendarAlt } from "react-icons/fa";
+import { FaTools, FaClipboardList, FaExchangeAlt, FaHome, FaSignOutAlt, FaBars, FaTimes, FaUsers, FaFileAlt, FaHistory, FaPlus, FaUser, FaFileInvoiceDollar, FaTruck, FaBell, FaUserCircle, FaUserCog, FaShoppingCart, FaCalendarAlt, FaChevronDown, FaChevronRight, FaBox, FaCogs } from "react-icons/fa";
 import { useAuth } from "../contexts/AuthContext";
 import { useState, useEffect } from "react";
 import { useNotifications } from "../contexts/NotificationContext";
@@ -12,6 +12,7 @@ export default function DashboardLayout() {
   const { unreadCount, notificaciones, marcarLeida } = useNotifications();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [activeSubmenu, setActiveSubmenu] = useState(null); // Estado para acordeón
   const navigate = useNavigate();
 
   // Detectar si es móvil
@@ -60,6 +61,45 @@ export default function DashboardLayout() {
   // Calcular conteos específicos para el sidebar
   const unreadCompras = notificaciones.filter(n => !n.leido && n.tipo === 'compra').length;
   const unreadOTs = notificaciones.filter(n => !n.leido && n.tipo !== 'compra').length;
+
+  // Función para alternar submenús
+  const toggleSubmenu = (menu) => {
+    if (!isSidebarOpen) setIsSidebarOpen(true); // Abrir sidebar si está colapsado
+    setActiveSubmenu(activeSubmenu === menu ? null : menu);
+  };
+
+  // Componente auxiliar para Grupos de Navegación (Acordeón)
+  const NavGroup = ({ title, icon: Icon, id, children, badgeCount }) => {
+    const isActive = activeSubmenu === id;
+    return (
+      <div className="mb-1">
+        <button
+          onClick={() => toggleSubmenu(id)}
+          className={`w-full flex items-center justify-between hover:bg-primary-50 hover:text-primary-700 transition-all duration-200 rounded-xl ${
+            !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
+          } ${isActive ? 'bg-primary-50 text-primary-700' : 'text-secondary-600'}`}
+        >
+          <div className="flex items-center gap-3">
+            {isSidebarOpen ? (
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isActive ? 'bg-primary-100' : 'bg-gray-100'}`}>
+                <Icon size={16} className={isActive ? "text-primary-600" : "text-gray-500"} />
+              </div>
+            ) : (
+              <Icon size={18} className={isActive ? "text-primary-600" : "text-gray-500"} />
+            )}
+            {isSidebarOpen && <span className="font-medium text-sm">{title}</span>}
+            {isSidebarOpen && badgeCount > 0 && <span className="bg-red-500 text-white text-[10px] px-1.5 rounded-full">{badgeCount}</span>}
+          </div>
+          {isSidebarOpen && (isActive ? <FaChevronDown size={12} /> : <FaChevronRight size={12} />)}
+        </button>
+        <div className={`overflow-hidden transition-all duration-300 ${isActive && isSidebarOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+          <div className="mt-1 space-y-1 pl-2 border-l-2 border-gray-100 ml-4">
+            {children}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-secondary-50 to-secondary-100">
@@ -129,302 +169,100 @@ export default function DashboardLayout() {
             )}
             {isSidebarOpen && <span className="font-medium">Inicio</span>}
           </Link>
-          {/* Separador de Inventario */}
-          {isSidebarOpen && (
-            <div className="pt-4 pb-2">
-              <p className="text-xs font-semibold text-secondary-500 uppercase tracking-wider px-3">
-                Inventario
-              </p>
-            </div>
-          )}
-          {/* Inventario - Admin y Técnico */}
-          {user && (['admin', 'superadmin', 'tecnico', 'jefe_inventario', 'administracion'].includes(user.rol)) && (
-            <Link
-              to="/herramientas"
-              onClick={handleNavClick}
-              className={`flex items-center gap-3 hover:bg-primary-50 hover:text-primary-700 transition-all duration-200 rounded-xl ${
-                !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
-              }`}
-            >
-              {isSidebarOpen ? (
-                <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
-                  <FaTools size={16} className="text-primary-600" />
-                </div>
-              ) : (
-                <FaTools size={18} className="text-primary-600" />
-              )}
-              {isSidebarOpen && <span className="font-medium">Inventario</span>}
-            </Link>
-          )}
 
-          {/* Movimientos */}
+          {/* Agenda Virtual */}
           <Link
-            to="/movimientos"
+            to="/agenda"
             onClick={handleNavClick}
-            className={`flex items-center gap-3 hover:bg-primary-50 hover:text-primary-700 transition-all duration-200 rounded-xl ${
+            className={`flex items-center gap-3 hover:bg-teal-50 hover:text-teal-700 transition-all duration-200 rounded-xl ${
               !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
             }`}
           >
             {isSidebarOpen ? (
-              <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
-                <FaExchangeAlt size={16} className="text-primary-600" />
+              <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center">
+                <FaCalendarAlt size={16} className="text-teal-600" />
               </div>
             ) : (
-              <FaExchangeAlt size={18} className="text-primary-600" />
+              <FaCalendarAlt size={18} className="text-teal-600" />
             )}
-            {isSidebarOpen && <span className="font-medium">Movimientos</span>}
+            {isSidebarOpen && <span className="font-medium">Agenda</span>}
           </Link>
 
-          {/* Productos - Admin, Responsable de Inventario y Técnico */}
-          {user && (['admin', 'superadmin', 'tecnico', 'jefe_inventario', 'administracion'].includes(user.rol)) && (
-            <Link
-              to="/productos"
-              onClick={handleNavClick}
-              className={`flex items-center gap-3 hover:bg-primary-50 hover:text-primary-700 transition-all duration-200 rounded-xl ${
-                !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
-              }`}
-            >
-              {isSidebarOpen ? (
-                <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
-                  <FaClipboardList size={16} className="text-primary-600" />
-                </div>
-              ) : (
-                <FaClipboardList size={18} className="text-primary-600" />
-              )}
-              {isSidebarOpen && <span className="font-medium">Productos</span>}
-            </Link>
+          {/* GRUPO: INVENTARIO */}
+          {user && (['admin', 'superadmin', 'tecnico', 'ingeniero', 'jefe_inventario', 'administracion'].includes(user.rol)) && (
+            <NavGroup title="Inventario" icon={FaBox} id="inventario">
+              <Link to="/herramientas" onClick={handleNavClick} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 text-secondary-600 hover:text-primary-600 transition-colors">
+                <FaTools size={14} /> <span className="text-sm">Herramientas</span>
+              </Link>
+              <Link to="/movimientos" onClick={handleNavClick} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 text-secondary-600 hover:text-primary-600 transition-colors">
+                <FaExchangeAlt size={14} /> <span className="text-sm">Movimientos</span>
+              </Link>
+              <Link to="/productos" onClick={handleNavClick} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 text-secondary-600 hover:text-primary-600 transition-colors">
+                <FaClipboardList size={14} /> <span className="text-sm">Productos</span>
+              </Link>
+            </NavGroup>
           )}
 
           {/* --- SECCIÓN COTIZACIONES (Oculta para técnicos y jefe de inventario) --- */}
-          {user?.rol !== 'tecnico' && user?.rol !== 'jefe_inventario' && (
-            <>
-              {/* Separador de Cotizaciones */}
-              {isSidebarOpen && (
-                <div className="pt-4 pb-2">
-                  <p className="text-xs font-semibold text-secondary-500 uppercase tracking-wider px-3">
-                    Ventas
-                  </p>
-                </div>
-              )}
-
+          {user?.rol !== 'tecnico' && user?.rol !== 'ingeniero' && user?.rol !== 'jefe_inventario' && (
+            <NavGroup title="Ventas" icon={FaFileInvoiceDollar} id="ventas">
               {/* Nueva Cotización - Solo Admin */}
               {(user.rol === 'admin' || user.rol === 'superadmin' || user.rol === 'administracion') && (
-                <Link
-                  to="/cotización"
-                  onClick={handleNavClick}
-                  className={`flex items-center gap-3 hover:bg-green-50 hover:text-green-700 transition-all duration-200 rounded-xl ${
-                    !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
-                  }`}
-                >
-                  {isSidebarOpen ? (
-                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                      <FaPlus size={16} className="text-green-600" />
-                    </div>
-                  ) : (
-                    <FaPlus size={18} className="text-green-600" />
-                  )}
-                  {isSidebarOpen && <span className="font-medium">Nueva Cotización</span>}
+                <Link to="/cotización" onClick={handleNavClick} className="flex items-center gap-3 p-2 rounded-lg hover:bg-green-50 text-secondary-600 hover:text-green-700 transition-colors">
+                  <FaPlus size={14} /> <span className="text-sm">Nueva Cotización</span>
                 </Link>
               )}
-
-              {/* Mis Cotizaciones */}
-              <Link
-                to="/cotizaciones"
-                onClick={handleNavClick}
-                className={`flex items-center gap-3 hover:bg-yellow-50 hover:text-yellow-700 transition-all duration-200 rounded-xl ${
-                  !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
-                }`}
-              >
-                {isSidebarOpen ? (
-                  <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <FaFileAlt size={16} className="text-yellow-600" />
-                  </div>
-                ) : (
-                  <FaFileAlt size={18} className="text-yellow-600" />
-                )}
-                {isSidebarOpen && <span className="font-medium">Mis Cotizaciones</span>}
+              <Link to="/cotizaciones" onClick={handleNavClick} className="flex items-center gap-3 p-2 rounded-lg hover:bg-yellow-50 text-secondary-600 hover:text-yellow-700 transition-colors">
+                <FaFileAlt size={14} /> <span className="text-sm">Mis Cotizaciones</span>
               </Link>
-
-              {/* Historial de Cotizaciones */}
-              <Link
-                to="/historial-cotizaciones"
-                onClick={handleNavClick}
-                className={`flex items-center gap-3 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 rounded-xl ${
-                  !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
-                }`}
-              >
-                {isSidebarOpen ? (
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <FaHistory size={16} className="text-blue-600" />
-                  </div>
-                ) : (
-                  <FaHistory size={18} className="text-blue-600" />
-                )}
-                {isSidebarOpen && (
-                  <div className="flex flex-col">
-                    <span className="font-medium">Historial</span>
-                    <span className="text-xs text-secondary-500">Solo lectura</span>
-                  </div>
-                )}
+              <Link to="/historial-cotizaciones" onClick={handleNavClick} className="flex items-center gap-3 p-2 rounded-lg hover:bg-blue-50 text-secondary-600 hover:text-blue-700 transition-colors">
+                <FaHistory size={14} /> <span className="text-sm">Historial</span>
               </Link>
-
-              {/* Facturas */}
-              <Link
-                to="/facturas"
-                onClick={handleNavClick}
-                className={`flex items-center gap-3 hover:bg-green-50 hover:text-green-700 transition-all duration-200 rounded-xl ${
-                  !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
-                }`}
-              >
-                {isSidebarOpen ? (
-                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                    <FaFileInvoiceDollar size={16} className="text-green-600" />
-                  </div>
-                ) : (
-                  <FaFileInvoiceDollar size={18} className="text-green-600" />
-                )}
-                {isSidebarOpen && <span className="font-medium">Facturas</span>}
+              <Link to="/facturas" onClick={handleNavClick} className="flex items-center gap-3 p-2 rounded-lg hover:bg-green-50 text-secondary-600 hover:text-green-700 transition-colors">
+                <FaFileInvoiceDollar size={14} /> <span className="text-sm">Facturas</span>
               </Link>
-            </>
+            </NavGroup>
           )}
-          {/* --- FIN SECCIÓN COTIZACIONES --- */}
-
-          {/*
-            CÓDIGO ORIGINAL ELIMINADO:
-            Se movieron los enlaces de cotizaciones dentro del bloque condicional de arriba
-            para agrupar toda la lógica y que se oculte la sección completa.
-          */}
 
           {/* --- SECCIÓN ORDEN DE TRABAJO (Oculta para jefe de inventario) --- */}
           {user?.rol !== 'jefe_inventario' && (
-            <>
-              {/* Separador de Orden de trabajo */}
-              {isSidebarOpen && (
-                <div className="pt-4 pb-2">
-                  <p className="text-xs font-semibold text-secondary-500 uppercase tracking-wider px-3">
-                    Orden de trabajo
-                  </p>
+            <NavGroup title="Orden de Trabajo" icon={FaClipboardList} id="ots" badgeCount={unreadOTs + unreadCompras}>
+              <Link to="/ordenes-trabajo" onClick={handleNavClick} className="flex items-center gap-3 p-2 rounded-lg hover:bg-indigo-50 text-secondary-600 hover:text-indigo-700 transition-colors justify-between">
+                <div className="flex items-center gap-3">
+                  <FaClipboardList size={14} /> <span className="text-sm">Órdenes</span>
                 </div>
-              )}
-
-              {/* Órdenes de Trabajo */}
-              <Link
-                to="/ordenes-trabajo"
-                onClick={handleNavClick}
-                className={`flex items-center gap-3 hover:bg-indigo-50 hover:text-indigo-700 transition-all duration-200 rounded-xl ${
-                  !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
-                }`}
-              >
-                {isSidebarOpen ? (
-                  <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-                    <FaClipboardList size={16} className="text-indigo-600" />
-                  </div>
-                ) : (
-                  <FaClipboardList size={18} className="text-indigo-600" />
-                )}
-                {isSidebarOpen && <span className="font-medium">Órdenes de Trabajo</span>}
-                
-                {/* CONTADOR EN SIDEBAR */}
-                {isSidebarOpen && unreadOTs > 0 && (
-                  <span className="ml-auto bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
+                {unreadOTs > 0 && (
+                  <span className="bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                     {unreadOTs}
                   </span>
                 )}
               </Link>
-
-              {/* Calendario de Trabajo */}
-              <Link
-                to="/ordenes-trabajo/calendario"
-                onClick={handleNavClick}
-                className={`flex items-center gap-3 hover:bg-indigo-50 hover:text-indigo-700 transition-all duration-200 rounded-xl ${
-                  !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
-                }`}
-              >
-                {isSidebarOpen ? (
-                  <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-                    <FaCalendarAlt size={16} className="text-indigo-600" />
-                  </div>
-                ) : (
-                  <FaCalendarAlt size={18} className="text-indigo-600" />
-                )}
-                {isSidebarOpen && <span className="font-medium">Calendario</span>}
+              <Link to="/ordenes-trabajo/calendario" onClick={handleNavClick} className="flex items-center gap-3 p-2 rounded-lg hover:bg-indigo-50 text-secondary-600 hover:text-indigo-700 transition-colors">
+                <FaCalendarAlt size={14} /> <span className="text-sm">Calendario</span>
               </Link>
-
-              {/* Compras (Nuevo ítem dentro de Orden de Trabajo) */}
-              <Link
-                to="/compras"
-                onClick={handleNavClick}
-                className={`flex items-center gap-3 hover:bg-orange-50 hover:text-orange-700 transition-all duration-200 rounded-xl ${
-                  !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
-                }`}
-              >
-                {isSidebarOpen ? (
-                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <FaShoppingCart size={16} className="text-orange-600" />
-                  </div>
-                ) : (
-                  <FaShoppingCart size={18} className="text-orange-600" />
-                )}
-                {isSidebarOpen && <span className="font-medium">Compras</span>}
-
-                {/* CONTADOR DE COMPRAS */}
-                {isSidebarOpen && unreadCompras > 0 && (
-                  <span className="ml-auto bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
+              <Link to="/compras" onClick={handleNavClick} className="flex items-center gap-3 p-2 rounded-lg hover:bg-orange-50 text-secondary-600 hover:text-orange-700 transition-colors justify-between">
+                <div className="flex items-center gap-3">
+                  <FaShoppingCart size={14} /> <span className="text-sm">Compras</span>
+                </div>
+                {unreadCompras > 0 && (
+                  <span className="bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                     {unreadCompras}
                   </span>
                 )}
               </Link>
-            </>
+            </NavGroup>
           )}
-          {/* --- FIN SECCIÓN ORDEN DE TRABAJO --- */}
-
-          {/* Asignar OT eliminado: las OTs se asignan al crear */}
 
           {/* --- SECCIÓN GESTIÓN (Admin) --- */}
           {user && (user.rol === 'admin' || user.rol === 'superadmin' || user.rol === 'administracion') && (
-            <>
-              {isSidebarOpen && (
-                <div className="pt-4 pb-2">
-                  <p className="text-xs font-semibold text-secondary-500 uppercase tracking-wider px-3">
-                    Gestión
-                  </p>
-                </div>
-              )}
-              {/* Clientes */}
-              <Link
-                to="/clientes"
-                onClick={handleNavClick}
-                className={`flex items-center gap-3 hover:bg-primary-50 hover:text-primary-700 transition-all duration-200 rounded-xl ${
-                  !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
-                }`}
-              >
-                {isSidebarOpen ? (
-                  <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
-                    <FaUsers size={16} className="text-primary-600" />
-                  </div>
-                ) : (
-                  <FaUsers size={18} className="text-primary-600" />
-                )}
-                {isSidebarOpen && <span className="font-medium">Clientes</span>}
+            <NavGroup title="Gestión" icon={FaCogs} id="gestion">
+              <Link to="/clientes" onClick={handleNavClick} className="flex items-center gap-3 p-2 rounded-lg hover:bg-primary-50 text-secondary-600 hover:text-primary-700 transition-colors">
+                <FaUsers size={14} /> <span className="text-sm">Clientes</span>
               </Link>
-              {/* Proveedores */}
-              <Link
-                to="/proveedores"
-                onClick={handleNavClick}
-                className={`flex items-center gap-3 hover:bg-teal-50 hover:text-teal-700 transition-all duration-200 rounded-xl ${
-                  !isSidebarOpen ? 'justify-center py-3 px-1' : 'p-3'
-                }`}
-              >
-                {isSidebarOpen ? (
-                  <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center">
-                    <FaTruck size={16} className="text-teal-600" />
-                  </div>
-                ) : (
-                  <FaTruck size={18} className="text-teal-600" />
-                )}
-                {isSidebarOpen && <span className="font-medium">Proveedores</span>}
+              <Link to="/proveedores" onClick={handleNavClick} className="flex items-center gap-3 p-2 rounded-lg hover:bg-teal-50 text-secondary-600 hover:text-teal-700 transition-colors">
+                <FaTruck size={14} /> <span className="text-sm">Proveedores</span>
               </Link>
-            </>
+            </NavGroup>
           )}
 
           {/* Perfil - Todos los usuarios */}
@@ -455,7 +293,7 @@ export default function DashboardLayout() {
               </p>
               <p className="font-semibold text-secondary-800">{user.nombre}</p>
               <p className="text-xs text-secondary-500 mt-1">
-                {user.rol === 'superadmin' ? '⚡ Super Admin' : user.rol === 'admin' ? '👑 Administrador' : user.rol === 'jefe_inventario' ? '📦 Jefe de Inventario' : user.rol === 'administracion' ? '💼 Administración' : user.rol === 'tecnico' ? '🔧 Técnico' : '👷 Trabajador'}
+                {user.rol === 'superadmin' ? '⚡ Super Admin' : user.rol === 'admin' ? '👑 Administrador' : user.rol === 'jefe_inventario' ? '📦 Jefe de Inventario' : user.rol === 'administracion' ? '💼 Administración' : user.rol === 'tecnico' ? '🔧 Técnico' : user.rol === 'ingeniero' ? '📐 Ingeniero' : '👷 Trabajador'}
               </p>
             </div>
           )}

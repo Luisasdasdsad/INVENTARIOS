@@ -282,5 +282,5 @@ export const generarReporteMovimientos = (movimientosFiltrados = []) => {
   );
 
   // 🔹 Guardar PDF
-  doc.save(`reporte_movimientos_${fecha}.pdf`);
+  doc.save(`Reporte_Movimientos_${fecha}.pdf`);
 };

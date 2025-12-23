@@ -145,7 +145,7 @@ const OrdenTrabajoList = () => {
           </h2>
 
           {/* Botón Crear - visible para admin */}
-          {user && user.rol === 'admin' && (
+          {user && (user.rol === 'admin' || user.rol === 'ingeniero') && (
             <Link
               to="/ordenes-trabajo/crear"
               className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm font-medium shadow-sm transition-colors"
@@ -221,7 +221,7 @@ const OrdenTrabajoList = () => {
                     </div>
                   )}
                   <p className="mt-1">
-                    <span className="font-semibold">Técnico:</span> {orden.tecnicoAsignado ? orden.tecnicoAsignado.nombre : 'Sin asignar'}
+                    <span className="font-semibold">Responsable:</span> {orden.tecnicoAsignado ? orden.tecnicoAsignado.nombre : 'Sin asignar'}
                   </p>
                   {orden.tecnicoAsignado && (
                     <div className="flex gap-3 mt-1 pl-1">
@@ -248,7 +248,7 @@ const OrdenTrabajoList = () => {
                     </div>
                   )}
                   <p>
-                    <span className="font-semibold">Productos:</span> {orden.productos?.length || 0}
+                    <span className="font-semibold">Productos/Herramientas:</span> {orden.productos?.length || 0}
                   </p>
                   {orden.fechaInicio && (
                     <p>
@@ -312,9 +312,9 @@ const OrdenTrabajoList = () => {
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">N° OT</th>
                     <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Cliente</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Técnico</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Responsable</th>
                     <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Estado</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Productos</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Herramientas/Productos</th>
                     <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Fecha Inicio</th>
                     <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Fecha Fin</th>
                     <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Acciones</th>
@@ -400,7 +400,25 @@ const OrdenTrabajoList = () => {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
-                        {orden.productos?.length || 0}
+                        {orden.productos?.length > 0 ? (
+                          <div className="flex flex-col gap-1">
+                            {orden.productos.map((p, i) => (
+                              <div key={i} className="text-xs truncate max-w-[200px]" title={p.producto?.nombre}>
+                                • {p.producto?.nombre || "Producto eliminado"} (x{p.cantidad})
+                              </div>
+                            ))}
+                          </div>
+                        ) : orden.herramientas?.length > 0 ? (
+                          <div className="flex flex-col gap-1">
+                            {orden.herramientas.map((h, i) => (
+                              <div key={i} className="text-xs truncate max-w-[200px]" title={h.herramienta?.nombre}>
+                                • {h.herramienta?.nombre || "Herramienta eliminada"} (x{h.cantidad})
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          "0"
+                        )}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-500">
                         {formatLocalDate(orden.fechaInicio)}
