@@ -4,6 +4,7 @@ import { FaSearch, FaPlus, FaEdit, FaTrash, FaWhatsapp, FaFileExcel } from "reac
 import Modal from "../../components/Modal/Modal";
 import ProveedorForm from "./ProveedorForm";
 import * as XLSX from 'xlsx'; // 1. Importar la librería para Excel
+import { toast } from 'react-hot-toast';
 
 // --- Componente Principal de la Lista de Proveedores ---
 const ProveedorList = () => {
@@ -57,14 +58,16 @@ const ProveedorList = () => {
     try {
       if (editingProveedor) {
         await api.put(`/proveedores/${editingProveedor._id}`, dataToSend);
+        toast.success("Proveedor actualizado con éxito");
       } else {
         await api.post("/proveedores", dataToSend);
+        toast.success("Proveedor creado con éxito");
       }
       fetchProveedores(); // Recargar la lista
       handleCloseForm();
     } catch (error) {
       console.error("Error al guardar el proveedor:", error);
-      alert(`No se pudo guardar el proveedor: ${error.response?.data?.msg || error.message}`);
+      toast.error(`No se pudo guardar el proveedor: ${error.response?.data?.msg || error.message}`);
     }
     // --- FIN DE LA CORRECCIÓN ---
   };
@@ -73,10 +76,11 @@ const ProveedorList = () => {
     if (window.confirm("¿Estás seguro de que deseas eliminar este proveedor?")) {
       try {
         await api.delete(`/proveedores/${proveedorId}`);
+        toast.success("Proveedor eliminado con éxito");
         fetchProveedores(); // Recargar la lista
       } catch (error) {
         console.error("Error al eliminar el proveedor:", error);
-        alert("No se pudo eliminar el proveedor.");
+        toast.error("No se pudo eliminar el proveedor.");
       }
     }
   };

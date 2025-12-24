@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../services/api.js';
 import PhotoCapture from '../../components/PhotoCapture/PhotoCapture';
+import { toast } from 'react-hot-toast';
 
 export default function ProductoForm({ producto, onSuccess, onCancel }) {
   const [formData, setFormData] = useState({
@@ -72,12 +73,12 @@ export default function ProductoForm({ producto, onSuccess, onCancel }) {
         response = await api.put(`/productos/${producto._id}`, data, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        alert("Producto actualizado con éxito.");
+        toast.success("Producto actualizado con éxito.");
       } else {
         response = await api.post("/productos", data, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        alert("Producto creado con éxito.");
+        toast.success("Producto creado con éxito.");
       }
 
       // Pasamos la respuesta (que contiene el producto creado/actualizado) al callback

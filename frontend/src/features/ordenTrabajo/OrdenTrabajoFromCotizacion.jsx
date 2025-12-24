@@ -128,6 +128,14 @@ const OrdenTrabajoFromCotizacion = () => {
   const handleProductoChange = (index, field, value) => {
     const newProductos = [...productosSeleccionados];
     newProductos[index][field] = value;
+
+    // Validación de stock
+    if (field === 'cantidad' && newProductos[index].producto) {
+      const prodDB = productosDB.find(p => p._id === newProductos[index].producto);
+      if (prodDB && Number(value) > prodDB.stock) {
+        toast.error(`Stock insuficiente: Solo hay ${prodDB.stock} unidades de ${prodDB.nombre}`, { id: 'stock-warning' });
+      }
+    }
     setProductosSeleccionados(newProductos);
   };
 
@@ -137,6 +145,14 @@ const OrdenTrabajoFromCotizacion = () => {
   const handleHerramientaChange = (index, field, value) => {
     const newHerramientas = [...herramientasSeleccionadas];
     newHerramientas[index][field] = value;
+
+    // Validación de stock para herramientas
+    if (field === 'cantidad' && newHerramientas[index].herramienta) {
+      const herrDB = herramientasDB.find(h => h._id === newHerramientas[index].herramienta);
+      if (herrDB && Number(value) > (herrDB.cantidad ?? 0)) {
+        toast.error(`Stock insuficiente: Solo hay ${herrDB.cantidad ?? 0} unidades de ${herrDB.nombre}`, { id: 'stock-warning' });
+      }
+    }
     setHerramientasSeleccionadas(newHerramientas);
   };
 
@@ -177,7 +193,7 @@ const OrdenTrabajoFromCotizacion = () => {
         herramientasSeleccionadas.filter(h => h.herramienta && h.cantidad > 0)
       );
 
-      toast.success("Orden de trabajo creada exitosamente");
+      toast.success("Orden de trabajo creada. Se ha enviado notificación al técnico asignado.");
       navigate("/ordenes-trabajo");
     } catch (error) {
       console.error("Error creando OT:", error);
@@ -277,7 +293,13 @@ const OrdenTrabajoFromCotizacion = () => {
                 {productosSeleccionados.map((p, i) => (
                   <div key={i} className="grid grid-cols-12 gap-2 items-center">
                     <div className="col-span-7">
-                      <select value={p.producto} onChange={e => handleProductoChange(i, 'producto', e.target.value)} className="input-field">
+                      <select value={p.producto} onChange={e => {
+                        handleProductoChange(i, 'producto', e.target.value);
+                        const prod = productosDB.find(pr => pr._id === e.target.value);
+                        if (prod && prod.stock < 1) {
+                          toast.error(`El producto ${prod.nombre} no tiene stock disponible.`);
+                        }
+                      }} className="input-field">
                         <option value="">Seleccionar producto</option>
                         {productosDB.map(prod => <option key={prod._id} value={prod._id}>{prod.nombre}</option>)}
                       </select>
@@ -304,7 +326,13 @@ const OrdenTrabajoFromCotizacion = () => {
                 {herramientasSeleccionadas.map((h, i) => (
                   <div key={i} className="grid grid-cols-12 gap-2 items-center">
                     <div className="col-span-7">
-                      <select value={h.herramienta} onChange={e => handleHerramientaChange(i, 'herramienta', e.target.value)} className="input-field">
+                      <select value={h.herramienta} onChange={e => {
+                        handleHerramientaChange(i, 'herramienta', e.target.value);
+                        const herr = herramientasDB.find(hd => hd._id === e.target.value);
+                        if (herr && (herr.cantidad ?? 0) < 1) {
+                          toast.error(`La herramienta ${herr.nombre} no tiene stock disponible.`);
+                        }
+                      }} className="input-field">
                         <option value="">Seleccionar herramienta</option>
                         {herramientasDB.map(hd => <option key={hd._id} value={hd._id}>{hd.nombre}</option>)}
                       </select>

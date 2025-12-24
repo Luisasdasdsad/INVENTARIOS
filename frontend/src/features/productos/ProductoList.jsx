@@ -7,6 +7,7 @@ import QRDisplay from "../../components/BarcodeDisplay/QRDisplay.jsx";
 import { FaEdit, FaTrash, FaBarcode, FaQrcode, FaPlus, FaEye, FaPrint, FaFileExcel } from "react-icons/fa";
 import * as XLSX from 'xlsx';
 import { useAuth } from "../../contexts/AuthContext";
+import { toast } from 'react-hot-toast';
 
 export default function ProductoList() {
   const [productos, setProductos] = useState([]);
@@ -78,7 +79,7 @@ export default function ProductoList() {
     try {
       await api.delete(`/productos/${id}`);
       setProductos(productos.filter((p) => p._id !== id));
-      alert("Producto eliminado con éxito.");
+      toast.success("Producto eliminado con éxito.");
     } catch (err) {
       setError(err.response?.data?.message || "Error al eliminar producto");
       console.error("Error al eliminar producto:", err);
@@ -106,7 +107,7 @@ export default function ProductoList() {
     setGeneratingBarcode(true);
     try {
       const res = await api.post(`/productos/generar-barcode/${producto._id}`);
-      alert('Código de barras generado exitosamente');
+      toast.success('Código de barras generado exitosamente');
       fetchProductos();
       if (selectedProducto?._id === producto._id) {
         setSelectedProducto(res.data.producto);
@@ -123,7 +124,7 @@ export default function ProductoList() {
     setGeneratingQR(true);
     try {
       const res = await api.post(`/qr/producto/${producto._id}`);
-      alert(`Código QR generado exitosamente: ${res.data.qrCode}`);
+      toast.success(`Código QR generado exitosamente: ${res.data.qrCode}`);
       fetchProductos();
       if (selectedProducto?._id === producto._id) {
         setSelectedProducto(res.data.producto);
@@ -148,7 +149,7 @@ export default function ProductoList() {
     setGeneratingBarcode(true);
     try {
       const res = await api.post('/productos/generar-barcode-masivo');
-      alert(`Códigos de barras generados para ${res.data.productos.length} productos`);
+      toast.success(`Códigos de barras generados para ${res.data.productos.length} productos`);
       fetchProductos();
     } catch (err) {
       setError(err.response?.data?.error || 'Error al generar códigos masivos');
@@ -165,7 +166,7 @@ export default function ProductoList() {
     setGeneratingQR(true);
     try {
       const res = await api.post('/qr/masivo/productos');
-      alert(`Códigos QR generados para ${res.data.productos.length} productos`);
+      toast.success(`Códigos QR generados para ${res.data.productos.length} productos`);
       fetchProductos();
     } catch (err) {
       setError(err.response?.data?.error || 'Error al generar QR masivos');

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../../services/api.js';
+import { toast } from 'react-hot-toast';
 
 export default function HerramientaForm({ herramienta, herramientasExistentes = [], onSuccess, onCancel }) {
   const [formData, setFormData] = useState({
@@ -215,7 +216,7 @@ export default function HerramientaForm({ herramienta, herramientasExistentes = 
           setCapturedImage(URL.createObjectURL(blob));
           setFoto(blob); // También guardamos el blob por si necesitas usarlo
           setError('');
-          alert('Foto capturada y subida exitosamente');
+          toast.success('Foto capturada y subida exitosamente');
           stopCamera(); // Cerramos la cámara después de capturar
         } catch (err) {
           setError('Error al subir la foto: ' + (err.response?.data?.msg || err.message));
@@ -268,7 +269,7 @@ export default function HerramientaForm({ herramienta, herramientasExistentes = 
       let response;
       if (herramienta) {
         response = await api.put(`/herramientas/${herramienta._id}`, data);
-        alert("Herramienta actualizada con éxito.");
+        toast.success("Herramienta actualizada con éxito.");
       } else {
         response = await api.post("/herramientas", data);
         const res = response; // Mantener referencia para lógica existente
@@ -281,13 +282,13 @@ export default function HerramientaForm({ herramienta, herramientasExistentes = 
               api.post(`/barcode/generar/${newId}`),
               api.post(`/qr/herramienta/${newId}`)
             ]);
-            alert("Herramienta creada con éxito (Códigos generados automáticamente).");
+            toast.success("Herramienta creada con éxito (Códigos generados automáticamente).");
           } catch (codeErr) {
             console.error("Error generando códigos automáticos:", codeErr);
-            alert("Herramienta creada, pero hubo un error al generar los códigos automáticamente.");
+            toast.error("Herramienta creada, pero hubo un error al generar los códigos automáticamente.");
           }
         } else {
-          alert("Herramienta creada con éxito.");
+          toast.success("Herramienta creada con éxito.");
         }
       }
 

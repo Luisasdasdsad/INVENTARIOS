@@ -105,6 +105,7 @@ export default function PerfilForm() {
       case 'superadmin': return 'Super Admin';
       case 'admin': return 'Administrador'; // Rol válido
       case 'tecnico': return 'Técnico'; // Rol válido
+      case 'ingeniero': return 'Ingeniero'; // Rol válido
       case 'trabajador': return 'Trabajador'; // Rol válido
       case 'jefe_inventario': return 'Jefe de Inventario'; // Rol válido
       case 'administracion': return 'Administración'; // Rol válido
@@ -529,6 +530,7 @@ export default function PerfilForm() {
               >
                 <option value="trabajador">Trabajador</option>
                 <option value="tecnico">Técnico</option>
+                <option value="ingeniero">Ingeniero</option>
                 <option value="admin">Admin</option>
                 <option value="jefe_inventario">Jefe de Inventario</option>
                 <option value="administracion">Administración</option>

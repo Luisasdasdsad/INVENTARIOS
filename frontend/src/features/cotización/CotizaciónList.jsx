@@ -4,6 +4,7 @@ import api from "../../services/api";
 import { FaEdit, FaTrash, FaPlus, FaSearch, FaFilePdf, FaWhatsapp, FaFileInvoice } from "react-icons/fa";
 import generarReporteCotizacion from "../../utils/generarReporteCotización"; // Para cotizaciones
 import { generarFactura } from "../../utils/generarFactura"; // NUEVO: Para facturas
+import { toast } from 'react-hot-toast';
 
 const CotizaciónList = () => {
   const [cotizaciones, setCotizaciones] = useState([]);
@@ -46,9 +47,10 @@ const CotizaciónList = () => {
       try {
         await api.delete(`/cotizaciones/${id}`);
         setCotizaciones(cotizaciones.filter((c) => c._id !== id));
+        toast.success("Cotización eliminada");
       } catch (err) {
         console.error("Error al eliminar cotización:", err);
-        alert(err.response?.data?.msg || "Error al eliminar la cotización");
+        toast.error(err.response?.data?.msg || "Error al eliminar la cotización");
       }
     }
   };
@@ -69,10 +71,10 @@ const CotizaciónList = () => {
       setCotizaciones(cotizaciones.map(c => 
         c._id === cotizacionId ? res.data : c
       ));
-      alert(`Cotización marcada como ${nuevoEstado}`);
+      toast.success(`Cotización marcada como ${nuevoEstado}`);
     } catch (error) {
       console.error("Error al actualizar el estado:", error);
-      alert(error.response?.data?.msg || "Error al cambiar el estado de la cotización");
+      toast.error(error.response?.data?.msg || "Error al cambiar el estado de la cotización");
     }
   };
 
@@ -87,21 +89,21 @@ const CotizaciónList = () => {
       const res = await api.post("/facturas", { cotizacionId: cotizacion._id });
       const nuevaFactura = res.data;
 
-      alert(`Factura ${nuevaFactura.numeroFactura} creada exitosamente.`);
+      toast.success(`Factura ${nuevaFactura.numeroFactura} creada exitosamente.`);
 
       // El backend ya cambia el estado, solo necesitamos actualizar el frontend
       fetchCotizaciones(); // Recargamos la lista para ver el estado "Facturada"
 
     } catch (error) {
       console.error("Error al generar la factura:", error);
-      alert("Error al generar la factura: " + (error.response?.data?.msg || error.message));
+      toast.error("Error al generar la factura: " + (error.response?.data?.msg || error.message));
     }
   };
 
   // NUEVO: Handler para ver la factura en PDF
   const handleVerFactura = async (cotizacion) => {
     if (!cotizacion.factura) {
-      alert("Esta cotización no tiene una factura asociada para mostrar.");
+      toast.error("Esta cotización no tiene una factura asociada para mostrar.");
       return;
     }
   
@@ -144,7 +146,7 @@ const CotizaciónList = () => {
       await generarFactura(datosParaPdf);
     } catch (error) {
       console.error("Error al generar el PDF de la factura:", error);
-      alert("No se pudo generar el PDF de la factura.");
+      toast.error("No se pudo generar el PDF de la factura.");
     }
   };
 

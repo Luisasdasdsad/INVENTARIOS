@@ -1,4 +1,5 @@
 import Evento from '../models/evento.model.js';
+import User from '../models/usuario.model.js';
 
 // Obtener todos los eventos
 export const getEventos = async (req, res) => {
@@ -7,6 +8,16 @@ export const getEventos = async (req, res) => {
         res.json(eventos);
     } catch (error) {
         res.status(500).json({ msg: 'Error al obtener eventos', error: error.message });
+    }
+};
+
+// Obtener usuarios para la agenda (Nombre, Rol y Estado) - Accesible para todos
+export const getUsuariosAgenda = async (req, res) => {
+    try {
+        const usuarios = await User.find({}, 'nombre rol estadoLaboral email');
+        res.json(usuarios);
+    } catch (error) {
+        res.status(500).json({ msg: 'Error al obtener usuarios para agenda', error: error.message });
     }
 };
 

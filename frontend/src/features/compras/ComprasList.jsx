@@ -3,6 +3,7 @@ import api from "../../services/api";
 import Modal from "../../components/Modal/Modal";
 import { FaPlus, FaCheck, FaTimes, FaFileInvoiceDollar, FaSearch, FaShoppingCart, FaEye, FaUpload, FaImage, FaTrash, FaEdit, FaPaperclip } from "react-icons/fa";
 import { useAuth } from "../../contexts/AuthContext";
+import { toast } from 'react-hot-toast';
 
 export default function ComprasList() {
   const [compras, setCompras] = useState([]);
@@ -123,7 +124,7 @@ export default function ComprasList() {
       setItems(newItems);
     } catch (error) {
       console.error("Error upload:", error);
-      alert("Error subiendo foto del item. Asegúrate de que sea una imagen válida.");
+      toast.error("Error subiendo foto del item. Asegúrate de que sea una imagen válida.");
     }
   };
 
@@ -144,7 +145,7 @@ export default function ComprasList() {
         console.error("Error upload:", error);
         // Mostrar el mensaje exacto que devuelve el backend (ej: API no habilitada)
         const errorMsg = error.response?.data?.error || error.response?.data?.msg || "Error subiendo archivo a Drive.";
-        alert(`Error: ${errorMsg}`);
+        toast.error(`Error: ${errorMsg}`);
         return null;
       }
     }
@@ -165,11 +166,13 @@ export default function ComprasList() {
         const hasItems = items && items.length > 0 && items.some(i => i.nombre.trim());
         
         if (!hasItems && !archivoUrl) {
-          return alert("Debes agregar al menos un ítem o subir un archivo con la lista.");
+          toast.error("Debes agregar al menos un ítem o subir un archivo con la lista.");
+          return;
         }
 
         if (hasItems && items.some(i => i.nombre && i.cantidad <= 0)) {
-           return alert("Los items deben tener cantidad mayor a 0.");
+           toast.error("Los items deben tener cantidad mayor a 0.");
+           return;
         }
 
         // Preparamos el payload evitando enviar campos vacíos que puedan romper el backend
@@ -178,23 +181,28 @@ export default function ComprasList() {
 
         const res = await api.post('/compras/requerimiento', payload);
         setCompras(prev => [res.data, ...prev]); // Agregamos al inicio de la lista visualmente
+        toast.success("Requerimiento creado. Se notificará al encargado de cotizar.");
       } else if (modalStep === 'cotizar') {
         const res = await api.put(`/compras/${selectedCompra._id}/cotizar`, { 
           items, 
           proveedorNombre: formData.proveedorNombre
         });
         setCompras(prev => prev.map(c => c._id === res.data._id ? res.data : c)); // Actualizamos el item en la lista
+        toast.success("Cotización registrada. Se notificará al aprobador.");
       } else if (modalStep === 'editar') {
-        if (!items || items.length === 0) return alert("Debes tener al menos un ítem.");
+        if (!items || items.length === 0) {
+          toast.error("Debes tener al menos un ítem.");
+          return;
+        }
         const res = await api.put(`/compras/${selectedCompra._id}`, { ...formData, items });
         setCompras(prev => prev.map(c => c._id === res.data._id ? res.data : c)); // Actualizamos el item en la lista
+        toast.success("Requerimiento actualizado correctamente.");
       }
       setShowModal(false);
       // fetchCompras(); // YA NO ES NECESARIO RECARGAR TODO
-      alert("Proceso guardado exitosamente");
     } catch (error) {
       console.error(error);
-      alert("Error al guardar");
+      toast.error("Error al guardar");
     }
   };
 
@@ -203,16 +211,17 @@ export default function ComprasList() {
     try {
       await api.delete(`/compras/${id}`);
       setCompras(prev => prev.filter(c => c._id !== id)); // Eliminamos visualmente al instante
-      alert("Requerimiento eliminado");
+      toast.success("Requerimiento eliminado");
     } catch (error) {
       console.error(error);
-      alert("Error al eliminar");
+      toast.error("Error al eliminar");
     }
   };
 
   const handleAprobar = async (decision) => {
     if (decision === 'rechazado' && !evaluacionComentario.trim()) {
-      return alert("Por favor, ingrese una justificación en los comentarios para rechazar la solicitud.");
+      toast.error("Por favor, ingrese una justificación en los comentarios para rechazar la solicitud.");
+      return;
     }
 
     if(!window.confirm(`¿Seguro que deseas ${decision} esta compra?`)) return;
@@ -220,8 +229,9 @@ export default function ComprasList() {
       const res = await api.put(`/compras/${selectedCompra._id}/evaluar`, { decision, comentarios: evaluacionComentario || 'Evaluado por gerencia' });
       setCompras(prev => prev.map(c => c._id === res.data._id ? res.data : c)); // Actualizamos estado visualmente
       setShowModal(false);
+      toast.success(`Compra ${decision === 'aprobado' ? 'aprobada' : 'rechazada'}. Se notificará al solicitante.`);
     } catch (error) {
-      alert("Error al evaluar");
+      toast.error("Error al evaluar");
     }
   };
 

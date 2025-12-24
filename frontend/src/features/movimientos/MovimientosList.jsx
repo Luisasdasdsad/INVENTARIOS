@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../services/api.js';
 import { FaFilePdf, FaSignInAlt, FaSignOutAlt, FaDownload, FaRedo, FaPrint } from 'react-icons/fa';
 import { generarReporteMovimientos as generarReporteMovimientosPDF, generarReporteMovimientoIndividual } from '../../utils/generarReporteMovimiento.js';
+import { toast } from 'react-hot-toast';
 
 
 export default function MovimientosList() {
@@ -100,7 +101,7 @@ export default function MovimientosList() {
     }
 
     if (movimientosFiltrados.length === 0) {
-      alert("No hay movimientos que coincidan con los filtros seleccionados.");
+      toast.error("No hay movimientos que coincidan con los filtros seleccionados.");
       return;
     }
 

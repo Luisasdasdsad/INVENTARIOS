@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import api from "../../services/api";
 import { FaFilePdf, FaSearch, FaPaperPlane, FaCheckCircle, FaTimesCircle, FaHourglassHalf } from "react-icons/fa";
 import { generarFactura } from "../../utils/generarFactura";
+import { toast } from 'react-hot-toast';
 
 const FacturaList = () => {
   const [facturas, setFacturas] = useState([]);
@@ -85,7 +86,7 @@ const FacturaList = () => {
 
     } catch (error) {
       console.error("Error al imprimir la factura:", error);
-      alert("No se pudo generar el PDF de la factura.");
+      toast.error("No se pudo generar el PDF de la factura.");
     }
   };
 
@@ -103,11 +104,11 @@ const FacturaList = () => {
       // Actualiza la lista de facturas con la respuesta final del backend
       setFacturas(facturas.map(f => f._id === facturaId ? facturaActualizada : f));
 
-      alert(`Factura enviada. Estado SUNAT: ${facturaActualizada.estadoSunat}`);
+      toast.success(`Factura enviada. Estado SUNAT: ${facturaActualizada.estadoSunat}`);
 
     } catch (error) {
       console.error("Error al enviar a SUNAT:", error);
-      alert(`Error: ${error.response?.data?.message || 'No se pudo enviar la factura.'}`);
+      toast.error(`Error: ${error.response?.data?.message || 'No se pudo enviar la factura.'}`);
       // Vuelve a cargar los datos para reflejar el estado de error guardado en el backend
       fetchFacturas(); 
     }

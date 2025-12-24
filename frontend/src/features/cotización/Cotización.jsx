@@ -5,6 +5,7 @@ import ClienteForm from "../clientes/ClienteForm";
 import generarReporteCotizacion from "../../utils/generarReporteCotización";
 import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 import { useAuth } from "../../contexts/AuthContext";
+import { toast } from 'react-hot-toast';
 
 const Cotización = () => {
   const location = useLocation();
@@ -135,6 +136,21 @@ const Cotización = () => {
     nuevos[index].igv = pUnit * 0.18;
     nuevos[index].vUnit = pUnit - nuevos[index].igv;
     nuevos[index].total = pUnit * cantidad;
+
+    // Validación de Stock (Solo advertencia)
+    if (campo === 'cantidad') {
+      if (nuevos[index].producto) {
+        const prodDB = productosDB.find(p => p._id === nuevos[index].producto);
+        if (prodDB && Number(nuevoValor) > prodDB.stock) {
+          toast.error(`Stock insuficiente: Solo hay ${prodDB.stock} unidades de ${prodDB.nombre}`, { id: 'stock-warning' });
+        }
+      } else if (nuevos[index].herramienta) {
+        const herrDB = herramientasDB.find(h => h._id === nuevos[index].herramienta);
+        if (herrDB && Number(nuevoValor) > (herrDB.cantidad ?? 0)) {
+          toast.error(`Stock insuficiente: Solo hay ${herrDB.cantidad ?? 0} unidades de ${herrDB.nombre}`, { id: 'stock-warning' });
+        }
+      }
+    }
     setProductos(nuevos);
   };
 
@@ -167,7 +183,7 @@ const Cotización = () => {
     } catch (error) {
       console.error("Error al obtener tipo de cambio SUNAT:", error);
       if (showError) {
-        alert("No se pudo obtener el T.C. de SUNAT automáticamente. Por favor ingréselo manualmente.");
+        toast.error("No se pudo obtener el T.C. de SUNAT automáticamente. Por favor ingréselo manualmente.");
       }
     } finally {
       setLoadingSunat(false);
@@ -189,7 +205,7 @@ const Cotización = () => {
   // === Guardar cotización ===
   const guardarCotizacion = async () => {
     if (!clienteSeleccionado) {
-      alert("Selecciona un cliente");
+      toast.error("Selecciona un cliente");
       return;
     }
 
@@ -226,20 +242,20 @@ const Cotización = () => {
     try {
       if (isEditing && cotizacionEdit) {
         await api.put(`/cotizaciones/${cotizacionEdit._id}`, cotizacionData);
-        alert("Cotización actualizada exitosamente");
+        toast.success("Cotización actualizada exitosamente");
       } else {
         const response = await api.post("/cotizaciones", cotizacionData);
         setNumeroCotizacion(response.data.numeroCotizacion); // Mantener por si acaso
-        alert("Cotización guardada exitosamente");
+        toast.success("Cotización guardada exitosamente");
       }
       // Redireccionar después de guardar
       navigate('/cotizaciones'); 
     } catch (error) {
       console.error("Error al guardar cotización:", error);
       if (error.response?.status === 400 && error.response?.data?.msg?.includes("duplicate key")) {
-        alert("El número de cotización ya existe. Por favor, usa un número único.");
+        toast.error("El número de cotización ya existe. Por favor, usa un número único.");
       } else {
-        alert("Error al guardar la cotización: " + (error.response?.data?.msg || error.message));
+        toast.error("Error al guardar la cotización: " + (error.response?.data?.msg || error.message));
       }
     }
   };
@@ -248,7 +264,7 @@ const Cotización = () => {
   const generarPDF = async () => {
     // Verificar si ya está guardada la cotización
     if (!numeroCotizacion) {
-      alert("Debe guardar la cotización antes de generar el PDF");
+      toast.error("Debe guardar la cotización antes de generar el PDF");
       return;
     }
 
@@ -394,7 +410,7 @@ const Cotización = () => {
       {/* --- Datos de Cotización --- */}
       <section className="bg-white border rounded-xl shadow-sm p-4 mb-6">
         <h2 className="font-semibold text-gray-700 mb-3 text-lg">Información</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <div>
             <label className="text-sm text-gray-600">Fecha</label>
             <input
@@ -493,7 +509,7 @@ const Cotización = () => {
               className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <div className="col-span-2 md:col-span-4">
+          <div className="col-span-1 sm:col-span-2 md:col-span-4">
             <label className="text-sm text-gray-600">Descripción del Servicio</label>
             <textarea
               rows="2"
@@ -661,11 +677,14 @@ const Cotización = () => {
           <h3 className="text-sm font-medium text-gray-700 mb-3">Agregar Ítem</h3>
           <div className="flex flex-col md:flex-row gap-3">
             <select
-              className="flex-1 border p-2 rounded-md focus:ring-2 focus:ring-blue-500 text-sm"
+              className="flex-1 w-full border p-2 rounded-md focus:ring-2 focus:ring-blue-500 text-sm"
               onChange={(e) => {
                 const prod = productosDB.find((p) => p._id === e.target.value);
                 if (prod) {
                   const pUnit = prod.precioUnitario || 0;
+                  if (prod.stock < 1) {
+                    toast.error(`Advertencia: El producto ${prod.nombre} no tiene stock disponible.`, { duration: 4000 });
+                  }
                   const cantidad = 1;
                   const igv = pUnit * 0.18;
                   const vUnit = pUnit - igv;
@@ -687,10 +706,13 @@ const Cotización = () => {
             </select>
 
             <select
-              className="flex-1 border p-2 rounded-md focus:ring-2 focus:ring-blue-500 text-sm"
+              className="flex-1 w-full border p-2 rounded-md focus:ring-2 focus:ring-blue-500 text-sm"
               onChange={(e) => {
                 const herramienta = herramientasDB.find((h) => h._id === e.target.value);
                 if (herramienta) {
+                  if ((herramienta.cantidad ?? 0) < 1) {
+                    toast.error(`Advertencia: La herramienta ${herramienta.nombre} no tiene stock disponible.`, { duration: 4000 });
+                  }
                   const pUnit = herramienta.precio || 0;
                   const cantidad = 1;
                   const igv = pUnit * 0.18;

@@ -12,11 +12,30 @@ export const getUsuarios = async (req, res) => {
 export const updateUsuario = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombre, email, rol, telefono, celular, direccion } = req.body;
+        const { nombre, email, rol, telefono, celular, direccion, estadoLaboral } = req.body;
+
+        // Validar permisos: Admin o el mismo usuario
+        const esAdmin = req.user.rol === 'admin' || req.user.rol === 'superadmin';
+        const esMismoUsuario = req.user.id === id;
+
+        if (!esAdmin && !esMismoUsuario) {
+            return res.status(403).json({ msg: 'No tienes permiso para editar este usuario' });
+        }
+
+        // Construir objeto de actualización
+        const updateData = { nombre, email, telefono, celular, direccion, estadoLaboral };
+
+        // Solo admin puede cambiar el rol
+        if (esAdmin && rol) {
+            updateData.rol = rol;
+        }
+
+        // Eliminar campos undefined para evitar sobrescribir con null
+        Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
 
         const usuario = await User.findByIdAndUpdate(
             id,
-            { nombre, email, rol, telefono, celular, direccion },
+            updateData,
             { new: true, select: '-password' }
         );
 

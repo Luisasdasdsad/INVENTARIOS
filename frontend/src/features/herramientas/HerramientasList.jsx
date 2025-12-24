@@ -7,6 +7,7 @@ import QRDisplay from "../../components/BarcodeDisplay/QRDisplay.jsx";
 import { FaEdit, FaTrash, FaBarcode, FaQrcode, FaPlus, FaEye, FaChevronLeft, FaChevronRight, FaPrint, FaFileExcel } from "react-icons/fa";
 import * as XLSX from 'xlsx';
 import { useAuth } from "../../contexts/AuthContext";
+import { toast } from 'react-hot-toast';
 
 export default function HerramientasList() {
   const [herramientas, setHerramientas] = useState([]);
@@ -76,7 +77,7 @@ export default function HerramientasList() {
     try {
       await api.delete(`/herramientas/${id}`);
       setHerramientas(herramientas.filter((h) => h._id !== id));
-      alert("Herramienta eliminada con éxito.");
+      toast.success("Herramienta eliminada con éxito.");
     } catch (err) {
       setError(err.response?.data?.message || "Error al eliminar herramienta");
       console.error("Error al eliminar herramienta:", err);
@@ -104,7 +105,7 @@ export default function HerramientasList() {
     setGeneratingBarcode(true);
     try {
       const res = await api.post(`/barcode/generar/${herramienta._id}`);
-      alert('Código de barras generado exitosamente');
+      toast.success('Código de barras generado exitosamente');
       fetchHerramientas();
       if (selectedHerramienta?._id === herramienta._id) {
         setSelectedHerramienta(res.data.herramienta);
@@ -121,7 +122,7 @@ export default function HerramientasList() {
     setGeneratingQR(true);
     try {
       const res = await api.post(`/qr/herramienta/${herramienta._id}`);
-      alert(`Código QR generado exitosamente: ${res.data.qrCode}`);
+      toast.success(`Código QR generado exitosamente: ${res.data.qrCode}`);
       fetchHerramientas();
       if (selectedHerramienta?._id === herramienta._id) {
         setSelectedHerramienta(res.data.herramienta);
@@ -285,7 +286,7 @@ export default function HerramientasList() {
     setGeneratingBarcode(true);
     try {
       const res = await api.post('/barcode/generar-masivo');
-      alert(`Códigos de barras generados para ${res.data.herramientas.length} herramientas`);
+      toast.success(`Códigos de barras generados para ${res.data.herramientas.length} herramientas`);
       fetchHerramientas();
     } catch (err) {
       setError(err.response?.data?.error || 'Error al generar códigos masivos');
@@ -302,7 +303,7 @@ export default function HerramientasList() {
     setGeneratingQR(true);
     try {
       const res = await api.post('/qr/masivo/herramientas');
-      alert(`Códigos QR generados para ${res.data.herramientas.length} herramientas`);
+      toast.success(`Códigos QR generados para ${res.data.herramientas.length} herramientas`);
       fetchHerramientas();
     } catch (err) {
       setError(err.response?.data?.error || 'Error al generar QR masivos');

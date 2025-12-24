@@ -86,6 +86,7 @@ export default function RegistrarMovimientoPage() {
         barcode: codigo,
         qrCode: '',
         cantidad: 1,
+        stockDisponible: toolLocal.cantidad,
         tipo: 'herramienta'
       }]);
       setFormData(prev => ({ ...prev, herramienta: '', barcode: '', qrCode: '' }));
@@ -101,6 +102,7 @@ export default function RegistrarMovimientoPage() {
         barcode: codigo,
         qrCode: '',
         cantidad: 1,
+        stockDisponible: prodLocal.stock,
         tipo: 'producto'
       }]);
       setFormData(prev => ({ ...prev, herramienta: '', barcode: '', qrCode: '' }));
@@ -126,6 +128,7 @@ export default function RegistrarMovimientoPage() {
       barcode: codigo,
       qrCode: '',
       cantidad: 1, // Default cantidad
+      stockDisponible: herramienta.cantidad !== undefined ? herramienta.cantidad : herramienta.stock,
       tipo: 'herramienta'
     }]);
 
@@ -157,9 +160,7 @@ export default function RegistrarMovimientoPage() {
   }
 };
 
-    
     // Alert de éxito
-
 
   const handleChange = e => {
     const { name, value } = e.target;
@@ -184,6 +185,7 @@ export default function RegistrarMovimientoPage() {
           barcode: '',
           qrCode: '',
           cantidad: 1, // Default cantidad
+          stockDisponible: herramienta.cantidad,
           tipo: 'herramienta'
         }]);
       } else if (producto) {
@@ -194,6 +196,7 @@ export default function RegistrarMovimientoPage() {
           barcode: '',
           qrCode: '',
           cantidad: 1,
+          stockDisponible: producto.stock,
           tipo: 'producto'
         }]);
       }
@@ -294,6 +297,7 @@ const handleBarcodeManualChange = e => {
           qrCode: herramienta.qrCode || qrCode,
           barcode: '',
           cantidad: 1,
+          stockDisponible: herramienta.tipo === 'producto' ? herramienta.stock : herramienta.cantidad,
           tipo: herramienta.tipo || 'herramienta'
         }]);
         setFormData(prev => ({ ...prev, qrCode: '', herramienta: '', barcode: '' }));
@@ -474,7 +478,7 @@ const handleBarcodeManualChange = e => {
                       <strong>{h.nombre}</strong> {h.codigo ? `(${h.codigo})` : ''} <span className="text-xs bg-gray-200 px-1 rounded">{h.tipo === 'producto' ? 'Prod' : 'Herr'}</span>
                     </p>
                     <p className="text-green-700 text-sm">
-                      Cantidad disponible: {h.cantidad} {h.unidad}
+                      Cantidad disponible: {h.stockDisponible} {h.unidad}
                     </p>
                     {h.barcode && (
                       <p className="text-green-700 text-sm">

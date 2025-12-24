@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { toast } from 'react-hot-toast';
 
 const GestionUsuarios = () => {
   const [users, setUsers] = useState([]);
@@ -34,11 +35,12 @@ const GestionUsuarios = () => {
       
       // Actualizar el estado local para reflejar el cambio inmediatamente
       setUsers(users.map(u => (u._id === userId ? response.data : u)));
+      toast.success('Rol actualizado correctamente');
       
     } catch (err) {
       console.error('Error al actualizar el rol:', err);
       // Opcional: mostrar un mensaje de error al usuario
-      alert(err.response?.data?.msg || 'No se pudo actualizar el rol.');
+      toast.error(err.response?.data?.msg || 'No se pudo actualizar el rol.');
     }
   };
 

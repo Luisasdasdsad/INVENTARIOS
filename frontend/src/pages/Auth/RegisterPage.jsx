@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api.js'; // Importa tu instancia de axios configurada
+import { toast } from 'react-hot-toast';
 
 export default function RegisterPage() {
   const [nombre, setNombre] = useState('');
@@ -22,7 +23,7 @@ export default function RegisterPage() {
 
     try {
       await api.post('/auth/register', { nombre, email, password, rol });
-      alert('Registro exitoso. Por favor, inicia sesión.');
+      toast.success('Registro exitoso. Por favor, inicia sesión.');
       navigate('/login');
     } catch (err) {
       setError(err.response?.data?.msg || 'Error al registrar usuario');
