@@ -11,6 +11,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import resourceTimeGridPlugin from '@fullcalendar/resource-timegrid';
+import esLocale from '@fullcalendar/core/locales/es';
 
 const Agenda = () => {
   const { user } = useAuth();
@@ -20,6 +21,8 @@ const Agenda = () => {
   const [loading, setLoading] = useState(true);
   
   const [modalEliminar, setModalEliminar] = useState({ show: false, id: null });
+  const [modalNuevoEvento, setModalNuevoEvento] = useState({ show: false, selectInfo: null, title: '' });
+  const [modalDetalle, setModalDetalle] = useState({ show: false, id: null, title: '', start: null, end: null, userId: null });
 
   useEffect(() => {
     fetchData();
@@ -85,25 +88,30 @@ const Agenda = () => {
   // --- Handlers de FullCalendar ---
 
   // Crear evento al seleccionar un rango de tiempo
-  const handleSelect = async (selectInfo) => {
-    const title = prompt('Por favor ingresa un título para la nueva actividad:');
-    if (title) {
-      const newEvent = {
-        title,
-        start: selectInfo.startStr,
-        end: selectInfo.endStr,
-        user: selectInfo.resource.id, // Asignar al usuario de la columna
-        allDay: selectInfo.allDay
-      };
+  const handleSelect = (selectInfo) => {
+    setModalNuevoEvento({ show: true, selectInfo, title: '' });
+  };
 
-      try {
-        const res = await api.post('/eventos', newEvent);
-        setEventos(prev => [...prev, res.data]);
-        toast.success("Actividad creada");
-      } catch (error) {
-        console.error("Error creando evento:", error);
-        toast.error("No se pudo crear la actividad");
-      }
+  const handleCrearEvento = async () => {
+    const { title, selectInfo } = modalNuevoEvento;
+    if (!title || !title.trim()) return toast.error("El título es obligatorio");
+
+    const newEvent = {
+      title,
+      start: selectInfo.startStr,
+      end: selectInfo.endStr,
+      user: selectInfo.resource ? selectInfo.resource.id : user.id,
+      allDay: selectInfo.allDay
+    };
+
+    try {
+      const res = await api.post('/eventos', newEvent);
+      setEventos(prev => [...prev, res.data]);
+      toast.success("Actividad creada");
+      setModalNuevoEvento({ show: false, selectInfo: null, title: '' });
+    } catch (error) {
+      console.error("Error creando evento:", error);
+      toast.error("No se pudo crear la actividad");
     }
   };
 
@@ -128,13 +136,37 @@ const Agenda = () => {
 
   // Clic en un evento para eliminarlo
   const handleEventClick = (clickInfo) => {
-    // Solo el dueño del evento o un admin puede eliminar
-    const eventOwnerId = clickInfo.event.extendedProps.userId;
-    if (user.id !== eventOwnerId && user.rol !== 'admin' && user.rol !== 'superadmin') {
+    const { id, title, start, end, extendedProps } = clickInfo.event;
+    setModalDetalle({
+      show: true,
+      id,
+      title,
+      start,
+      end,
+      userId: extendedProps.userId
+    });
+  };
+
+  const handleActualizarDetalle = async () => {
+    if (!modalDetalle.title.trim()) return toast.error("El título es obligatorio");
+    try {
+      await api.put(`/eventos/${modalDetalle.id}`, { title: modalDetalle.title });
+      setEventos(prev => prev.map(ev => ev._id === modalDetalle.id ? { ...ev, title: modalDetalle.title } : ev));
+      toast.success("Actividad actualizada");
+      setModalDetalle(prev => ({ ...prev, show: false }));
+    } catch (error) {
+      console.error(error);
+      toast.error("Error al actualizar");
+    }
+  };
+
+  const handleEliminarDesdeDetalle = () => {
+    if (user.id !== modalDetalle.userId && user.rol !== 'admin' && user.rol !== 'superadmin') {
       toast.error("No tienes permiso para eliminar esta actividad.");
       return;
     }
-    handleEliminarActividad(clickInfo.event.id);
+    setModalDetalle(prev => ({ ...prev, show: false }));
+    handleEliminarActividad(modalDetalle.id);
   };
 
 
@@ -191,6 +223,7 @@ const Agenda = () => {
         <div className='bg-white p-4 rounded-lg shadow-md border'>
           <FullCalendar
             plugins={[resourceTimeGridPlugin, interactionPlugin, dayGridPlugin, timeGridPlugin]}
+            schedulerLicenseKey="CC-Attribution-NonCommercial-NoDerivatives"
             headerToolbar={{
               left: 'prev,next today',
               center: 'title',
@@ -204,7 +237,7 @@ const Agenda = () => {
             dayMaxEvents={true}
             resources={calendarResources}
             events={calendarEvents}
-            locale='es'
+            locale={esLocale}
             slotMinTime="08:00:00"
             slotMaxTime="20:00:00"
             allDaySlot={false}
@@ -226,6 +259,86 @@ const Agenda = () => {
         message="Esta acción no se puede deshacer. ¿Estás seguro de continuar?"
         confirmText="Sí, eliminar"
       />
+
+      {/* Modal Nuevo Evento */}
+      {modalNuevoEvento.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md transform transition-all">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Nueva Actividad</h3>
+            <input
+              type="text"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              placeholder="Título de la actividad..."
+              value={modalNuevoEvento.title}
+              onChange={(e) => setModalNuevoEvento({ ...modalNuevoEvento, title: e.target.value })}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleCrearEvento();
+                if (e.key === 'Escape') setModalNuevoEvento({ show: false, selectInfo: null, title: '' });
+              }}
+            />
+            <div className="flex justify-end gap-3">
+              <button
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                onClick={() => setModalNuevoEvento({ show: false, selectInfo: null, title: '' })}
+              >
+                Cancelar
+              </button>
+              <button
+                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                onClick={handleCrearEvento}
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Detalle Evento (Ver/Editar/Eliminar) */}
+      {modalDetalle.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md transform transition-all">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Detalles de la Actividad</h3>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
+              <input
+                type="text"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                value={modalDetalle.title}
+                onChange={(e) => setModalDetalle({ ...modalDetalle, title: e.target.value })}
+              />
+            </div>
+
+            <div className="mb-4 text-sm text-gray-600 bg-gray-50 p-3 rounded border">
+               <p className="mb-1"><strong>Inicio:</strong> {modalDetalle.start?.toLocaleString()}</p>
+               <p><strong>Fin:</strong> {modalDetalle.end?.toLocaleString()}</p>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2 border-t mt-4">
+               <button
+                className="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 mr-auto"
+                onClick={handleEliminarDesdeDetalle}
+              >
+                Eliminar
+              </button>
+              <button
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                onClick={() => setModalDetalle({ ...modalDetalle, show: false })}
+              >
+                Cerrar
+              </button>
+              <button
+                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+                onClick={handleActualizarDetalle}
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

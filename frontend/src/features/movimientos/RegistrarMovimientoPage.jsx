@@ -498,7 +498,8 @@ const handleBarcodeManualChange = e => {
                       min="1"
                       value={h.cantidad}
                       onChange={(e) => {
-                        const newCantidad = parseInt(e.target.value) || 1;
+                        const val = e.target.value;
+                        const newCantidad = val === '' ? '' : parseInt(val);
                         setHerramientasSeleccionadas(prev =>
                           prev.map((item, i) =>
                             i === index ? { ...item, cantidad: newCantidad } : item

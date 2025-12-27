@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
-import { FaSearch, FaPlus, FaEdit, FaTrash, FaWhatsapp, FaFileExcel } from "react-icons/fa";
+import { FaSearch, FaPlus, FaEdit, FaTrash, FaWhatsapp, FaFileExcel, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import Modal from "../../components/Modal/Modal";
 import ProveedorForm from "./ProveedorForm";
 import * as XLSX from 'xlsx'; // 1. Importar la librería para Excel
@@ -24,6 +24,10 @@ const ProveedorList = () => {
     action: null,
     data: null
   });
+
+  // Estados para paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const fetchProveedores = async () => {
     try {
@@ -117,6 +121,17 @@ const ProveedorList = () => {
     p.ruc?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // --- Lógica de Paginación ---
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentProveedores = filteredProveedores.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredProveedores.length / itemsPerPage);
+
+  // Resetear a la página 1 cuando cambia la búsqueda
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   // 2. Función para manejar la exportación a Excel
   const handleExportExcel = () => {
     // Formatear los datos para que coincidan con las columnas deseadas
@@ -187,8 +202,8 @@ const ProveedorList = () => {
 
       {/* Vista Móvil: Tarjetas */}
       <div className="md:hidden space-y-4">
-        {filteredProveedores.length > 0 ? (
-          filteredProveedores.map((proveedor) => (
+        {currentProveedores.length > 0 ? (
+          currentProveedores.map((proveedor) => (
             <div key={proveedor._id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
               <div className="flex justify-between items-start mb-2">
                 <h3 className="text-base font-bold text-gray-900">{proveedor.nombre}</h3>
@@ -242,8 +257,8 @@ const ProveedorList = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredProveedores.length > 0 ? (
-              filteredProveedores.map((proveedor) => (
+            {currentProveedores.length > 0 ? (
+              currentProveedores.map((proveedor) => (
                 <tr key={proveedor._id} className="hover:bg-blue-50">
                   <td className="px-4 py-3 text-sm font-medium text-secondary-900">{proveedor.nombre}</td>
                   <td className="px-4 py-3 text-sm text-secondary-600 max-w-xs whitespace-normal" title={proveedor.descripcion}>{proveedor.descripcion || '-'}</td>
@@ -279,6 +294,29 @@ const ProveedorList = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Controles de Paginación */}
+      {filteredProveedores.length > itemsPerPage && (
+        <div className="flex justify-center items-center mt-6 gap-4">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="p-2 rounded-md border bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <FaChevronLeft />
+          </button>
+          <span className="text-sm font-medium text-gray-700">
+            Página {currentPage} de {totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="p-2 rounded-md border bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <FaChevronRight />
+          </button>
+        </div>
+      )}
 
       <ModalConfirmacion
         show={modalConfirmacion.show}

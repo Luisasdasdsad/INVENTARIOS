@@ -3,7 +3,7 @@
 const compraSchema = new mongoose.Schema({
     nombreObra: { type: String, required: true }, // Nombre del proyecto principal
     asunto: { type: String, required: true }, // Título específico de la compra
-    archivoSolicitudUrl: { type: String }, // Archivo adjunto con la lista de items (PDF/Excel)
+    archivosSolicitudUrls: [{ type: String }], // Soporte para múltiples archivos
     codigo: { type: String, unique: true },
     estado: { type: String, enum: [ 'pendiente', 'cotizado', 'aprobado', 'rechazado', 'comprado' ], default: 'pendiente' },
     

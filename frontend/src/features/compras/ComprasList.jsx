@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
 import Modal from "../../components/Modal/Modal";
-import { FaPlus, FaCheck, FaTimes, FaFileInvoiceDollar, FaSearch, FaShoppingCart, FaEye, FaUpload, FaImage, FaTrash, FaEdit, FaPaperclip } from "react-icons/fa";
+import { FaPlus, FaCheck, FaTimes, FaFileInvoiceDollar, FaSearch, FaShoppingCart, FaEye, FaUpload, FaImage, FaTrash, FaEdit, FaPaperclip, FaFilePdf } from "react-icons/fa";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from 'react-hot-toast';
 import ModalConfirmacion from "../../components/ModalConfirmacion";
+import { generarReporteCompras } from "../../utils/generarReporteCompras";
+
+// PEGA AQUÍ LA URL DE TU GOOGLE APPS SCRIPT (WEB APP)
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxsopO2QCw09B2pPx4bj1UVF7Z9QMvUhEM9479vkLjVyRNvfuBkwKOsI7IAJt_uYXaRag/exec";
 
 export default function ComprasList() {
   const [compras, setCompras] = useState([]);
@@ -23,7 +27,7 @@ export default function ComprasList() {
   const [items, setItems] = useState([{ nombre: '', descripcion: '', cantidad: 1, unidad: 'und', foto: '', precioUnitario: 0 }]);
   const [formData, setFormData] = useState({ nombreObra: '', asunto: '', prioridad: 'media', proveedorNombre: '', numeroFactura: '', montoFinal: '' });
   const [evaluacionComentario, setEvaluacionComentario] = useState('');
-  const [archivoSolicitud, setArchivoSolicitud] = useState(null); // Estado para el archivo de requerimiento
+  const [archivosSolicitud, setArchivosSolicitud] = useState([]); // Estado para los archivos de requerimiento
   const [modalConfirmacion, setModalConfirmacion] = useState({
     show: false,
     title: "",
@@ -54,7 +58,7 @@ export default function ComprasList() {
     try {
       const res = await api.get("/cotizaciones/historial");
       const cotizacionesData = Array.isArray(res.data) ? res.data : res.data.cotizaciones || [];
-      setCotizacionesAprobadas(cotizacionesData.filter(c => c.estado === 'Aceptada'));
+      setCotizacionesAprobadas(cotizacionesData);
     } catch (error) {
       console.error("Error cargando compras", error);
     } finally {
@@ -67,9 +71,9 @@ export default function ComprasList() {
     setSelectedCompra(null);
     setModalStep('crear');
     setItems([{ nombre: '', descripcion: '', cantidad: 1, unidad: 'und', foto: '', precioUnitario: 0 }]);
-    setFormData({ nombreObra: '', asunto: '', prioridad: 'media' });
+    setFormData({ nombreObra: '', asunto: '', prioridad: 'media', proveedorNombre: '', numeroFactura: '', montoFinal: '' });
     setCotizacionId('');
-    setArchivoSolicitud(null);
+    setArchivosSolicitud([]);
     setShowModal(true);
   };
 
@@ -109,8 +113,8 @@ export default function ComprasList() {
     if (cotizacion) {
       setFormData(prev => ({
         ...prev,
-        nombreObra: cotizacion.descripcionServicio || `Proyecto de Cot. #${cotizacion.numeroCotizacion}`,
-        asunto: ''
+        nombreObra: '', // Se deja vacío para que el usuario ingrese el nombre de la obra manualmente
+        asunto: cotizacion.descripcionServicio || `Requerimiento de Cot. #${cotizacion.numeroCotizacion}`
       }));
       setItems(cotizacion.productos.map(p => ({
         nombre: p.descripcion,
@@ -142,25 +146,34 @@ export default function ComprasList() {
   const addItem = () => setItems([...items, { nombre: '', descripcion: '', cantidad: 1, unidad: 'und', foto: '', precioUnitario: 0 }]);
   const removeItem = (index) => setItems(items.filter((_, i) => i !== index));
 
-  const handleFileUpload = async (fileToUpload) => {
-    const file = fileToUpload;
-    if (file) {
-      const formData = new FormData();
-      // Renombramos el archivo con prefijo 'compra' para activar la lógica del backend
-      const ext = file.name.split('.').pop();
-      formData.append('archivo', file, `req-doc-${Date.now()}.${ext}`);
+  // Helper para convertir archivo a Base64
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const handleUploadFiles = async () => {
+    const urls = [];
+    for (const file of archivosSolicitud) {
       try {
-        const res = await api.post('/upload/drive', formData);
-        return res.data.url;
+        const base64 = await fileToBase64(file);
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          // No enviamos headers explícitos. Al enviar un string, el navegador lo trata como text/plain automáticamente (Simple Request).
+          body: JSON.stringify({ filename: file.name, mimeType: file.type, fileBase64: base64 })
+        });
+        const data = await response.json();
+        if (data.status === 'success') urls.push(data.url);
       } catch (error) {
-        console.error("Error upload:", error);
-        // Mostrar el mensaje exacto que devuelve el backend (ej: API no habilitada)
-        const errorMsg = error.response?.data?.error || error.response?.data?.msg || "Error subiendo archivo a Drive.";
-        toast.error(`Error: ${errorMsg}`);
-        return null;
+        console.error("Error subiendo a Drive:", error);
+        toast.error(`Error al subir ${file.name}`);
       }
     }
-    return null;
+    return urls;
   };
 
   const handleSubmit = async (e) => {
@@ -171,18 +184,19 @@ export default function ComprasList() {
     try {
       if (modalStep === 'crear') {
         // --- VALIDACIONES ---
-        let archivoUrl = '';
-        if (archivoSolicitud) {
-           archivoUrl = await handleFileUpload(archivoSolicitud);
-           if (!archivoUrl) {
+        let archivoUrls = [];
+        if (archivosSolicitud.length > 0) {
+           const uploadedUrls = await handleUploadFiles();
+           if (!uploadedUrls || uploadedUrls.length !== archivosSolicitud.length) {
              setIsSubmitting(false); // Desactivar carga si falla
              return; 
            }
+           archivoUrls = uploadedUrls;
         }
 
         const hasItems = items && items.length > 0 && items.some(i => i.nombre.trim());
         
-        if (!hasItems && !archivoUrl) {
+        if (!hasItems && archivoUrls.length === 0) {
           toast.error("Debes agregar al menos un ítem o subir un archivo con la lista.");
           setIsSubmitting(false);
           return;
@@ -195,7 +209,11 @@ export default function ComprasList() {
         }
 
         // Preparamos el payload evitando enviar campos vacíos que puedan romper el backend
-        const payload = { ...formData, items: hasItems ? items : [], archivoSolicitudUrl: archivoUrl };
+        const payload = { 
+          ...formData, 
+          items: hasItems ? items : [], 
+          archivosSolicitudUrls: archivoUrls
+        };
         if (cotizacionId) payload.cotizacion = cotizacionId;
 
         const res = await api.post('/compras/requerimiento', payload);
@@ -288,6 +306,10 @@ export default function ComprasList() {
     setModalConfirmacion(prev => ({ ...prev, show: false }));
   };
 
+  const handlePrint = (compra) => {
+    generarReporteCompras(compra);
+  };
+
   // --- RENDER ---
   const getStatusBadge = (estado) => {
     const styles = {
@@ -329,14 +351,23 @@ export default function ComprasList() {
               <p className="text-sm text-gray-600 flex items-center gap-1">
                 <span className="font-medium">Solicitante:</span> {compra.solicitante?.nombre}
               </p>
-              {compra.archivoSolicitudUrl && (
-                <a href={compra.archivoSolicitudUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-100 hover:bg-blue-100">
-                  <FaPaperclip /> Ver Archivo Adjunto
-                </a>
+              {compra.archivosSolicitudUrls?.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {compra.archivosSolicitudUrls.map((url, idx) => (
+                    <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-100 hover:bg-blue-100">
+                      <FaPaperclip /> Archivo {idx + 1}
+                    </a>
+                  ))}
+                </div>
               )}
               {compra.comentarios && (
                 <div className="mt-2 text-xs text-gray-600 bg-gray-50 p-2 rounded border border-gray-100 italic">
                   <span className="font-semibold not-italic">Nota:</span> {compra.comentarios}
+                </div>
+              )}
+              {['aprobado', 'comprado'].includes(compra.estado) && (
+                <div className="mt-2 text-sm font-bold text-gray-800 bg-green-50 p-2 rounded border border-green-100">
+                  Total: S/ {compra.items.reduce((acc, item) => acc + (item.cantidad * (item.precioUnitario || 0)), 0).toFixed(2)}
                 </div>
               )}
             </div>
@@ -360,6 +391,9 @@ export default function ComprasList() {
                     Evaluar
                   </button>
                )}
+               <button onClick={() => handlePrint(compra)} className="col-span-2 flex items-center justify-center gap-2 bg-gray-50 text-gray-600 py-2 rounded-lg text-sm font-medium hover:bg-gray-100">
+                 <FaFilePdf /> Descargar PDF
+               </button>
                <button onClick={() => handleOpenAction(compra, 'ver')} className={`col-span-2 flex items-center justify-center gap-2 bg-gray-50 text-gray-600 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 ${compra.estado !== 'pendiente' ? 'col-span-2' : ''}`}>
                  <FaEye /> Ver Detalles
                </button>
@@ -390,16 +424,25 @@ export default function ComprasList() {
                 <td className="px-6 py-4 text-sm text-gray-500">
                   <div className="font-bold text-gray-900">{compra.nombreObra}</div>
                   <div className="text-xs text-gray-600">{compra.asunto}</div>
-                  {compra.archivoSolicitudUrl && (
-                    <a href={compra.archivoSolicitudUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1">
-                      <FaPaperclip size={10} /> Ver Archivo
-                    </a>
+                  {compra.archivosSolicitudUrls?.length > 0 && (
+                    <div className="flex flex-col gap-1 mt-1">
+                      {compra.archivosSolicitudUrls.map((url, idx) => (
+                        <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-1">
+                          <FaPaperclip size={10} /> Ver Archivo {idx + 1}
+                        </a>
+                      ))}
+                    </div>
                   )}
                   <div className="text-xs">{new Date(compra.createdAt).toLocaleDateString()}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{compra.solicitante?.nombre}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {getStatusBadge(compra.estado)}
+                  {['aprobado', 'comprado'].includes(compra.estado) && (
+                    <div className="text-sm font-bold text-gray-700 mt-1">
+                      S/ {compra.items.reduce((acc, item) => acc + (item.cantidad * (item.precioUnitario || 0)), 0).toFixed(2)}
+                    </div>
+                  )}
                   {compra.comentarios && (
                     <div className="text-xs text-gray-500 mt-1 max-w-[200px] truncate" title={compra.comentarios}>
                       {compra.comentarios}
@@ -420,6 +463,7 @@ export default function ComprasList() {
                   {compra.estado === 'cotizado' && (
                     <button onClick={() => handleOpenAction(compra, 'aprobar')} className="text-green-600 hover:text-green-900 mr-3">Evaluar</button>
                   )}
+                  <button onClick={() => handlePrint(compra)} className="text-gray-500 hover:text-gray-700 mr-3" title="Descargar PDF"><FaFilePdf /></button>
                   <button onClick={() => handleOpenAction(compra, 'ver')} className="text-gray-400 hover:text-gray-600"><FaEye /></button>
                 </td>
               </tr>
@@ -469,14 +513,27 @@ export default function ComprasList() {
                   {modalStep === 'crear' && (
                     <div className="mt-4 p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        <FaPaperclip className="inline mr-1" /> Adjuntar Lista de Pedido (PDF/Excel)
+                        <FaPaperclip className="inline mr-1" /> Adjuntar Archivos (PDF/Excel)
                       </label>
                       <input 
                         type="file" 
                         accept=".pdf,.xlsx,.xls,.doc,.docx"
-                        onChange={(e) => setArchivoSolicitud(e.target.files[0])}
+                        multiple
+                        onChange={(e) => {
+                          if (e.target.files) setArchivosSolicitud(prev => [...prev, ...Array.from(e.target.files)]);
+                        }}
                         className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                       />
+                      {archivosSolicitud.length > 0 && (
+                        <ul className="mt-2 space-y-1">
+                          {archivosSolicitud.map((file, idx) => (
+                            <li key={idx} className="text-xs text-gray-600 flex justify-between items-center bg-white p-1 rounded border">
+                              <span>{file.name}</span>
+                              <button type="button" onClick={() => setArchivosSolicitud(prev => prev.filter((_, i) => i !== idx))} className="text-red-500 hover:text-red-700"><FaTimes /></button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                       <p className="text-xs text-gray-500 mt-1">Si subes un archivo, no es obligatorio llenar la lista de items abajo.</p>
                     </div>
                   )}
