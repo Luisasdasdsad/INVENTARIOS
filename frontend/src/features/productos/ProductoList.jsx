@@ -8,6 +8,7 @@ import { FaEdit, FaTrash, FaBarcode, FaQrcode, FaPlus, FaEye, FaPrint, FaFileExc
 import * as XLSX from 'xlsx';
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from 'react-hot-toast';
+import ModalConfirmacion from "../../components/ModalConfirmacion";
 
 export default function ProductoList() {
   const [productos, setProductos] = useState([]);
@@ -25,6 +26,15 @@ export default function ProductoList() {
   const itemsPerPage = 10;
   const { user } = useAuth(); // Corregido: useAuth devuelve un objeto
   const isTecnico = user?.rol === 'tecnico';
+  const [modalConfirmacion, setModalConfirmacion] = useState({
+    show: false,
+    title: "",
+    message: "",
+    confirmText: "Confirmar",
+    isDestructive: true,
+    action: null,
+    data: null
+  });
 
   const fetchProductos = async () => {
     setLoading(true);
@@ -72,13 +82,22 @@ export default function ProductoList() {
     setShowModal(true);
   };
 
-  const handleDeleteProducto = async (id) => {
-    if (!window.confirm("¿Estás seguro de que quieres eliminar este producto?")) {
-      return;
-    }
+  const handleDeleteProducto = (id) => {
+    setModalConfirmacion({
+      show: true,
+      title: "¿Eliminar producto?",
+      message: "¿Estás seguro de que quieres eliminar este producto?",
+      confirmText: "Sí, eliminar",
+      isDestructive: true,
+      action: 'eliminar',
+      data: id
+    });
+  };
+
+  const ejecutarEliminacion = async (id) => {
     try {
       await api.delete(`/productos/${id}`);
-      setProductos(productos.filter((p) => p._id !== id));
+      setProductos(prev => prev.filter((p) => p._id !== id));
       toast.success("Producto eliminado con éxito.");
     } catch (err) {
       setError(err.response?.data?.message || "Error al eliminar producto");
@@ -142,10 +161,19 @@ export default function ProductoList() {
     setShowCodesModal(true);
   };
 
-  const handleGenerateMassiveBarcodes = async () => {
-    if (!window.confirm('¿Generar códigos de barras para todos los productos que no tienen?')) {
-      return;
-    }
+  const handleGenerateMassiveBarcodes = () => {
+    setModalConfirmacion({
+      show: true,
+      title: "Generar Barcodes Masivos",
+      message: "¿Generar códigos de barras para todos los productos que no tienen?",
+      confirmText: "Sí, generar",
+      isDestructive: false,
+      action: 'masivoBarcodes',
+      data: null
+    });
+  };
+
+  const ejecutarMasivoBarcodes = async () => {
     setGeneratingBarcode(true);
     try {
       const res = await api.post('/productos/generar-barcode-masivo');
@@ -159,10 +187,19 @@ export default function ProductoList() {
     }
   };
 
-  const handleGenerateMassiveQRs = async () => {
-    if (!window.confirm('¿Generar códigos QR para todos los productos que no tienen?')) {
-      return;
-    }
+  const handleGenerateMassiveQRs = () => {
+    setModalConfirmacion({
+      show: true,
+      title: "Generar QRs Masivos",
+      message: "¿Generar códigos QR para todos los productos que no tienen?",
+      confirmText: "Sí, generar",
+      isDestructive: false,
+      action: 'masivoQRs',
+      data: null
+    });
+  };
+
+  const ejecutarMasivoQRs = async () => {
     setGeneratingQR(true);
     try {
       const res = await api.post('/qr/masivo/productos');
@@ -174,6 +211,17 @@ export default function ProductoList() {
     } finally {
       setGeneratingQR(false);
     }
+  };
+
+  const handleConfirmarAccion = () => {
+    if (modalConfirmacion.action === 'eliminar') {
+      ejecutarEliminacion(modalConfirmacion.data);
+    } else if (modalConfirmacion.action === 'masivoBarcodes') {
+      ejecutarMasivoBarcodes();
+    } else if (modalConfirmacion.action === 'masivoQRs') {
+      ejecutarMasivoQRs();
+    }
+    setModalConfirmacion(prev => ({ ...prev, show: false }));
   };
 
   const handleExportExcel = () => {
@@ -718,6 +766,16 @@ export default function ProductoList() {
           </div>
         </Modal>
       )}
+
+      <ModalConfirmacion
+        show={modalConfirmacion.show}
+        onClose={() => setModalConfirmacion(prev => ({ ...prev, show: false }))}
+        onConfirm={handleConfirmarAccion}
+        title={modalConfirmacion.title}
+        message={modalConfirmacion.message}
+        confirmText={modalConfirmacion.confirmText}
+        isDestructive={modalConfirmacion.isDestructive}
+      />
     </div>
   );
 }

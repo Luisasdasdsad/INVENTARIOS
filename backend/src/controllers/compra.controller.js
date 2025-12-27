@@ -65,8 +65,10 @@ export const crearRequerimiento = async (req, res) => {
         // 📧 CORREO: Notificar al Cotizador específico
         try {
             const cotizador = await Usuario.findById(ID_COTIZADOR).select('email nombre');
+            const linkSistema = process.env.FRONTEND_URL || 'https://inventarios-aip4.vercel.app';
             if (cotizador && cotizador.email) {
                 await enviarCorreo({
+                    from: process.env.EMAIL_USER,
                     to: cotizador.email,
                     subject: `Nuevo Requerimiento de Compra #${codigo}`,
                     html: `
@@ -76,6 +78,7 @@ export const crearRequerimiento = async (req, res) => {
                         <p><strong>Solicitante:</strong> ${req.user.nombre}</p>
                         <p><strong>Asunto:</strong> ${data.asunto || 'Sin asunto'}</p>
                         <p>Por favor, ingresa al sistema para revisarlo.</p>
+                        <p><a href="${linkSistema}">Ingresar al Sistema</a></p>
                     `
                 });
             }
@@ -125,7 +128,7 @@ export const registrarCotizacion = async (req, res) => {
             cotizador: req.user.id,
             estado: 'cotizado'
         }, { new: true })
-        .populate('solicitante', 'nombre')
+        .populate('solicitante', 'nombre email') // Necesitamos el email del solicitante
         .populate('proveedor', 'nombre')
         .populate('cotizacion', 'numeroCotizacion descripcionServicio');
 
@@ -142,12 +145,15 @@ export const registrarCotizacion = async (req, res) => {
             if (notificaciones.length > 0) await Notificacion.insertMany(notificaciones);
         } catch (err) { console.error("Error notificando:", err); }
 
-        // 📧 CORREO: Notificar al Aprobador específico
+        // 📧 CORREO: Notificar al Aprobador y al Solicitante
         try {
+            const linkSistema = process.env.FRONTEND_URL || 'https://inventarios-aip4.vercel.app';
             const aprobador = await Usuario.findById(ID_APROBADOR).select('email nombre');
+            
+            // 1. Correo al Aprobador (Para que entre a aprobar)
             if (aprobador && aprobador.email) {
-                const linkSistema = process.env.FRONTEND_URL || 'http://localhost:5173';
                 await enviarCorreo({
+                    from: process.env.EMAIL_USER,
                     to: aprobador.email,
                     subject: `Cotización Lista para Aprobación - Compra #${compra.codigo}`,
                     html: `
@@ -156,12 +162,28 @@ export const registrarCotizacion = async (req, res) => {
                         <p>La cotización para el requerimiento <strong>#${compra.codigo}</strong> ha sido registrada y espera tu evaluación.</p>
                         <p><strong>Solicitante:</strong> ${compra.solicitante?.nombre || 'Usuario'}</p>
                         <p><strong>Monto Total Estimado:</strong> S/ ${montoTotalEstimado.toFixed(2)}</p>
-                        <p>Para aprobar o rechazar, por favor <a href="${linkSistema}/compras">ingresa al sistema</a>.</p>
+                        <p>Para aprobar o rechazar, por favor <a href="${linkSistema}">ingresa al sistema</a>.</p>
+                    `
+                });
+            }
+
+            // 2. Correo al Solicitante (Informativo: "Ya cotizaron tu pedido")
+            if (compra.solicitante && compra.solicitante.email) {
+                await enviarCorreo({
+                    from: process.env.EMAIL_USER,
+                    to: compra.solicitante.email,
+                    subject: `Tu Requerimiento #${compra.codigo} ha sido Cotizado`,
+                    html: `
+                        <h1>Requerimiento Cotizado</h1>
+                        <p>Hola ${compra.solicitante.nombre},</p>
+                        <p>Tu requerimiento <strong>#${compra.codigo}</strong> ya tiene una cotización registrada por un monto estimado de <strong>S/ ${montoTotalEstimado.toFixed(2)}</strong>.</p>
+                        <p>Actualmente se encuentra <strong>pendiente de aprobación</strong> por la gerencia.</p>
+                        <p>Puedes ver el avance en el sistema: <a href="${linkSistema}">Ingresar</a></p>
                     `
                 });
             }
         } catch (emailError) {
-            console.error("Error al enviar correo de notificación al aprobador:", emailError);
+            console.error("Error al enviar correos de cotización:", emailError);
         }
 
         res.json(compra);
@@ -188,13 +210,17 @@ export const evaluarCompra = async (req, res) => {
             fechaAprobacion: new Date(),
             comentarios: comentarios
         }, { new: true })
-        .populate('solicitante', 'nombre')
+        .populate('solicitante', 'nombre email')
+        .populate('cotizador', 'nombre email')
         .populate('proveedor', 'nombre')
         .populate('cotizacion', 'numeroCotizacion descripcionServicio');
 
-        // 🔔 NOTIFICACIÓN: Avisar al Solicitante (Pedro/Jose) y al Cotizador (Cesar) el resultado
         try {
-            const destinatarios = [compra.solicitante, compra.cotizador].filter(id => id);
+            // CORRECCIÓN: Extraer IDs correctamente (solicitante es un objeto poblado, cotizador es un ID)
+            const solicitanteId = compra.solicitante ? (compra.solicitante._id || compra.solicitante) : null;
+            const cotizadorId = compra.cotizador ? (compra.cotizador._id || compra.cotizador) : null;
+            
+            const destinatarios = [solicitanteId, cotizadorId].filter(id => id);
             // Eliminar duplicados (si el que cotizó es el mismo que solicitó)
             const uniqueDest = [...new Set(destinatarios.map(id => id.toString()))];
             
@@ -208,24 +234,45 @@ export const evaluarCompra = async (req, res) => {
             if (notificaciones.length > 0) await Notificacion.insertMany(notificaciones);
         } catch (err) { console.error("Error notificando:", err); }
 
-        // 📧 CORREO: Notificar al Solicitante original
+        // 📧 CORREO: Notificar al Solicitante y al Cotizador
         try {
+            console.log(`[EvaluarCompra] Iniciando notificación por correo. Decisión: ${decision}`);
+            const decisionTexto = decision === 'aprobado' ? 'APROBADO' : 'RECHAZADO';
+            const destinatariosEmail = [];
+            const linkSistema = process.env.FRONTEND_URL || 'https://inventarios-aip4.vercel.app';
+
             if (compra.solicitante && compra.solicitante.email) {
-                const decisionTexto = decision === 'aprobado' ? 'APROBADO' : 'RECHAZADO';
+                destinatariosEmail.push({ email: compra.solicitante.email, nombre: compra.solicitante.nombre });
+            } else {
+                console.warn("[EvaluarCompra] Solicitante no tiene email o no se cargó:", compra.solicitante);
+            }
+            if (compra.cotizador && compra.cotizador.email) {
+                // Evitar duplicados
+                if (!destinatariosEmail.some(d => d.email === compra.cotizador.email)) {
+                    destinatariosEmail.push({ email: compra.cotizador.email, nombre: compra.cotizador.nombre });
+                }
+            }
+
+            console.log(`[EvaluarCompra] Destinatarios encontrados: ${destinatariosEmail.length}`, destinatariosEmail);
+
+            for (const dest of destinatariosEmail) {
+                console.log(`[EvaluarCompra] Enviando correo a: ${dest.email}`);
                 await enviarCorreo({
-                    to: compra.solicitante.email,
-                    subject: `Tu Requerimiento de Compra #${compra.codigo} ha sido ${decisionTexto}`,
+                    from: process.env.EMAIL_USER,
+                    to: dest.email,
+                    subject: `Requerimiento de Compra #${compra.codigo} ha sido ${decisionTexto}`,
                     html: `
-                        <h1>Actualización de tu Requerimiento</h1>
-                        <p>Hola ${compra.solicitante.nombre},</p>
-                        <p>Tu requerimiento de compra <strong>#${compra.codigo}</strong> ha sido <strong>${decisionTexto}</strong>.</p>
+                        <h1>Actualización de Requerimiento</h1>
+                        <p>Hola ${dest.nombre},</p>
+                        <p>El requerimiento de compra <strong>#${compra.codigo}</strong> ha sido <strong>${decisionTexto}</strong>.</p>
                         ${decision === 'rechazado' ? `<p><strong>Motivo:</strong> ${comentarios}</p>` : ''}
-                        <p>Puedes ver los detalles en el sistema.</p>
+                        <p>Puedes ver los detalles en el sistema: <a href="${linkSistema}">Ingresar</a></p>
                     `
                 });
+                console.log(`[EvaluarCompra] Correo enviado a ${dest.email}`);
             }
         } catch (emailError) {
-            console.error("Error al enviar correo de notificación al solicitante:", emailError);
+            console.error("Error al enviar correos de notificación:", emailError);
         }
 
         res.json(compra);
@@ -262,7 +309,7 @@ export const registrarFacturaCompra = async (req, res) => {
         try {
             if (compra.solicitante) {
                 await Notificacion.create({
-                    usuario: compra.solicitante,
+                    usuario: compra.solicitante._id || compra.solicitante, // CORRECCIÓN: Usar solo el ID
                     tipo: 'compra',
                     mensaje: `Compra realizada para requerimiento ${compra.codigo}. Factura disponible.`,
                     referenciaId: compra._id,

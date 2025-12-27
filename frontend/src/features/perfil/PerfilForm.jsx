@@ -3,6 +3,7 @@ import api from '../../services/api.js';
 import { useAuth } from '../../contexts/AuthContext';
 import { FaUser, FaEnvelope, FaLock, FaSave, FaEye, FaEyeSlash, FaUsers, FaEdit, FaPhone, FaMobileAlt, FaMapMarkerAlt, FaTrash, FaSearch } from 'react-icons/fa';
 import Modal from '../../components/Modal/Modal';
+import ModalConfirmacion from '../../components/ModalConfirmacion';
 
 export default function PerfilForm() {
   const { user, login, setUser } = useAuth();
@@ -14,6 +15,15 @@ export default function PerfilForm() {
   const [selectedUsuario, setSelectedUsuario] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [userSearch, setUserSearch] = useState('');
+  const [modalConfirmacion, setModalConfirmacion] = useState({
+    show: false,
+    title: "",
+    message: "",
+    confirmText: "Confirmar",
+    isDestructive: true,
+    action: null,
+    data: null
+  });
 
   // Estado para perfil
   const [profileData, setProfileData] = useState({
@@ -88,16 +98,33 @@ export default function PerfilForm() {
     }
   };
 
-  const handleDeleteUsuario = async (userId) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.')) {
-      try {
-        await api.delete(`/usuarios/${userId}`);
-        setSuccess('Usuario eliminado exitosamente');
-        fetchUsuarios();
-      } catch (err) {
-        setError(err.response?.data?.msg || 'Error al eliminar usuario');
-      }
+  const handleDeleteUsuario = (userId) => {
+    setModalConfirmacion({
+      show: true,
+      title: "¿Eliminar usuario?",
+      message: "¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.",
+      confirmText: "Sí, eliminar",
+      isDestructive: true,
+      action: 'eliminarUsuario',
+      data: userId
+    });
+  };
+
+  const ejecutarEliminacionUsuario = async (userId) => {
+    try {
+      await api.delete(`/usuarios/${userId}`);
+      setSuccess('Usuario eliminado exitosamente');
+      fetchUsuarios();
+    } catch (err) {
+      setError(err.response?.data?.msg || 'Error al eliminar usuario');
     }
+  };
+
+  const handleConfirmarAccion = () => {
+    if (modalConfirmacion.action === 'eliminarUsuario') {
+      ejecutarEliminacionUsuario(modalConfirmacion.data);
+    }
+    setModalConfirmacion(prev => ({ ...prev, show: false }));
   };
 
   const getRolLabel = (rol) => {
@@ -553,6 +580,16 @@ export default function PerfilForm() {
           </div>
         </Modal>
       )}
+
+      <ModalConfirmacion
+        show={modalConfirmacion.show}
+        onClose={() => setModalConfirmacion(prev => ({ ...prev, show: false }))}
+        onConfirm={handleConfirmarAccion}
+        title={modalConfirmacion.title}
+        message={modalConfirmacion.message}
+        confirmText={modalConfirmacion.confirmText}
+        isDestructive={modalConfirmacion.isDestructive}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import api from "../../services/api";
 import ClienteForm from "./ClienteForm";
 import Modal from "../../components/Modal/Modal";
 import { FaEdit, FaTrash, FaPlus, FaSearch, FaWhatsapp } from "react-icons/fa";
+import ModalConfirmacion from "../../components/ModalConfirmacion";
 
 const ClienteList = () => {
   const [clientes, setClientes] = useState([]);
@@ -11,6 +12,7 @@ const ClienteList = () => {
   const [showForm, setShowForm] = useState(false);
   const [clienteEdit, setClienteEdit] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [modalEliminar, setModalEliminar] = useState({ show: false, id: null });
 
   useEffect(() => {
     fetchClientes();
@@ -44,14 +46,18 @@ const ClienteList = () => {
     setShowForm(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("¿Estás seguro de que deseas eliminar este cliente?")) {
-      try {
-        await api.delete(`/clientes/${id}`);
-        setClientes(clientes.filter((c) => c._id !== id));
-      } catch (err) {
-        console.error("Error al eliminar cliente:", err);
-      }
+  const handleDelete = (id) => {
+    setModalEliminar({ show: true, id });
+  };
+
+  const confirmarEliminacion = async () => {
+    try {
+      await api.delete(`/clientes/${modalEliminar.id}`);
+      setClientes(clientes.filter((c) => c._id !== modalEliminar.id));
+    } catch (err) {
+      console.error("Error al eliminar cliente:", err);
+    } finally {
+      setModalEliminar({ show: false, id: null });
     }
   };
 
@@ -266,6 +272,15 @@ const ClienteList = () => {
           />
         </Modal>
       )}
+
+      <ModalConfirmacion
+        show={modalEliminar.show}
+        onClose={() => setModalEliminar({ show: false, id: null })}
+        onConfirm={confirmarEliminacion}
+        title="¿Eliminar cliente?"
+        message="¿Estás seguro de que deseas eliminar este cliente? Esta acción no se puede deshacer."
+        confirmText="Sí, eliminar"
+      />
     </div>
   );
 };

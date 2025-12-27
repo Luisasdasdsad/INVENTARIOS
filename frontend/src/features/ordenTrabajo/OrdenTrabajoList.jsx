@@ -4,6 +4,7 @@ import api from "../../services/api";
 import { FaSearch, FaPlay, FaCheck, FaClock, FaPrint, FaPlus, FaTrash, FaEdit, FaWhatsapp, FaEnvelope } from "react-icons/fa";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from 'react-hot-toast';
+import ModalConfirmacion from "../../components/ModalConfirmacion";
 
 // Formatear fechas ignorando desplazamientos de zona horaria: usar la porción YYYY-MM-DD
 const formatLocalDate = (d) => {
@@ -25,6 +26,15 @@ const OrdenTrabajoList = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const { user } = useAuth();
+  const [modalConfirmacion, setModalConfirmacion] = useState({
+    show: false,
+    title: "",
+    message: "",
+    confirmText: "Confirmar",
+    isDestructive: true,
+    action: null,
+    data: null
+  });
 
   useEffect(() => {
     fetchOrdenes();
@@ -64,17 +74,27 @@ const OrdenTrabajoList = () => {
     }
   };
 
-  const handleEliminarOrden = async (id) => {
-    if (window.confirm("¿Estás seguro de que deseas eliminar esta orden de trabajo? Esta acción no se puede deshacer.")) {
-      try {
-        await api.delete(`/ordenes-trabajo/${id}`);
-        // Actualizar el estado para remover la orden eliminada de la lista
-        setOrdenes(ordenes.filter(orden => orden._id !== id));
-        toast.success("Orden eliminada correctamente");
-      } catch (err) {
-        console.error("Error al eliminar la orden:", err);
-        toast.error(err.response?.data?.message || "Error al eliminar la orden de trabajo");
-      }
+  const handleEliminarOrden = (id) => {
+    setModalConfirmacion({
+      show: true,
+      title: "¿Eliminar orden de trabajo?",
+      message: "¿Estás seguro de que deseas eliminar esta orden de trabajo? Esta acción no se puede deshacer.",
+      confirmText: "Sí, eliminar",
+      isDestructive: true,
+      action: 'eliminar',
+      data: id
+    });
+  };
+
+  const ejecutarEliminacion = async (id) => {
+    try {
+      await api.delete(`/ordenes-trabajo/${id}`);
+      // Actualizar el estado para remover la orden eliminada de la lista
+      setOrdenes(prev => prev.filter(orden => orden._id !== id));
+      toast.success("Orden eliminada correctamente");
+    } catch (err) {
+      console.error("Error al eliminar la orden:", err);
+      toast.error(err.response?.data?.message || "Error al eliminar la orden de trabajo");
     }
   };
 
@@ -89,6 +109,13 @@ const OrdenTrabajoList = () => {
       console.error("Error al generar reporte:", err);
       toast.error("Error al generar el reporte");
     }
+  };
+
+  const handleConfirmarAccion = () => {
+    if (modalConfirmacion.action === 'eliminar') {
+      ejecutarEliminacion(modalConfirmacion.data);
+    }
+    setModalConfirmacion(prev => ({ ...prev, show: false }));
   };
 
   const getEstadoColor = (estado) => {
@@ -472,6 +499,16 @@ const OrdenTrabajoList = () => {
           </div>
         </div>
       )}
+
+      <ModalConfirmacion
+        show={modalConfirmacion.show}
+        onClose={() => setModalConfirmacion(prev => ({ ...prev, show: false }))}
+        onConfirm={handleConfirmarAccion}
+        title={modalConfirmacion.title}
+        message={modalConfirmacion.message}
+        confirmText={modalConfirmacion.confirmText}
+        isDestructive={modalConfirmacion.isDestructive}
+      />
     </div>
   );
 };

@@ -135,7 +135,7 @@ export const generarReporteMovimientoIndividual = (movimiento) => {
   doc.setFontSize(10);
   doc.setFont("helvetica", "italic");
   doc.text(
-    "Generado automáticamente por el Sistema de Inventario TEAM GAS S.A.C.",
+    "Generado automáticamente por el Sistema TEAM GAS S.A.C.",
     40,
     pageHeight - 30
   );
@@ -276,7 +276,7 @@ export const generarReporteMovimientos = (movimientosFiltrados = []) => {
   const pageHeight = doc.internal.pageSize.height;
   doc.setFontSize(9);
   doc.text(
-    "Generado automáticamente por el Sistema de Inventario TEAM GAS S.A.C.",
+    "Generado automáticamente por el Sistema de TEAM GAS S.A.C.",
     40,
     pageHeight - 30
   );

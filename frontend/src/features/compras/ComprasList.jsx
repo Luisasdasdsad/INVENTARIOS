@@ -4,6 +4,7 @@ import Modal from "../../components/Modal/Modal";
 import { FaPlus, FaCheck, FaTimes, FaFileInvoiceDollar, FaSearch, FaShoppingCart, FaEye, FaUpload, FaImage, FaTrash, FaEdit, FaPaperclip } from "react-icons/fa";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from 'react-hot-toast';
+import ModalConfirmacion from "../../components/ModalConfirmacion";
 
 export default function ComprasList() {
   const [compras, setCompras] = useState([]);
@@ -16,12 +17,22 @@ export default function ComprasList() {
   // Nuevos estados para la funcionalidad de cotización
   const [cotizacionesAprobadas, setCotizacionesAprobadas] = useState([]);
   const [cotizacionId, setCotizacionId] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false); // Estado para controlar el envío
 
   // Form States
   const [items, setItems] = useState([{ nombre: '', descripcion: '', cantidad: 1, unidad: 'und', foto: '', precioUnitario: 0 }]);
   const [formData, setFormData] = useState({ nombreObra: '', asunto: '', prioridad: 'media', proveedorNombre: '', numeroFactura: '', montoFinal: '' });
   const [evaluacionComentario, setEvaluacionComentario] = useState('');
   const [archivoSolicitud, setArchivoSolicitud] = useState(null); // Estado para el archivo de requerimiento
+  const [modalConfirmacion, setModalConfirmacion] = useState({
+    show: false,
+    title: "",
+    message: "",
+    confirmText: "Confirmar",
+    isDestructive: true,
+    action: null,
+    data: null
+  });
 
   useEffect(() => {
     fetchCompras();
@@ -154,24 +165,32 @@ export default function ComprasList() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return; // Evitar doble clic
+
+    setIsSubmitting(true); // Activar estado de carga
     try {
       if (modalStep === 'crear') {
         // --- VALIDACIONES ---
         let archivoUrl = '';
         if (archivoSolicitud) {
            archivoUrl = await handleFileUpload(archivoSolicitud);
-           if (!archivoUrl) return; // Error en subida
+           if (!archivoUrl) {
+             setIsSubmitting(false); // Desactivar carga si falla
+             return; 
+           }
         }
 
         const hasItems = items && items.length > 0 && items.some(i => i.nombre.trim());
         
         if (!hasItems && !archivoUrl) {
           toast.error("Debes agregar al menos un ítem o subir un archivo con la lista.");
+          setIsSubmitting(false);
           return;
         }
 
         if (hasItems && items.some(i => i.nombre && i.cantidad <= 0)) {
            toast.error("Los items deben tener cantidad mayor a 0.");
+           setIsSubmitting(false);
            return;
         }
 
@@ -192,6 +211,7 @@ export default function ComprasList() {
       } else if (modalStep === 'editar') {
         if (!items || items.length === 0) {
           toast.error("Debes tener al menos un ítem.");
+          setIsSubmitting(false);
           return;
         }
         const res = await api.put(`/compras/${selectedCompra._id}`, { ...formData, items });
@@ -203,11 +223,24 @@ export default function ComprasList() {
     } catch (error) {
       console.error(error);
       toast.error("Error al guardar");
+    } finally {
+      setIsSubmitting(false); // Desactivar carga al finalizar (éxito o error)
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("¿Estás seguro de eliminar este requerimiento? Esta acción no se puede deshacer.")) return;
+  const handleDelete = (id) => {
+    setModalConfirmacion({
+      show: true,
+      title: "¿Eliminar requerimiento?",
+      message: "¿Estás seguro de eliminar este requerimiento? Esta acción no se puede deshacer.",
+      confirmText: "Sí, eliminar",
+      isDestructive: true,
+      action: 'eliminar',
+      data: id
+    });
+  };
+
+  const ejecutarEliminacion = async (id) => {
     try {
       await api.delete(`/compras/${id}`);
       setCompras(prev => prev.filter(c => c._id !== id)); // Eliminamos visualmente al instante
@@ -218,13 +251,24 @@ export default function ComprasList() {
     }
   };
 
-  const handleAprobar = async (decision) => {
+  const handleAprobar = (decision) => {
     if (decision === 'rechazado' && !evaluacionComentario.trim()) {
       toast.error("Por favor, ingrese una justificación en los comentarios para rechazar la solicitud.");
       return;
     }
 
-    if(!window.confirm(`¿Seguro que deseas ${decision} esta compra?`)) return;
+    setModalConfirmacion({
+      show: true,
+      title: `¿${decision === 'aprobado' ? 'Aprobar' : 'Rechazar'} compra?`,
+      message: `¿Seguro que deseas ${decision} esta compra?`,
+      confirmText: decision === 'aprobado' ? "Sí, aprobar" : "Sí, rechazar",
+      isDestructive: decision === 'rechazado',
+      action: 'aprobar',
+      data: decision
+    });
+  };
+
+  const ejecutarAprobacion = async (decision) => {
     try {
       const res = await api.put(`/compras/${selectedCompra._id}/evaluar`, { decision, comentarios: evaluacionComentario || 'Evaluado por gerencia' });
       setCompras(prev => prev.map(c => c._id === res.data._id ? res.data : c)); // Actualizamos estado visualmente
@@ -233,6 +277,15 @@ export default function ComprasList() {
     } catch (error) {
       toast.error("Error al evaluar");
     }
+  };
+
+  const handleConfirmarAccion = () => {
+    if (modalConfirmacion.action === 'eliminar') {
+      ejecutarEliminacion(modalConfirmacion.data);
+    } else if (modalConfirmacion.action === 'aprobar') {
+      ejecutarAprobacion(modalConfirmacion.data);
+    }
+    setModalConfirmacion(prev => ({ ...prev, show: false }));
   };
 
   // --- RENDER ---
@@ -565,9 +618,9 @@ export default function ComprasList() {
               <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-6">
                 <button type="button" onClick={() => setShowModal(false)} className="w-full sm:w-auto px-4 py-2 border rounded text-gray-600">Cerrar</button>
                 
-                {modalStep === 'crear' && <button type="submit" className="w-full sm:w-auto px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700">Crear Requerimiento</button>}
-                {modalStep === 'editar' && <button type="submit" className="w-full sm:w-auto px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700">Guardar Cambios</button>}
-                {modalStep === 'cotizar' && <button type="submit" className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Guardar Cotización</button>}
+                {modalStep === 'crear' && <button type="submit" disabled={isSubmitting} className="w-full sm:w-auto px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed">{isSubmitting ? 'Creando...' : 'Crear Requerimiento'}</button>}
+                {modalStep === 'editar' && <button type="submit" disabled={isSubmitting} className="w-full sm:w-auto px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed">{isSubmitting ? 'Guardando...' : 'Guardar Cambios'}</button>}
+                {modalStep === 'cotizar' && <button type="submit" disabled={isSubmitting} className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">{isSubmitting ? 'Guardando...' : 'Guardar Cotización'}</button>}
                 
                 {modalStep === 'aprobar' && (
                   <>
@@ -580,6 +633,16 @@ export default function ComprasList() {
           </div>
         </Modal>
       )}
+
+      <ModalConfirmacion
+        show={modalConfirmacion.show}
+        onClose={() => setModalConfirmacion(prev => ({ ...prev, show: false }))}
+        onConfirm={handleConfirmarAccion}
+        title={modalConfirmacion.title}
+        message={modalConfirmacion.message}
+        confirmText={modalConfirmacion.confirmText}
+        isDestructive={modalConfirmacion.isDestructive}
+      />
     </div>
   );
 }

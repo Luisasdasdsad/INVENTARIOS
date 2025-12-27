@@ -3,12 +3,22 @@ import api from "../../services/api";
 import { FaFilePdf, FaSearch, FaPaperPlane, FaCheckCircle, FaTimesCircle, FaHourglassHalf } from "react-icons/fa";
 import { generarFactura } from "../../utils/generarFactura";
 import { toast } from 'react-hot-toast';
+import ModalConfirmacion from "../../components/ModalConfirmacion";
 
 const FacturaList = () => {
   const [facturas, setFacturas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [modalConfirmacion, setModalConfirmacion] = useState({
+    show: false,
+    title: "",
+    message: "",
+    confirmText: "Confirmar",
+    isDestructive: true,
+    action: null,
+    data: null
+  });
 
   const fetchFacturas = async () => {
     setLoading(true);
@@ -90,19 +100,28 @@ const FacturaList = () => {
     }
   };
 
-  const handleEnviarSunat = async (facturaId) => {    
-    const confirmSend = window.confirm("¿Estás seguro de que deseas enviar esta factura a la SUNAT? Esta acción no se puede deshacer.");
-    if (!confirmSend) return;
+  const handleEnviarSunat = (facturaId) => {
+    setModalConfirmacion({
+      show: true,
+      title: "Enviar a SUNAT",
+      message: "¿Estás seguro de que deseas enviar esta factura a la SUNAT? Esta acción no se puede deshacer.",
+      confirmText: "Sí, enviar",
+      isDestructive: false, // Usamos false para que salga azul/amarillo en vez de rojo
+      action: 'enviarSunat',
+      data: facturaId
+    });
+  };
 
+  const ejecutarEnviarSunat = async (facturaId) => {
     try {
       // Actualiza el estado local para mostrar un feedback inmediato al usuario
-      setFacturas(facturas.map(f => f._id === facturaId ? { ...f, estadoSunat: 'Enviando...' } : f));
+      setFacturas(prev => prev.map(f => f._id === facturaId ? { ...f, estadoSunat: 'Enviando...' } : f));
 
       const res = await api.post(`/facturas/${facturaId}/enviar-sunat`);
       const facturaActualizada = res.data.factura;
 
       // Actualiza la lista de facturas con la respuesta final del backend
-      setFacturas(facturas.map(f => f._id === facturaId ? facturaActualizada : f));
+      setFacturas(prev => prev.map(f => f._id === facturaId ? facturaActualizada : f));
 
       toast.success(`Factura enviada. Estado SUNAT: ${facturaActualizada.estadoSunat}`);
 
@@ -112,6 +131,13 @@ const FacturaList = () => {
       // Vuelve a cargar los datos para reflejar el estado de error guardado en el backend
       fetchFacturas(); 
     }
+  };
+
+  const handleConfirmarAccion = () => {
+    if (modalConfirmacion.action === 'enviarSunat') {
+      ejecutarEnviarSunat(modalConfirmacion.data);
+    }
+    setModalConfirmacion(prev => ({ ...prev, show: false }));
   };
 
   const filteredFacturas = facturas.filter((factura) =>
@@ -293,6 +319,16 @@ const FacturaList = () => {
           </div>
         </>
       )}
+
+      <ModalConfirmacion
+        show={modalConfirmacion.show}
+        onClose={() => setModalConfirmacion(prev => ({ ...prev, show: false }))}
+        onConfirm={handleConfirmarAccion}
+        title={modalConfirmacion.title}
+        message={modalConfirmacion.message}
+        confirmText={modalConfirmacion.confirmText}
+        isDestructive={modalConfirmacion.isDestructive}
+      />
     </div>
   );
 };

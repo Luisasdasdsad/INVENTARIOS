@@ -5,6 +5,7 @@ import Modal from "../../components/Modal/Modal";
 import ProveedorForm from "./ProveedorForm";
 import * as XLSX from 'xlsx'; // 1. Importar la librería para Excel
 import { toast } from 'react-hot-toast';
+import ModalConfirmacion from "../../components/ModalConfirmacion";
 
 // --- Componente Principal de la Lista de Proveedores ---
 const ProveedorList = () => {
@@ -14,6 +15,15 @@ const ProveedorList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingProveedor, setEditingProveedor] = useState(null);
+  const [modalConfirmacion, setModalConfirmacion] = useState({
+    show: false,
+    title: "",
+    message: "",
+    confirmText: "Confirmar",
+    isDestructive: true,
+    action: null,
+    data: null
+  });
 
   const fetchProveedores = async () => {
     try {
@@ -72,17 +82,34 @@ const ProveedorList = () => {
     // --- FIN DE LA CORRECCIÓN ---
   };
 
-  const handleDeleteProveedor = async (proveedorId) => {
-    if (window.confirm("¿Estás seguro de que deseas eliminar este proveedor?")) {
-      try {
-        await api.delete(`/proveedores/${proveedorId}`);
-        toast.success("Proveedor eliminado con éxito");
-        fetchProveedores(); // Recargar la lista
-      } catch (error) {
-        console.error("Error al eliminar el proveedor:", error);
-        toast.error("No se pudo eliminar el proveedor.");
-      }
+  const handleDeleteProveedor = (proveedorId) => {
+    setModalConfirmacion({
+      show: true,
+      title: "¿Eliminar proveedor?",
+      message: "¿Estás seguro de que deseas eliminar este proveedor?",
+      confirmText: "Sí, eliminar",
+      isDestructive: true,
+      action: 'eliminar',
+      data: proveedorId
+    });
+  };
+
+  const ejecutarEliminacion = async (proveedorId) => {
+    try {
+      await api.delete(`/proveedores/${proveedorId}`);
+      toast.success("Proveedor eliminado con éxito");
+      fetchProveedores(); // Recargar la lista
+    } catch (error) {
+      console.error("Error al eliminar el proveedor:", error);
+      toast.error("No se pudo eliminar el proveedor.");
     }
+  };
+
+  const handleConfirmarAccion = () => {
+    if (modalConfirmacion.action === 'eliminar') {
+      ejecutarEliminacion(modalConfirmacion.data);
+    }
+    setModalConfirmacion(prev => ({ ...prev, show: false }));
   };
 
   const filteredProveedores = proveedores.filter((p) =>
@@ -252,6 +279,16 @@ const ProveedorList = () => {
           </tbody>
         </table>
       </div>
+
+      <ModalConfirmacion
+        show={modalConfirmacion.show}
+        onClose={() => setModalConfirmacion(prev => ({ ...prev, show: false }))}
+        onConfirm={handleConfirmarAccion}
+        title={modalConfirmacion.title}
+        message={modalConfirmacion.message}
+        confirmText={modalConfirmacion.confirmText}
+        isDestructive={modalConfirmacion.isDestructive}
+      />
     </div>
   );
 };

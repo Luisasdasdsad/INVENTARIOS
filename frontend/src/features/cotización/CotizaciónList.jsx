@@ -5,6 +5,7 @@ import { FaEdit, FaTrash, FaPlus, FaSearch, FaFilePdf, FaWhatsapp, FaFileInvoice
 import generarReporteCotizacion from "../../utils/generarReporteCotización"; // Para cotizaciones
 import { generarFactura } from "../../utils/generarFactura"; // NUEVO: Para facturas
 import { toast } from 'react-hot-toast';
+import ModalConfirmacion from "../../components/ModalConfirmacion";
 
 const CotizaciónList = () => {
   const [cotizaciones, setCotizaciones] = useState([]);
@@ -12,6 +13,15 @@ const CotizaciónList = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
+  const [modalConfirmacion, setModalConfirmacion] = useState({
+    show: false,
+    title: "",
+    message: "",
+    confirmText: "Confirmar",
+    isDestructive: true,
+    action: null,
+    data: null
+  });
 
   useEffect(() => {
     fetchCotizaciones();
@@ -42,16 +52,26 @@ const CotizaciónList = () => {
     navigate("/cotización", { state: { cotizacion } });
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("¿Estás seguro de que deseas eliminar esta cotización?")) {
-      try {
-        await api.delete(`/cotizaciones/${id}`);
-        setCotizaciones(cotizaciones.filter((c) => c._id !== id));
-        toast.success("Cotización eliminada");
-      } catch (err) {
-        console.error("Error al eliminar cotización:", err);
-        toast.error(err.response?.data?.msg || "Error al eliminar la cotización");
-      }
+  const handleDelete = (id) => {
+    setModalConfirmacion({
+      show: true,
+      title: "¿Eliminar cotización?",
+      message: "¿Estás seguro de que deseas eliminar esta cotización?",
+      confirmText: "Sí, eliminar",
+      isDestructive: true,
+      action: 'eliminar',
+      data: id
+    });
+  };
+
+  const ejecutarEliminacion = async (id) => {
+    try {
+      await api.delete(`/cotizaciones/${id}`);
+      setCotizaciones(prev => prev.filter((c) => c._id !== id));
+      toast.success("Cotización eliminada");
+    } catch (err) {
+      console.error("Error al eliminar cotización:", err);
+      toast.error(err.response?.data?.msg || "Error al eliminar la cotización");
     }
   };
 
@@ -60,15 +80,23 @@ const CotizaciónList = () => {
   };
 
   // NUEVA FUNCIÓN: Para cambiar el estado de una cotización
-  const handleUpdateEstado = async (cotizacionId, nuevoEstado) => {
-    // Pedir confirmación para evitar clics accidentales
-    if (!window.confirm(`¿Estás seguro de que quieres marcar esta cotización como "${nuevoEstado}"?`)) {
-      return;
-    }
+  const handleUpdateEstado = (cotizacionId, nuevoEstado) => {
+    setModalConfirmacion({
+      show: true,
+      title: `¿Marcar como ${nuevoEstado}?`,
+      message: `¿Estás seguro de que quieres marcar esta cotización como "${nuevoEstado}"?`,
+      confirmText: "Sí, confirmar",
+      isDestructive: nuevoEstado === 'Rechazada',
+      action: 'updateEstado',
+      data: { cotizacionId, nuevoEstado }
+    });
+  };
+
+  const ejecutarUpdateEstado = async (cotizacionId, nuevoEstado) => {
     try {
       const res = await api.patch(`/cotizaciones/${cotizacionId}/estado`, { estado: nuevoEstado });
       // Actualizar la lista de cotizaciones en el frontend para reflejar el cambio al instante
-      setCotizaciones(cotizaciones.map(c => 
+      setCotizaciones(prev => prev.map(c => 
         c._id === cotizacionId ? res.data : c
       ));
       toast.success(`Cotización marcada como ${nuevoEstado}`);
@@ -79,11 +107,19 @@ const CotizaciónList = () => {
   };
 
   // FUNCIÓN ACTUALIZADA: Ahora crea la factura en el backend
-  const handleGenerarFactura = async (cotizacion) => {
-    if (!window.confirm(`¿Estás seguro de que quieres generar una factura para la cotización #${cotizacion.numeroCotizacion}? Esto marcará la cotización como "Facturada".`)) {
-      return;
-    }
+  const handleGenerarFactura = (cotizacion) => {
+    setModalConfirmacion({
+      show: true,
+      title: "Generar Factura",
+      message: `¿Estás seguro de que quieres generar una factura para la cotización #${cotizacion.numeroCotizacion}? Esto marcará la cotización como "Facturada".`,
+      confirmText: "Generar Factura",
+      isDestructive: false,
+      action: 'generarFactura',
+      data: cotizacion
+    });
+  };
 
+  const ejecutarGenerarFactura = async (cotizacion) => {
     try {
       // Llamar al nuevo endpoint del backend para crear la factura
       const res = await api.post("/facturas", { cotizacionId: cotizacion._id });
@@ -98,6 +134,17 @@ const CotizaciónList = () => {
       console.error("Error al generar la factura:", error);
       toast.error("Error al generar la factura: " + (error.response?.data?.msg || error.message));
     }
+  };
+
+  const handleConfirmarAccion = () => {
+    if (modalConfirmacion.action === 'eliminar') {
+      ejecutarEliminacion(modalConfirmacion.data);
+    } else if (modalConfirmacion.action === 'updateEstado') {
+      ejecutarUpdateEstado(modalConfirmacion.data.cotizacionId, modalConfirmacion.data.nuevoEstado);
+    } else if (modalConfirmacion.action === 'generarFactura') {
+      ejecutarGenerarFactura(modalConfirmacion.data);
+    }
+    setModalConfirmacion(prev => ({ ...prev, show: false }));
   };
 
   // NUEVO: Handler para ver la factura en PDF
@@ -460,6 +507,16 @@ const CotizaciónList = () => {
           </div>
         </div>
       )}
+
+      <ModalConfirmacion
+        show={modalConfirmacion.show}
+        onClose={() => setModalConfirmacion(prev => ({ ...prev, show: false }))}
+        onConfirm={handleConfirmarAccion}
+        title={modalConfirmacion.title}
+        message={modalConfirmacion.message}
+        confirmText={modalConfirmacion.confirmText}
+        isDestructive={modalConfirmacion.isDestructive}
+      />
     </div>
   );
 };

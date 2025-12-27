@@ -46,7 +46,7 @@ export const crearEvento = async (req, res) => {
 export const actualizarEvento = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, start, end, allDay, description, color } = req.body;
+        const { title, start, end, allDay, description, color, completed } = req.body;
 
         const evento = await Evento.findById(id);
         if (!evento) return res.status(404).json({ msg: 'Evento no encontrado' });
@@ -57,7 +57,7 @@ export const actualizarEvento = async (req, res) => {
         }
 
         const eventoActualizado = await Evento.findByIdAndUpdate(id, 
-            { title, start, end, allDay, description, color }, 
+            { title, start, end, allDay, description, color, completed }, 
             { new: true }
         ).populate('user', 'nombre');
 

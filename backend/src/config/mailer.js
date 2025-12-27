@@ -14,7 +14,7 @@ export const enviarCorreo = async ({ to, subject, html }) => {
         });
 
         const mailOptions = {
-            from: `"Sistema de Inventarios" <${process.env.EMAIL_USER}>`,
+            from: `"Sistema de TEAM GAS" <${process.env.EMAIL_USER}>`,
             to,
             subject,
             html
