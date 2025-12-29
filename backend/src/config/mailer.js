@@ -14,9 +14,7 @@ export const enviarCorreo = async ({ to, subject, html }) => {
         }
 
         const transporter = nodemailer.createTransport({
-            host: "smtp.gmail.com", // Host explícito para mayor estabilidad en Render
-            port: 587,              // Usar 587 (TLS) es más estable para evitar Timeouts
-            secure: false,          // false es obligatorio para el puerto 587 (usa STARTTLS)
+            service: 'gmail', // Usamos el servicio predefinido para mejor compatibilidad
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS

@@ -3,10 +3,6 @@ import Notificacion from "../models/notificacion.model.js";
 import Usuario from '../models/usuario.model.js';
 import { enviarCorreo } from '../config/mailer.js';
 
-// IDs específicos para el flujo de compras
-const ID_COTIZADOR = '69128ebaed6ab6a97487f143';
-const ID_APROBADOR = '690b83dfb5649a16ce4ee9cf';
-
 const generarCodigo = async () => {
     const last = await Compra.findOne().sort({ createdAt: -1 });
     if(!last || !last.codigo) return "REQ-0001";
@@ -64,7 +60,8 @@ export const crearRequerimiento = async (req, res) => {
 
         // 📧 CORREO: Notificar al Cotizador específico
         try {
-            const cotizador = await Usuario.findById(ID_COTIZADOR).select('email nombre');
+            // BUSCAR POR ROL: Busca al primer usuario de administración, jefe de inventario o admin
+            const cotizador = await Usuario.findOne({ rol: { $in: ['administracion', 'jefe_inventario', 'admin'] } }).select('email nombre');
             const linkSistema = process.env.FRONTEND_URL || 'https://inventarios-aip4.vercel.app';
             if (cotizador && cotizador.email) {
                 await enviarCorreo({
@@ -148,7 +145,8 @@ export const registrarCotizacion = async (req, res) => {
         // 📧 CORREO: Notificar al Aprobador y al Solicitante
         try {
             const linkSistema = process.env.FRONTEND_URL || 'https://inventarios-aip4.vercel.app';
-            const aprobador = await Usuario.findById(ID_APROBADOR).select('email nombre');
+            // BUSCAR POR ROL: Busca al Gerente (Admin o Superadmin) para aprobar
+            const aprobador = await Usuario.findOne({ rol: { $in: ['admin', 'superadmin'] } }).select('email nombre');
             
             // 1. Correo al Aprobador (Para que entre a aprobar)
             if (aprobador && aprobador.email) {
