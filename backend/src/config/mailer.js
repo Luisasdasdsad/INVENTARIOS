@@ -14,11 +14,17 @@ export const enviarCorreo = async ({ to, subject, html }) => {
         }
 
         const transporter = nodemailer.createTransport({
-            service: 'gmail', // Usamos el servicio predefinido para mejor compatibilidad
+            host: "smtp.gmail.com",
+            port: 587,
+            secure: false, // false es requerido para el puerto 587 (STARTTLS)
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS
-            }
+            },
+            tls: { rejectUnauthorized: false }, // Ayuda con certificados en la nube
+            family: 4, // IMPORTANTE: Fuerza IPv4 para evitar timeouts en Render
+            logger: true, // Habilitar logs detallados para depuración
+            debug: true   // Incluir tráfico SMTP en los logs
         });
 
         const mailOptions = {

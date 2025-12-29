@@ -45,6 +45,9 @@ export const crearRequerimiento = async (req, res) => {
             .populate('proveedor', 'nombre')
             .populate('cotizacion', 'numeroCotizacion descripcionServicio');
 
+        // RESPONDER INMEDIATAMENTE AL FRONTEND (Para evitar que se congele la pantalla)
+        res.status(201).json(compraPoblada);
+
         // 🔔 NOTIFICACIÓN: Avisar a Administración y Logística que hay un nuevo requerimiento
         try {
             const encargados = await Usuario.find({ rol: { $in: ['jefe_inventario', 'administracion', 'admin', 'superadmin'] } });
@@ -83,9 +86,10 @@ export const crearRequerimiento = async (req, res) => {
             console.error("Error al enviar correo de notificación al cotizador:", emailError);
         }
 
-        res.status(201).json(compraPoblada);
     } catch (error) {
-        res.status(500).json({ msg: "Error al crear requerimiento", error: error.message });
+        // Si ya respondimos, solo logueamos el error
+        if (!res.headersSent) res.status(500).json({ msg: "Error al crear requerimiento", error: error.message });
+        else console.error("Error posterior a la respuesta:", error);
     }
 };
 
@@ -128,6 +132,9 @@ export const registrarCotizacion = async (req, res) => {
         .populate('solicitante', 'nombre email') // Necesitamos el email del solicitante
         .populate('proveedor', 'nombre')
         .populate('cotizacion', 'numeroCotizacion descripcionServicio');
+
+        // RESPONDER INMEDIATAMENTE
+        res.json(compra);
 
         // 🔔 NOTIFICACIÓN: Avisar a Gerencia (Jefe Manuel/Admin) para aprobar
         try {
@@ -184,9 +191,9 @@ export const registrarCotizacion = async (req, res) => {
             console.error("Error al enviar correos de cotización:", emailError);
         }
 
-        res.json(compra);
     }catch (error) {
-        res.status(500).json({ msg: "Error al registrar cotización", error: error.message });
+        if (!res.headersSent) res.status(500).json({ msg: "Error al registrar cotización", error: error.message });
+        else console.error("Error posterior a la respuesta:", error);
     }
 };
 
@@ -212,6 +219,9 @@ export const evaluarCompra = async (req, res) => {
         .populate('cotizador', 'nombre email')
         .populate('proveedor', 'nombre')
         .populate('cotizacion', 'numeroCotizacion descripcionServicio');
+
+        // RESPONDER INMEDIATAMENTE
+        res.json(compra);
 
         try {
             // CORRECCIÓN: Extraer IDs correctamente (solicitante es un objeto poblado, cotizador es un ID)
@@ -273,9 +283,9 @@ export const evaluarCompra = async (req, res) => {
             console.error("Error al enviar correos de notificación:", emailError);
         }
 
-        res.json(compra);
     } catch (error) {
-        res.status(500).json({ msg: "Error al evaluar compra", error: error.message });
+        if (!res.headersSent) res.status(500).json({ msg: "Error al evaluar compra", error: error.message });
+        else console.error("Error posterior a la respuesta:", error);
     }
 };
 
