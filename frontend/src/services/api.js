@@ -1,7 +1,12 @@
 import axios from 'axios';
 
+// Detectar URL automáticamente:
+// 1. Si existe variable de entorno VITE_API_URL (local), úsala.
+// 2. Si no, usa la URL de producción de Render por defecto.
+const API_URL = import.meta.env.VITE_API_URL || "https://inventarios-axfm.onrender.com/api";
+
 const api = axios.create({
-  baseURL: "https://inventarios-axfm.onrender.com/api",
+  baseURL: API_URL,
 });
 
 // Interceptor para agregar el token

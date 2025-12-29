@@ -1,6 +1,5 @@
 import express from 'express';
 import multer from 'multer';
-import { uploadToDrive } from '../controllers/drive.controller.js';
 import { auth } from '../middlewares/auth.js';
 
 const router = express.Router();
@@ -12,7 +11,5 @@ const upload = multer({
 });
 
 router.use(auth);
-
-router.post('/drive', upload.single('archivo'), uploadToDrive);
 
 export default router;
