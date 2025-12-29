@@ -3,6 +3,11 @@ import Notificacion from "../models/notificacion.model.js";
 import Usuario from '../models/usuario.model.js';
 import { enviarCorreo } from '../config/mailer.js';
 
+// CONFIGURACIÓN DE DESTINATARIOS ESPECÍFICOS
+// Aquí definimos los correos que SIEMPRE deben recibir la notificación, sin importar su rol.
+const EMAILS_COTIZADORES = ['admiteamgassac@gmail.com']; 
+const EMAILS_APROBADORES = ['gerencia@teamgas.pe']; // Correos que siempre reciben solicitud de aprobación
+
 const generarCodigo = async () => {
     const last = await Compra.findOne().sort({ createdAt: -1 });
     if(!last || !last.codigo) return "REQ-0001";
@@ -61,29 +66,43 @@ export const crearRequerimiento = async (req, res) => {
             if (notificaciones.length > 0) await Notificacion.insertMany(notificaciones);
         } catch (err) { console.error("Error notificando:", err); }
 
-        // 📧 CORREO: Notificar al Cotizador específico
+        // 📧 CORREO: Notificar a TODOS los encargados de cotizar
         try {
-            // BUSCAR POR ROL: Busca al primer usuario de administración, jefe de inventario o admin
-            const cotizador = await Usuario.findOne({ rol: { $in: ['administracion', 'jefe_inventario', 'admin'] } }).select('email nombre');
+            // BUSCAR POR EMAIL O ROL: 
+            // 1. Busca específicamente a los correos definidos (ej: admiteamgassac@gmail.com)
+            // 2. También busca a roles administrativos por si acaso
+            const cotizadores = await Usuario.find({
+                $or: [
+                    { email: { $in: EMAILS_COTIZADORES } },
+                    { rol: { $in: ['administracion', 'jefe_inventario', 'admin'] } }
+                ]
+            }).select('email nombre');
+
             const linkSistema = process.env.FRONTEND_URL || 'https://inventarios-aip4.vercel.app';
-            if (cotizador && cotizador.email) {
-                await enviarCorreo({
-                    from: process.env.EMAIL_USER,
-                    to: cotizador.email,
-                    subject: `Nuevo Requerimiento de Compra #${codigo}`,
-                    html: `
-                        <h1>Nuevo Requerimiento de Compra</h1>
-                        <p>Hola ${cotizador.nombre},</p>
-                        <p>Se ha registrado un nuevo requerimiento de compra con el código <strong>#${codigo}</strong> y está pendiente de cotización.</p>
-                        <p><strong>Solicitante:</strong> ${req.user.nombre}</p>
-                        <p><strong>Asunto:</strong> ${data.asunto || 'Sin asunto'}</p>
-                        <p>Por favor, ingresa al sistema para revisarlo.</p>
-                        <p><a href="${linkSistema}">Ingresar al Sistema</a></p>
-                    `
-                });
+            
+            for (const cotizador of cotizadores) {
+                // No enviar al mismo usuario que creó el requerimiento (para que no te llegue a ti, Luis)
+                if (String(cotizador._id) === String(req.user.id)) continue;
+
+                if (cotizador && cotizador.email) {
+                    await enviarCorreo({
+                        from: process.env.EMAIL_USER,
+                        to: cotizador.email,
+                        subject: `Nuevo Requerimiento de Compra #${codigo}`,
+                        html: `
+                            <h1>Nuevo Requerimiento de Compra</h1>
+                            <p>Hola ${cotizador.nombre},</p>
+                            <p>Se ha registrado un nuevo requerimiento de compra con el código <strong>#${codigo}</strong> y está pendiente de cotización.</p>
+                            <p><strong>Solicitante:</strong> ${req.user.nombre}</p>
+                            <p><strong>Asunto:</strong> ${data.asunto || 'Sin asunto'}</p>
+                            <p>Por favor, ingresa al sistema para revisarlo.</p>
+                            <p><a href="${linkSistema}">Ingresar al Sistema</a></p>
+                        `
+                    });
+                }
             }
         } catch (emailError) {
-            console.error("Error al enviar correo de notificación al cotizador:", emailError);
+            console.error("Error al enviar correos de notificación a cotizadores:", emailError);
         }
 
     } catch (error) {
@@ -152,24 +171,31 @@ export const registrarCotizacion = async (req, res) => {
         // 📧 CORREO: Notificar al Aprobador y al Solicitante
         try {
             const linkSistema = process.env.FRONTEND_URL || 'https://inventarios-aip4.vercel.app';
-            // BUSCAR POR ROL: Busca al Gerente (Admin o Superadmin) para aprobar
-            const aprobador = await Usuario.findOne({ rol: { $in: ['admin', 'superadmin'] } }).select('email nombre');
+            // BUSCAR POR EMAIL O ROL: Busca a TODOS los Gerentes (Admin o Superadmin) y correos específicos
+            const aprobadores = await Usuario.find({
+                $or: [
+                    { email: { $in: EMAILS_APROBADORES } },
+                    { rol: { $in: ['admin', 'superadmin'] } }
+                ]
+            }).select('email nombre');
             
-            // 1. Correo al Aprobador (Para que entre a aprobar)
-            if (aprobador && aprobador.email) {
-                await enviarCorreo({
-                    from: process.env.EMAIL_USER,
-                    to: aprobador.email,
-                    subject: `Cotización Lista para Aprobación - Compra #${compra.codigo}`,
-                    html: `
-                        <h1>Cotización Lista para Aprobación</h1>
-                        <p>Hola ${aprobador.nombre},</p>
-                        <p>La cotización para el requerimiento <strong>#${compra.codigo}</strong> ha sido registrada y espera tu evaluación.</p>
-                        <p><strong>Solicitante:</strong> ${compra.solicitante?.nombre || 'Usuario'}</p>
-                        <p><strong>Monto Total Estimado:</strong> S/ ${montoTotalEstimado.toFixed(2)}</p>
-                        <p>Para aprobar o rechazar, por favor <a href="${linkSistema}">ingresa al sistema</a>.</p>
-                    `
-                });
+            // 1. Correo a los Aprobadores (Gerencia)
+            for (const aprobador of aprobadores) {
+                if (aprobador && aprobador.email) {
+                    await enviarCorreo({
+                        from: process.env.EMAIL_USER,
+                        to: aprobador.email,
+                        subject: `Cotización Lista para Aprobación - Compra #${compra.codigo}`,
+                        html: `
+                            <h1>Cotización Lista para Aprobación</h1>
+                            <p>Hola ${aprobador.nombre},</p>
+                            <p>La cotización para el requerimiento <strong>#${compra.codigo}</strong> ha sido registrada y espera tu evaluación.</p>
+                            <p><strong>Solicitante:</strong> ${compra.solicitante?.nombre || 'Usuario'}</p>
+                            <p><strong>Monto Total Estimado:</strong> S/ ${montoTotalEstimado.toFixed(2)}</p>
+                            <p>Para aprobar o rechazar, por favor <a href="${linkSistema}">ingresa al sistema</a>.</p>
+                        `
+                    });
+                }
             }
 
             // 2. Correo al Solicitante (Informativo: "Ya cotizaron tu pedido")
