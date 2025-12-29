@@ -47,10 +47,10 @@ const FacturaList = () => {
       // 2. Preparar datos de la empresa (esto debería venir de una config global)
       const EMPRESA_INFO = {
         nombre: "TEAM GAS S.A.C.",
-        ruc: "20XXXXXXXXX",
-        direccion: "Av. Ejemplo 123, Lima, Perú",
-        telefono: "987654321",
-        email: "contacto@teamgas.com",
+        ruc: "20604956499",
+        direccion: "JR. CORONEL GUERRA NRO. 152 (PLAZA PRINCIPAL) JUNIN - CHUPACA - CHUPACA",
+        telefono: "997030802 - 919289085",
+        email: "info@teamgas.com",
         logoUrl: "/fondocotizacion.png",
       };
 
