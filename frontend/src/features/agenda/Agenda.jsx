@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
-import { FaChevronLeft, FaChevronRight, FaCalendarDay } from 'react-icons/fa';
+import { FaChevronLeft, FaChevronRight, FaCalendarDay, FaPlus } from 'react-icons/fa';
 import ModalConfirmacion from '../../components/ModalConfirmacion';
 
 // FullCalendar imports
@@ -23,6 +23,14 @@ const Agenda = () => {
   const [modalEliminar, setModalEliminar] = useState({ show: false, id: null });
   const [modalNuevoEvento, setModalNuevoEvento] = useState({ show: false, selectInfo: null, title: '' });
   const [modalDetalle, setModalDetalle] = useState({ show: false, id: null, title: '', start: null, end: null, userId: null });
+
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -115,6 +123,28 @@ const Agenda = () => {
     }
   };
 
+  // Handler para botón flotante (Móvil) - Crea evento en la siguiente hora
+  const handleFabClick = () => {
+    const now = new Date();
+    const start = new Date(now); 
+    // Ajustar a la siguiente hora en punto para facilitar
+    start.setMinutes(0, 0, 0);
+    start.setHours(start.getHours() + 1);
+    
+    const end = new Date(start.getTime() + 60 * 60 * 1000); // 1 hora de duración por defecto
+
+    setModalNuevoEvento({
+      show: true,
+      selectInfo: {
+        startStr: start.toISOString(),
+        endStr: end.toISOString(),
+        allDay: false,
+        resource: { id: user.id } // Asigna al usuario actual
+      },
+      title: ''
+    });
+  };
+
   // Mover o redimensionar un evento
   const handleEventChange = async (changeInfo) => {
     const { event } = changeInfo;
@@ -195,7 +225,7 @@ const Agenda = () => {
   const calendarEvents = eventos.map(ev => ({
     id: ev._id,
     resourceId: ev.user?._id,
-    title: ev.title,
+    title: (isMobile && ev.user?.nombre) ? `${ev.title} (${ev.user.nombre})` : ev.title,
     start: new Date(ev.start),
     end: new Date(ev.end),
     allDay: ev.allDay,
@@ -220,16 +250,17 @@ const Agenda = () => {
       {loading ? (
         <div className="text-center py-10 text-gray-500">Cargando equipo...</div>
       ) : (
-        <div className='bg-white p-4 rounded-lg shadow-md border'>
+        <div className={`bg-white rounded-lg shadow-md border ${isMobile ? 'p-2' : 'p-4'}`}>
           <FullCalendar
+            key={isMobile ? 'mobile' : 'desktop'}
             plugins={[resourceTimeGridPlugin, interactionPlugin, dayGridPlugin, timeGridPlugin]}
             schedulerLicenseKey="CC-Attribution-NonCommercial-NoDerivatives"
             headerToolbar={{
-              left: 'prev,next today',
+              left: isMobile ? 'prev,next' : 'prev,next today',
               center: 'title',
-              right: 'resourceTimeGridDay,timeGridWeek,dayGridMonth'
+              right: isMobile ? 'timeGridDay,timeGridWeek,dayGridMonth' : 'resourceTimeGridDay,timeGridWeek,dayGridMonth'
             }}
-            initialView='resourceTimeGridDay'
+            initialView={isMobile ? 'timeGridDay' : 'resourceTimeGridDay'}
             initialDate={fechaSeleccionada}
             editable={true}
             selectable={true}
@@ -248,6 +279,17 @@ const Agenda = () => {
             eventChange={handleEventChange} // Se activa al arrastrar o redimensionar
           />
         </div>
+      )}
+
+      {/* Botón Flotante para Móvil */}
+      {isMobile && (
+        <button
+          onClick={handleFabClick}
+          className="fixed bottom-6 right-6 bg-indigo-600 text-white p-4 rounded-full shadow-lg z-40 hover:bg-indigo-700 transition-colors flex items-center justify-center"
+          title="Nueva Actividad"
+        >
+          <FaPlus size={24} />
+        </button>
       )}
 
       {/* Modal de Confirmación */}

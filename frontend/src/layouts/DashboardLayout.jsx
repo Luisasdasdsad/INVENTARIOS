@@ -224,9 +224,23 @@ export default function DashboardLayout() {
             </NavGroup>
           )}
 
+          {/* --- SECCIÓN COMPRAS (Nueva Sección Independiente) --- */}
+          <NavGroup title="Compras" icon={FaShoppingCart} id="compras" badgeCount={unreadCompras}>
+            <Link to="/compras" onClick={handleNavClick} className="flex items-center gap-3 p-2 rounded-lg hover:bg-orange-50 text-secondary-600 hover:text-orange-700 transition-colors justify-between">
+              <div className="flex items-center gap-3">
+                <FaClipboardList size={14} /> <span className="text-sm">Requerimientos</span>
+              </div>
+              {unreadCompras > 0 && (
+                <span className="bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                  {unreadCompras}
+                </span>
+              )}
+            </Link>
+          </NavGroup>
+
           {/* --- SECCIÓN ORDEN DE TRABAJO (Oculta para jefe de inventario) --- */}
           {user?.rol !== 'jefe_inventario' && (
-            <NavGroup title="Orden de Trabajo" icon={FaClipboardList} id="ots" badgeCount={unreadOTs + unreadCompras}>
+            <NavGroup title="Orden de Trabajo" icon={FaClipboardList} id="ots" badgeCount={unreadOTs}>
               <Link to="/ordenes-trabajo" onClick={handleNavClick} className="flex items-center gap-3 p-2 rounded-lg hover:bg-indigo-50 text-secondary-600 hover:text-indigo-700 transition-colors justify-between">
                 <div className="flex items-center gap-3">
                   <FaClipboardList size={14} /> <span className="text-sm">Órdenes</span>
@@ -239,16 +253,6 @@ export default function DashboardLayout() {
               </Link>
               <Link to="/ordenes-trabajo/calendario" onClick={handleNavClick} className="flex items-center gap-3 p-2 rounded-lg hover:bg-indigo-50 text-secondary-600 hover:text-indigo-700 transition-colors">
                 <FaCalendarAlt size={14} /> <span className="text-sm">Calendario</span>
-              </Link>
-              <Link to="/compras" onClick={handleNavClick} className="flex items-center gap-3 p-2 rounded-lg hover:bg-orange-50 text-secondary-600 hover:text-orange-700 transition-colors justify-between">
-                <div className="flex items-center gap-3">
-                  <FaShoppingCart size={14} /> <span className="text-sm">Compras</span>
-                </div>
-                {unreadCompras > 0 && (
-                  <span className="bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                    {unreadCompras}
-                  </span>
-                )}
               </Link>
             </NavGroup>
           )}
