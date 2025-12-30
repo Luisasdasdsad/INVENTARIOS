@@ -5,6 +5,12 @@ config();
 
 export const enviarCorreo = async ({ to, subject, html }) => {
     try {
+        // VALIDACIÓN PREVIA: Verificar que las credenciales existen en el entorno
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+            console.error("❌ ERROR CRÍTICO: Variables de entorno EMAIL_USER o EMAIL_PASS no definidas.");
+            return null;
+        }
+
         // --- PARCHE DE CORRECCIÓN ---
         // Si el sistema intenta enviar al correo antiguo, lo redirigimos forzosamente al gerente actual.
         let destinatario = to;
@@ -14,14 +20,16 @@ export const enviarCorreo = async ({ to, subject, html }) => {
         }
 
         const transporter = nodemailer.createTransport({
-            host: "smtp.gmail.com", // Volvemos a Gmail
-            port: 465,              // Puerto Seguro SSL (Mejor que 587 para Render)
-            secure: true,           // Requerido para puerto 465
+            host: "smtp.gmail.com",
+            port: 587,              // NOTA CRÍTICA: Render (Free Tier) bloquea salida a puertos 25, 465 y 587.
+                                    // Para producción en Render Free, se requiere usar una API (como Resend/SendGrid) vía HTTPS (443).
+            secure: false,          // CAMBIO: false es obligatorio para el puerto 587
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS
             },
-            family: 4 // IMPORTANTE: Fuerza IPv4 para evitar timeouts en Render
+            tls: { rejectUnauthorized: false }, // Ayuda a evitar errores de certificados
+            family: 4 // IMPORTANTE: Mantenemos IPv4 forzado
         });
 
         let remitente = process.env.EMAIL_USER;

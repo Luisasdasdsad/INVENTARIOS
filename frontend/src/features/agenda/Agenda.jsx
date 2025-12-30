@@ -21,7 +21,7 @@ const Agenda = () => {
   const [loading, setLoading] = useState(true);
   
   const [modalEliminar, setModalEliminar] = useState({ show: false, id: null });
-  const [modalNuevoEvento, setModalNuevoEvento] = useState({ show: false, selectInfo: null, title: '' });
+  const [modalNuevoEvento, setModalNuevoEvento] = useState({ show: false, selectInfo: null, title: '', selectedUserId: null });
   const [modalDetalle, setModalDetalle] = useState({ show: false, id: null, title: '', start: null, end: null, userId: null });
 
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
@@ -97,18 +97,23 @@ const Agenda = () => {
 
   // Crear evento al seleccionar un rango de tiempo
   const handleSelect = (selectInfo) => {
-    setModalNuevoEvento({ show: true, selectInfo, title: '' });
+    setModalNuevoEvento({ 
+      show: true, 
+      selectInfo, 
+      title: '', 
+      selectedUserId: selectInfo.resource ? selectInfo.resource.id : user.id 
+    });
   };
 
   const handleCrearEvento = async () => {
-    const { title, selectInfo } = modalNuevoEvento;
+    const { title, selectInfo, selectedUserId } = modalNuevoEvento;
     if (!title || !title.trim()) return toast.error("El título es obligatorio");
 
     const newEvent = {
       title,
       start: selectInfo.startStr,
       end: selectInfo.endStr,
-      user: selectInfo.resource ? selectInfo.resource.id : user.id,
+      user: selectedUserId || user.id,
       allDay: selectInfo.allDay
     };
 
@@ -141,7 +146,8 @@ const Agenda = () => {
         allDay: false,
         resource: { id: user.id } // Asigna al usuario actual
       },
-      title: ''
+      title: '',
+      selectedUserId: user.id
     });
   };
 
@@ -167,21 +173,36 @@ const Agenda = () => {
   // Clic en un evento para eliminarlo
   const handleEventClick = (clickInfo) => {
     const { id, title, start, end, extendedProps } = clickInfo.event;
+    
+    // Helper para formatear fecha a string compatible con input datetime-local (YYYY-MM-DDTHH:mm)
+    const formatDate = (date) => {
+      if (!date) return '';
+      const d = new Date(date);
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      return d.toISOString().slice(0, 16);
+    };
+
     setModalDetalle({
       show: true,
       id,
       title,
-      start,
-      end,
+      start: formatDate(start),
+      end: formatDate(end || start),
       userId: extendedProps.userId
     });
   };
 
   const handleActualizarDetalle = async () => {
     if (!modalDetalle.title.trim()) return toast.error("El título es obligatorio");
+    if (new Date(modalDetalle.start) >= new Date(modalDetalle.end)) {
+      return toast.error("La fecha de fin debe ser posterior a la de inicio");
+    }
+
     try {
-      await api.put(`/eventos/${modalDetalle.id}`, { title: modalDetalle.title });
-      setEventos(prev => prev.map(ev => ev._id === modalDetalle.id ? { ...ev, title: modalDetalle.title } : ev));
+      const payload = { title: modalDetalle.title, start: modalDetalle.start, end: modalDetalle.end };
+      await api.put(`/eventos/${modalDetalle.id}`, payload);
+      
+      setEventos(prev => prev.map(ev => ev._id === modalDetalle.id ? { ...ev, ...payload } : ev));
       toast.success("Actividad actualizada");
       setModalDetalle(prev => ({ ...prev, show: false }));
     } catch (error) {
@@ -307,6 +328,22 @@ const Agenda = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md transform transition-all">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Nueva Actividad</h3>
+            
+            {(user.rol === 'admin' || user.rol === 'superadmin') && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Asignar a:</label>
+                <select
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  value={modalNuevoEvento.selectedUserId || ''}
+                  onChange={(e) => setModalNuevoEvento({ ...modalNuevoEvento, selectedUserId: e.target.value })}
+                >
+                  {usuarios.map(u => (
+                    <option key={u._id} value={u._id}>{u.nombre}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <input
               type="text"
               className="w-full border border-gray-300 rounded-md px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -353,9 +390,41 @@ const Agenda = () => {
               />
             </div>
 
-            <div className="mb-4 text-sm text-gray-600 bg-gray-50 p-3 rounded border">
-               <p className="mb-1"><strong>Inicio:</strong> {modalDetalle.start?.toLocaleString()}</p>
-               <p><strong>Fin:</strong> {modalDetalle.end?.toLocaleString()}</p>
+            <div className="mb-4 grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Inicio</label>
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="date"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    value={modalDetalle.start?.split('T')[0] || ''}
+                    onChange={(e) => setModalDetalle({ ...modalDetalle, start: `${e.target.value}T${modalDetalle.start.split('T')[1]}` })}
+                  />
+                  <input
+                    type="time"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    value={modalDetalle.start?.split('T')[1] || ''}
+                    onChange={(e) => setModalDetalle({ ...modalDetalle, start: `${modalDetalle.start.split('T')[0]}T${e.target.value}` })}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Fin</label>
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="date"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    value={modalDetalle.end?.split('T')[0] || ''}
+                    onChange={(e) => setModalDetalle({ ...modalDetalle, end: `${e.target.value}T${modalDetalle.end.split('T')[1]}` })}
+                  />
+                  <input
+                    type="time"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    value={modalDetalle.end?.split('T')[1] || ''}
+                    onChange={(e) => setModalDetalle({ ...modalDetalle, end: `${modalDetalle.end.split('T')[0]}T${e.target.value}` })}
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-end gap-3 pt-2 border-t mt-4">

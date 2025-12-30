@@ -36,8 +36,8 @@ export const NotificationProvider = ({ children }) => {
   const marcarLeida = async (id) => {
     try {
       await api.put(`/notificaciones/${id}/leer`);
-      // Actualizar estado localmente para rapidez
-      setNotificaciones(prev => prev.map(n => n._id === id ? { ...n, leido: true } : n));
+      // CAMBIO: Eliminar de la lista localmente (ya que en backend se borró)
+      setNotificaciones(prev => prev.filter(n => n._id !== id));
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
       console.error(error);
@@ -50,4 +50,3 @@ export const NotificationProvider = ({ children }) => {
     </NotificationContext.Provider>
   );
 };
-

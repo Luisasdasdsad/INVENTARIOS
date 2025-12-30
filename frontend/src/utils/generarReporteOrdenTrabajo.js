@@ -75,14 +75,6 @@ const generarReporteOrdenTrabajo = async (ordenTrabajo) => {
     </div>
   `;
 
-  const companyTitle = `
-    <!-- TÍTULO DE LA EMPRESA -->
-    <div style="text-align: left; margin-bottom: 10px;">
-      <h2 style="margin: 0 0 2px 0; color: #333; font-size: 16px; text-transform: uppercase;">Teamgas Sociedad Anónima Cerrada</h2>
-      <p style="margin: 0; color: #444; font-size: 14px;"><b>Dirección:</b> Jr. Coronel Guerra Nro. 152, Junín - Chupaca</p>
-    </div>
-  `;
-
   const infoSection = `
     <!-- INFORMACIÓN PRINCIPAL -->
     <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
@@ -224,7 +216,6 @@ const generarReporteOrdenTrabajo = async (ordenTrabajo) => {
   const htmlContent = `
     <div class="no-break" style="font-family: 'Arial', sans-serif; font-size: 12px; padding: 20px; border-radius: 12px; background: #fff; width: 210mm; box-sizing: border-box; page-break-inside: avoid;">
       ${headerWithDetails}
-      ${companyTitle}
       ${infoSection}
       ${descripcionSection}
 

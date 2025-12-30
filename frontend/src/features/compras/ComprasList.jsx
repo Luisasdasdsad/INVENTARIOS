@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
 import Modal from "../../components/Modal/Modal";
-import { FaPlus, FaCheck, FaTimes, FaFileInvoiceDollar, FaSearch, FaShoppingCart, FaEye, FaUpload, FaImage, FaTrash, FaEdit, FaPaperclip, FaFilePdf } from "react-icons/fa";
+import { FaPlus, FaCheck, FaTimes, FaFileInvoiceDollar, FaSearch, FaShoppingCart, FaEye, FaUpload, FaImage, FaTrash, FaEdit, FaPaperclip, FaFilePdf, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from 'react-hot-toast';
 import ModalConfirmacion from "../../components/ModalConfirmacion";
@@ -17,6 +17,10 @@ export default function ComprasList() {
   const [selectedCompra, setSelectedCompra] = useState(null);
   const [modalStep, setModalStep] = useState('crear'); // crear, cotizar, aprobar, facturar
   const { user } = useAuth();
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   // Nuevos estados para la funcionalidad de cotización
   const [cotizacionesAprobadas, setCotizacionesAprobadas] = useState([]);
@@ -65,6 +69,14 @@ export default function ComprasList() {
       setLoading(false);
     }
   };
+
+  // Reset page if out of bounds (e.g. after deletion)
+  useEffect(() => {
+    const maxPage = Math.ceil(compras.length / itemsPerPage);
+    if (currentPage > maxPage && maxPage > 0) {
+      setCurrentPage(maxPage);
+    }
+  }, [compras, currentPage]);
 
   // --- HANDLERS ---
   const handleOpenCrear = () => {
@@ -218,6 +230,7 @@ export default function ComprasList() {
 
         const res = await api.post('/compras/requerimiento', payload);
         setCompras(prev => [res.data, ...prev]); // Agregamos al inicio de la lista visualmente
+        setCurrentPage(1); // Volver a la primera página para ver el nuevo item
         toast.success("Requerimiento creado. Se notificará al encargado de cotizar.");
       } else if (modalStep === 'cotizar') {
         const res = await api.put(`/compras/${selectedCompra._id}/cotizar`, { 
@@ -322,6 +335,12 @@ export default function ComprasList() {
     return <span className={`px-2 py-1 rounded-full text-xs font-bold uppercase ${styles[estado] || styles.pendiente}`}>{estado}</span>;
   };
 
+  // Lógica de Paginación
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = compras.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(compras.length / itemsPerPage);
+
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -335,7 +354,7 @@ export default function ComprasList() {
 
       {/* Vista Móvil: Tarjetas */}
       <div className="md:hidden space-y-4 mb-6">
-        {compras.map((compra) => (
+        {currentItems.map((compra) => (
           <div key={compra._id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
             <div className="flex justify-between items-start mb-3">
               <div>
@@ -400,7 +419,7 @@ export default function ComprasList() {
             </div>
           </div>
         ))}
-        {compras.length === 0 && (
+        {currentItems.length === 0 && (
            <div className="text-center py-8 text-gray-500 bg-white rounded-lg border border-dashed">No hay compras registradas.</div>
         )}
       </div>
@@ -418,7 +437,7 @@ export default function ComprasList() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {compras.map((compra) => (
+            {currentItems.map((compra) => (
               <tr key={compra._id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{compra.codigo}</td>
                 <td className="px-6 py-4 text-sm text-gray-500">
@@ -471,6 +490,31 @@ export default function ComprasList() {
           </tbody>
         </table>
       </div>
+
+      {/* Controles de Paginación */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center space-x-2 mt-6">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className={`p-2 rounded-md ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`}
+          >
+            <FaChevronLeft />
+          </button>
+          
+          <span className="text-sm text-gray-600">
+            Página {currentPage} de {totalPages}
+          </span>
+
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className={`p-2 rounded-md ${currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`}
+          >
+            <FaChevronRight />
+          </button>
+        </div>
+      )}
 
       {/* MODAL DINÁMICO */}
       {showModal && (

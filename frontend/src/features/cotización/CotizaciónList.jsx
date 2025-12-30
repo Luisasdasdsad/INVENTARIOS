@@ -351,8 +351,8 @@ const CotizaciónList = () => {
                   <p>
                     <span className="font-semibold">Total:</span>{" "}
                     {cotizacion.moneda === "SOLES"
-                      ? `S/ ${cotizacion.totalGeneral?.toFixed(2) || "0.00"}`
-                      : `${Math.round(cotizacion.totalGeneral || 0)} $`}
+                      ? `S/ ${(cotizacion.totalGeneral || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      : `${Math.round(cotizacion.totalGeneral || 0).toLocaleString('en-US')} $`}
                   </p>
                 </div>
 
@@ -435,8 +435,8 @@ const CotizaciónList = () => {
                       </td>
                       <td className="px-4 py-3 text-sm font-semibold text-secondary-900">
                         {cotizacion.moneda === "SOLES"
-                          ? `S/ ${cotizacion.totalGeneral?.toFixed(2) || "0.00"}`
-                          : `${Math.round(cotizacion.totalGeneral || 0)} $`}
+                          ? `S/ ${(cotizacion.totalGeneral || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                          : `${Math.round(cotizacion.totalGeneral || 0).toLocaleString('en-US')} $`}
                       </td>
                       <td className="px-4 py-3 text-sm text-secondary-500">
                         {cotizacion.factura ? (

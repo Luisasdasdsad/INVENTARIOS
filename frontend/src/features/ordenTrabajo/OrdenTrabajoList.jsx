@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
-import { FaSearch, FaPlay, FaCheck, FaClock, FaPrint, FaPlus, FaTrash, FaEdit, FaWhatsapp, FaEnvelope } from "react-icons/fa";
+import { FaSearch, FaPlay, FaCheck, FaClock, FaPrint, FaPlus, FaTrash, FaEdit, FaWhatsapp, FaEnvelope, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from 'react-hot-toast';
 import ModalConfirmacion from "../../components/ModalConfirmacion";
@@ -26,6 +26,11 @@ const OrdenTrabajoList = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const { user } = useAuth();
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   const [modalConfirmacion, setModalConfirmacion] = useState({
     show: false,
     title: "",
@@ -60,6 +65,11 @@ const OrdenTrabajoList = () => {
     (orden.cliente?.nombre || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
     orden.observaciones?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const handleCambiarEstado = async (id, nuevoEstado) => {
     try {
@@ -149,6 +159,12 @@ const OrdenTrabajoList = () => {
     return `https://mail.google.com/mail/?view=cm&fs=1&to=${email}`;
   };
 
+  // Lógica de Paginación
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredOrdenes.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredOrdenes.length / itemsPerPage);
+
   if (loading)
     return (
       <div className="text-center p-6 text-gray-600 animate-pulse">
@@ -205,7 +221,7 @@ const OrdenTrabajoList = () => {
         <div className="space-y-3 md:space-y-4">
           {/* Móvil - Tarjetas */}
           <div className="md:hidden space-y-3">
-            {filteredOrdenes.map((orden) => (
+            {currentItems.map((orden) => (
               <div
                 key={orden._id}
                 className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition"
@@ -348,7 +364,7 @@ const OrdenTrabajoList = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredOrdenes.map((orden) => (
+                  {currentItems.map((orden) => (
                     <tr
                       key={orden._id}
                       className="hover:bg-gray-50 transition"
@@ -497,6 +513,31 @@ const OrdenTrabajoList = () => {
               </table>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Controles de Paginación */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center space-x-2 mt-6">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className={`p-2 rounded-md ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`}
+          >
+            <FaChevronLeft />
+          </button>
+          
+          <span className="text-sm text-gray-600">
+            Página {currentPage} de {totalPages}
+          </span>
+
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className={`p-2 rounded-md ${currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`}
+          >
+            <FaChevronRight />
+          </button>
         </div>
       )}
 

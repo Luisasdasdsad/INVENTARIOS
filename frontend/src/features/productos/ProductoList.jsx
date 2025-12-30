@@ -59,8 +59,13 @@ export default function ProductoList() {
     setCurrentPage(1);
   }, [searchTerm, categoriaFilter]);
 
+  // Helper para normalizar texto (quitar tildes y minúsculas) para búsqueda flexible
+  const normalizeText = (text) => {
+    return text ? text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
+  };
+
   const filteredProductos = productos.filter(p =>
-    p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    normalizeText(p.nombre).includes(normalizeText(searchTerm)) &&
     (categoriaFilter === '' || p.categoria === categoriaFilter)
   );
 

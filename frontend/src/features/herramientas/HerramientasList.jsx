@@ -54,8 +54,13 @@ export default function HerramientasList() {
     fetchHerramientas();
   }, []);
 
+  // Helper para normalizar texto (quitar tildes y minúsculas) para búsqueda flexible
+  const normalizeText = (text) => {
+    return text ? text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
+  };
+
   const filteredHerramientas = herramientas.filter(h =>
-    h.nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    normalizeText(h.nombre).includes(normalizeText(searchTerm)) &&
     (tipoFilter === '' || h.tipo === tipoFilter)
   );
 

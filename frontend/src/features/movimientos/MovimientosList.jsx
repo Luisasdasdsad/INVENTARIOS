@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api.js';
-import { FaFilePdf, FaSignInAlt, FaSignOutAlt, FaDownload, FaRedo, FaPrint } from 'react-icons/fa';
+import { FaFilePdf, FaSignInAlt, FaSignOutAlt, FaDownload, FaRedo, FaPrint, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { generarReporteMovimientos as generarReporteMovimientosPDF, generarReporteMovimientoIndividual } from '../../utils/generarReporteMovimiento.js';
 import { toast } from 'react-hot-toast';
 
@@ -13,6 +13,10 @@ export default function MovimientosList() {
   const [pdfLoading, setPdfLoading] = useState(false);
   const [filtros, setFiltros] = useState({ movimientos: '', tipoHerramienta: '', fechaInicio: '', fechaFin:'' });
   const navigate = useNavigate();
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   
 
@@ -142,6 +146,12 @@ export default function MovimientosList() {
     );
   }
 
+  // Lógica de Paginación
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = movimientos.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(movimientos.length / itemsPerPage);
+
   return (
     <div className="p-2 md:p-4 lg:p-6 bg-white rounded shadow max-w-7xl mx-auto">
       {/* Header Responsive */}
@@ -244,7 +254,7 @@ export default function MovimientosList() {
         <>
           {/* Mobile: Cards */}
           <div className="md:hidden space-y-3">
-            {movimientos.map((mov) => (
+            {currentItems.map((mov) => (
               <div key={mov._id} className={`bg-white p-4 rounded-xl shadow-md border-l-4 ${mov.tipo === 'entrada' ? 'border-green-500' : 'border-red-500'}`}>
                 <div className="flex justify-between items-start mb-3">
                   <span
@@ -351,7 +361,7 @@ export default function MovimientosList() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {movimientos.map((mov) => (
+                  {currentItems.map((mov) => (
                     <tr key={mov._id} className="hover:bg-blue-50 transition-colors duration-150">
                       <td className="px-4 py-3 whitespace-nowrap">
                         <span
@@ -428,6 +438,31 @@ export default function MovimientosList() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Controles de Paginación */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center space-x-2 mt-6">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className={`p-2 rounded-md ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`}
+          >
+            <FaChevronLeft />
+          </button>
+          
+          <span className="text-sm text-gray-600">
+            Página {currentPage} de {totalPages}
+          </span>
+
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className={`p-2 rounded-md ${currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`}
+          >
+            <FaChevronRight />
+          </button>
+        </div>
       )}
 
       {/* Información de resultados */}

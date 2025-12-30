@@ -17,18 +17,20 @@ export const getMisNotificaciones = async (req, res) => {
 export const marcarComoLeida = async (req, res) => {
     try {
         const { id } = req.params;
-        await Notificacion.findByIdAndUpdate(id, { leido: true });
-        res.json({ msg: 'Notificación marcada como leída' });
+        // CAMBIO: En lugar de marcar como leída, la eliminamos para no almacenar historial
+        await Notificacion.findByIdAndDelete(id);
+        res.json({ msg: 'Notificación eliminada (leída)' });
     } catch (error) {
-        res.status(500).json({ msg: 'Error al actualizar notificación' });
+        res.status(500).json({ msg: 'Error al eliminar notificación' });
     }
 };
 
 export const marcarTodasLeidas = async (req, res) => {
     try {
-        await Notificacion.updateMany({ usuario: req.user.id, leido: false }, { leido: true });
-        res.json({ msg: 'Todas marcadas como leídas' });
+        // CAMBIO: Eliminar todas las notificaciones del usuario
+        await Notificacion.deleteMany({ usuario: req.user.id });
+        res.json({ msg: 'Todas las notificaciones eliminadas' });
     } catch (error) {
-        res.status(500).json({ msg: 'Error al actualizar notificaciones' });
+        res.status(500).json({ msg: 'Error al eliminar notificaciones' });
     }
 };
