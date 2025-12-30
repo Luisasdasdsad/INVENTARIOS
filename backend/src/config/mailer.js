@@ -14,20 +14,22 @@ export const enviarCorreo = async ({ to, subject, html }) => {
         }
 
         const transporter = nodemailer.createTransport({
-            host: "smtp.googlemail.com", // TRUCO: Usar este alias a veces evita bloqueos de IP
-            port: 587,                   // Volvemos al puerto estándar STARTTLS
-            secure: false,               // false es obligatorio para puerto 587
+            host: "smtp.gmail.com", // Volvemos a Gmail
+            port: 465,              // Puerto Seguro SSL (Mejor que 587 para Render)
+            secure: true,           // Requerido para puerto 465
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS
             },
-            tls: { rejectUnauthorized: false }, // Ayuda a evitar errores de certificados en la nube
-            family: 4, // IMPORTANTE: Fuerza IPv4
-            connectionTimeout: 10000 // Esperar hasta 10 segundos antes de rendirse
+            family: 4 // IMPORTANTE: Fuerza IPv4 para evitar timeouts en Render
         });
 
+        let remitente = process.env.EMAIL_USER;
+
+        console.log(`📧 Intento de envío: DE [${remitente}] PARA [${destinatario}]`);
+
         const mailOptions = {
-            from: `"Sistema de TEAM GAS" <${process.env.EMAIL_USER}>`,
+            from: `"Sistema de TEAM GAS" <${remitente}>`,
             to: destinatario, // Usamos la variable corregida
             subject,
             html

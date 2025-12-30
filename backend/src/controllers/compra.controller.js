@@ -291,7 +291,7 @@ export const evaluarCompra = async (req, res) => {
 
             for (const dest of destinatariosEmail) {
                 console.log(`[EvaluarCompra] Enviando correo a: ${dest.email}`);
-                await enviarCorreo({
+                const resultado = await enviarCorreo({
                     from: process.env.EMAIL_USER,
                     to: dest.email,
                     subject: `Requerimiento de Compra #${compra.codigo} ha sido ${decisionTexto}`,
@@ -303,7 +303,8 @@ export const evaluarCompra = async (req, res) => {
                         <p>Puedes ver los detalles en el sistema: <a href="${linkSistema}">Ingresar</a></p>
                     `
                 });
-                console.log(`[EvaluarCompra] Correo enviado a ${dest.email}`);
+                if (resultado) console.log(`[EvaluarCompra] ✅ Correo enviado EXITOSAMENTE a ${dest.email}`);
+                else console.error(`[EvaluarCompra] ❌ FALLÓ el envío a ${dest.email}`);
             }
         } catch (emailError) {
             console.error("Error al enviar correos de notificación:", emailError);
