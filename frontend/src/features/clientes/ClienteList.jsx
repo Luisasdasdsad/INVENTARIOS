@@ -74,6 +74,9 @@ const ClienteList = () => {
     setClienteEdit(null);
   };
 
+  // Usar el custom hook para la paginación
+  const { currentPage, setCurrentPage, totalPages, currentData: currentItems } = usePagination(filteredClientes, 12);
+
   if (loading)
     return (
       <div className="text-center p-6 text-gray-600 animate-pulse">
@@ -87,9 +90,6 @@ const ClienteList = () => {
         {error}
       </div>
     );
-
-  // Usar el custom hook para la paginación
-  const { currentPage, setCurrentPage, totalPages, currentData: currentItems } = usePagination(filteredClientes, 12);
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full">
