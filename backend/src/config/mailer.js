@@ -4,6 +4,16 @@ import { config } from  'dotenv';
 config();
 
 export const enviarCorreo = async ({ to, subject, html }) => {
+    // Si no estamos en producción, solo simulamos el envío en consola.
+    if (process.env.NODE_ENV !== 'production') {
+        console.log("----------------------------------------------------");
+        console.log(`📧 [SIMULACIÓN DE CORREO EN MODO DESARROLLO]`);
+        console.log(`PARA: ${to}`);
+        console.log(`ASUNTO: ${subject}`);
+        console.log("----------------------------------------------------");
+        return { messageId: `simulated_${Date.now()}` };
+    }
+
     try {
         // VALIDACIÓN PREVIA: Verificar que las credenciales existen en el entorno
         if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {

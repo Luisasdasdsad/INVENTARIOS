@@ -55,7 +55,12 @@ export const crearRequerimiento = async (req, res) => {
 
         // 🔔 NOTIFICACIÓN: Avisar a Administración y Logística que hay un nuevo requerimiento
         try {
-            const encargados = await Usuario.find({ rol: { $in: ['jefe_inventario', 'administracion', 'admin', 'superadmin'] } });
+            const encargados = await Usuario.find({ 
+                $or: [
+                    { rol: { $in: ['jefe_inventario', 'administracion', 'superadmin'] } }, // Se quitó 'admin' para evitar duplicidad
+                    { _id: "69128ebaed6ab6a97487f143" } // Usuario específico encargado de cotizar
+                ]
+            });
             const notificaciones = encargados.map(u => ({
                 usuario: u._id,
                 tipo: 'compra',
@@ -74,7 +79,8 @@ export const crearRequerimiento = async (req, res) => {
             const cotizadores = await Usuario.find({
                 $or: [
                     { email: { $in: EMAILS_COTIZADORES } },
-                    { rol: { $in: ['administracion', 'jefe_inventario', 'admin'] } }
+                    { rol: { $in: ['administracion', 'jefe_inventario'] } }, // Se quitó 'admin'
+                    { _id: "69128ebaed6ab6a97487f143" } // Usuario específico
                 ]
             }).select('email nombre');
 
@@ -157,7 +163,12 @@ export const registrarCotizacion = async (req, res) => {
 
         // 🔔 NOTIFICACIÓN: Avisar a Gerencia (Jefe Manuel/Admin) para aprobar
         try {
-            const aprobadores = await Usuario.find({ rol: { $in: ['admin', 'superadmin'] } });
+            const aprobadores = await Usuario.find({ 
+                $or: [
+                    { rol: { $in: ['superadmin'] } }, // Se quitó 'admin'
+                    { _id: "690b83dfb5649a16ce4ee9cf" } // Usuario específico encargado de aprobar
+                ]
+            });
             const notificaciones = aprobadores.map(u => ({
                 usuario: u._id,
                 tipo: 'compra',
@@ -175,7 +186,8 @@ export const registrarCotizacion = async (req, res) => {
             const aprobadores = await Usuario.find({
                 $or: [
                     { email: { $in: EMAILS_APROBADORES } },
-                    { rol: { $in: ['admin', 'superadmin'] } }
+                    { rol: { $in: ['superadmin'] } }, // Se quitó 'admin'
+                    { _id: "690b83dfb5649a16ce4ee9cf" } // Usuario específico
                 ]
             }).select('email nombre');
             

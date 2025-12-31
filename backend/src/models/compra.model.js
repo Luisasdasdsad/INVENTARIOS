@@ -22,6 +22,7 @@ const compraSchema = new mongoose.Schema({
     prioridad: { type: String, enum: [ 'baja', 'media', 'alta' ], default: 'media' },
     cotizador: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario" },
     proveedor: { type: mongoose.Schema.Types.ObjectId, ref: "Proveedor" },
+    proveedorNombre: { type: String }, // Nombre del proveedor (texto libre)
     cotizacion: { type: mongoose.Schema.Types.ObjectId, ref: "Cotizacion" }, // Enlace a la cotización de origen
     sustentoCotizacionUrl: { type: String },
     montoTotalEstimado: { type: Number },

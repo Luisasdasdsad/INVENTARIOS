@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import api from "../../services/api";
 import ClienteForm from "./ClienteForm";
 import Modal from "../../components/Modal/Modal";
-import { FaEdit, FaTrash, FaPlus, FaSearch, FaWhatsapp } from "react-icons/fa";
+import { FaEdit, FaTrash, FaPlus, FaSearch, FaWhatsapp, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import ModalConfirmacion from "../../components/ModalConfirmacion";
+import { usePagination } from "../../hooks/usePagination";
 
 const ClienteList = () => {
   const [clientes, setClientes] = useState([]);
@@ -32,7 +33,7 @@ const ClienteList = () => {
     }
   };
 
-  const filteredClientes = clientes.filter((cliente) =>
+  const filteredClientes = (clientes || []).filter((cliente) =>
     cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
     cliente.nombreComercial?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (cliente.tipoDoc === "RUC"
@@ -87,6 +88,9 @@ const ClienteList = () => {
       </div>
     );
 
+  // Usar el custom hook para la paginación
+  const { currentPage, setCurrentPage, totalPages, currentData: currentItems } = usePagination(filteredClientes, 12);
+
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full">
       {/* Header */}
@@ -130,7 +134,7 @@ const ClienteList = () => {
         <div className="space-y-3 md:space-y-4">
           {/* Móvil - Tarjetas */}
           <div className="md:hidden space-y-3">
-            {filteredClientes.map((cliente) => (
+            {currentItems.map((cliente) => (
               <div
                 key={cliente._id}
                 className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition"
@@ -202,7 +206,7 @@ const ClienteList = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredClientes.map((cliente) => (
+                  {currentItems.map((cliente) => (
                     <tr
                       key={cliente._id}
                       className="hover:bg-gray-50 transition"
@@ -254,6 +258,31 @@ const ClienteList = () => {
               </table>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Controles de Paginación */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center space-x-2 mt-6">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className={`p-2 rounded-md ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`}
+          >
+            <FaChevronLeft />
+          </button>
+          
+          <span className="text-sm text-gray-600">
+            Página {currentPage} de {totalPages}
+          </span>
+
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className={`p-2 rounded-md ${currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`}
+          >
+            <FaChevronRight />
+          </button>
         </div>
       )}
 

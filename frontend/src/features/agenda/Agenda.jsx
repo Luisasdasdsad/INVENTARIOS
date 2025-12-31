@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
-import { FaChevronLeft, FaChevronRight, FaCalendarDay, FaPlus } from 'react-icons/fa';
+import { FaPlus } from 'react-icons/fa';
 import ModalConfirmacion from '../../components/ModalConfirmacion';
 
 // FullCalendar imports
@@ -11,6 +11,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import resourceTimeGridPlugin from '@fullcalendar/resource-timegrid';
+import listPlugin from '@fullcalendar/list'; // Para la vista de lista en móvil
 import esLocale from '@fullcalendar/core/locales/es';
 
 const Agenda = () => {
@@ -21,7 +22,7 @@ const Agenda = () => {
   const [loading, setLoading] = useState(true);
   
   const [modalEliminar, setModalEliminar] = useState({ show: false, id: null });
-  const [modalNuevoEvento, setModalNuevoEvento] = useState({ show: false, selectInfo: null, title: '', selectedUserId: null });
+  const [modalNuevoEvento, setModalNuevoEvento] = useState({ show: false, startStr: '', endStr: '', allDay: false, title: '', selectedUserId: null });
   const [modalDetalle, setModalDetalle] = useState({ show: false, id: null, title: '', start: null, end: null, userId: null });
 
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
@@ -44,17 +45,32 @@ const Agenda = () => {
   }, [user]); // No necesitamos fechaSeleccionada aquí, FullCalendar la maneja
 
   const fetchData = async (showLoading = true) => {
+    if (!user) return;
     if (showLoading) setLoading(true);
     try {
+      const userId = user._id || user.id;
+
       // 1. Cargar Eventos (Accesible para todos)
       const resEventos = await api.get('/eventos');
       const eventosData = resEventos.data;
-      setEventos(eventosData);
+
+      // Filtrar: Admin ve todo, usuarios normales solo ven sus propios eventos
+      if (user.rol === 'admin' || user.rol === 'superadmin') {
+        setEventos(eventosData);
+      } else {
+        setEventos(eventosData.filter(ev => (ev.user?._id || ev.user) === userId));
+      }
 
       // 2. Intentar Cargar Usuarios (Puede fallar si no es admin)
       try {
         const resUsuarios = await api.get('/eventos/usuarios');
-        setUsuarios(resUsuarios.data);
+        
+        if (user.rol === 'admin' || user.rol === 'superadmin') {
+          setUsuarios(resUsuarios.data);
+        } else {
+          // Si no es admin, solo mostrarse a sí mismo en los recursos
+          setUsuarios(resUsuarios.data.filter(u => u._id === userId));
+        }
       } catch (err) {
         console.warn("No se pudo cargar lista de usuarios completa. Usando modo limitado.");
         
@@ -63,8 +79,8 @@ const Agenda = () => {
         
         // Agregar usuario actual
         if (user) {
-            usuariosMap.set(user.id, { 
-                _id: user.id, 
+            usuariosMap.set(userId, { 
+                _id: userId, 
                 nombre: user.nombre, 
                 rol: user.rol, 
                 estadoLaboral: 'disponible' // Valor por defecto si no se puede leer
@@ -97,31 +113,37 @@ const Agenda = () => {
 
   // Crear evento al seleccionar un rango de tiempo
   const handleSelect = (selectInfo) => {
+    // Intentar capturar el recurso (usuario) de la columna seleccionada
+    const resourceId = selectInfo.resource?.id;
+    const currentUserId = user?._id || user?.id;
+
     setModalNuevoEvento({ 
       show: true, 
-      selectInfo, 
+      startStr: selectInfo.startStr,
+      endStr: selectInfo.endStr,
+      allDay: selectInfo.allDay,
       title: '', 
-      selectedUserId: selectInfo.resource ? selectInfo.resource.id : user.id 
+      selectedUserId: resourceId || currentUserId // Priorizar columna, sino usuario actual
     });
   };
 
   const handleCrearEvento = async () => {
-    const { title, selectInfo, selectedUserId } = modalNuevoEvento;
+    const { title, startStr, endStr, allDay, selectedUserId } = modalNuevoEvento;
     if (!title || !title.trim()) return toast.error("El título es obligatorio");
 
     const newEvent = {
       title,
-      start: selectInfo.startStr,
-      end: selectInfo.endStr,
-      user: selectedUserId || user.id,
-      allDay: selectInfo.allDay
+      start: startStr,
+      end: endStr,
+      user: selectedUserId || (user?._id || user?.id),
+      allDay: allDay
     };
 
     try {
       const res = await api.post('/eventos', newEvent);
       setEventos(prev => [...prev, res.data]);
       toast.success("Actividad creada");
-      setModalNuevoEvento({ show: false, selectInfo: null, title: '' });
+      setModalNuevoEvento({ show: false, startStr: '', endStr: '', allDay: false, title: '', selectedUserId: null });
     } catch (error) {
       console.error("Error creando evento:", error);
       toast.error("No se pudo crear la actividad");
@@ -140,29 +162,37 @@ const Agenda = () => {
 
     setModalNuevoEvento({
       show: true,
-      selectInfo: {
-        startStr: start.toISOString(),
-        endStr: end.toISOString(),
-        allDay: false,
-        resource: { id: user.id } // Asigna al usuario actual
-      },
+      startStr: start.toISOString(),
+      endStr: end.toISOString(),
+      allDay: false,
       title: '',
-      selectedUserId: user.id
+      selectedUserId: user?._id || user?.id
     });
   };
 
   // Mover o redimensionar un evento
   const handleEventChange = async (changeInfo) => {
     const { event } = changeInfo;
+    const newResourceId = event.getResources()[0]?.id;
+
+    // Si no se puede determinar el nuevo recurso (usuario), revertir.
+    if (!newResourceId) {
+      toast.error("No se pudo asignar a un nuevo usuario. Intente de nuevo.");
+      changeInfo.revert();
+      return;
+    }
+
     const updatedEvent = {
       start: event.startStr,
       end: event.endStr,
-      user: event.getResources()[0]?.id || user.id // Obtener el recurso (usuario)
+      user: newResourceId // Asignar el ID del nuevo recurso (columna de usuario)
     };
 
     try {
       await api.put(`/eventos/${event.id}`, updatedEvent);
-      toast.success("Actividad actualizada");
+      // Refrescar los datos para asegurar que el cambio de usuario se refleje visualmente
+      fetchData(false);
+      toast.success(`Actividad reasignada y actualizada.`);
     } catch (error) {
       console.error("Error actualizando evento:", error);
       toast.error("No se pudo actualizar la actividad");
@@ -212,7 +242,8 @@ const Agenda = () => {
   };
 
   const handleEliminarDesdeDetalle = () => {
-    if (user.id !== modalDetalle.userId && user.rol !== 'admin' && user.rol !== 'superadmin') {
+    const currentUserId = user?._id || user?.id;
+    if (currentUserId !== modalDetalle.userId && user?.rol !== 'admin' && user?.rol !== 'superadmin') {
       toast.error("No tienes permiso para eliminar esta actividad.");
       return;
     }
@@ -258,6 +289,8 @@ const Agenda = () => {
     }
   }));
 
+  if (!user) return <div className="p-8 text-center text-gray-500">Cargando usuario...</div>;
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
       {/* Header y Navegación de Fecha */}
@@ -266,6 +299,13 @@ const Agenda = () => {
           <h1 className="text-2xl font-bold text-gray-800">Agenda del Equipo</h1>
           <p className="text-gray-500 text-sm">Haz clic en un horario para crear una actividad, o arrastra las existentes para modificarlas.</p>
         </div>
+        {/* Botón Manual para crear actividad sin depender del clic en calendario */}
+        <button
+          onClick={handleFabClick}
+          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center gap-2 shadow-sm transition-colors"
+        >
+          <FaPlus /> Nueva Actividad
+        </button>
       </div>
 
       {loading ? (
@@ -274,14 +314,14 @@ const Agenda = () => {
         <div className={`bg-white rounded-lg shadow-md border ${isMobile ? 'p-2' : 'p-4'}`}>
           <FullCalendar
             key={isMobile ? 'mobile' : 'desktop'}
-            plugins={[resourceTimeGridPlugin, interactionPlugin, dayGridPlugin, timeGridPlugin]}
+            plugins={[resourceTimeGridPlugin, interactionPlugin, dayGridPlugin, timeGridPlugin, listPlugin]}
             schedulerLicenseKey="CC-Attribution-NonCommercial-NoDerivatives"
             headerToolbar={{
               left: isMobile ? 'prev,next' : 'prev,next today',
               center: 'title',
-              right: isMobile ? 'timeGridDay,timeGridWeek,dayGridMonth' : 'resourceTimeGridDay,timeGridWeek,dayGridMonth'
+              right: isMobile ? 'listWeek,timeGridDay,dayGridMonth' : 'resourceTimeGridDay,timeGridWeek,dayGridMonth'
             }}
-            initialView={isMobile ? 'timeGridDay' : 'resourceTimeGridDay'}
+            initialView={isMobile ? 'listWeek' : 'resourceTimeGridDay'}
             initialDate={fechaSeleccionada}
             editable={true}
             selectable={true}
@@ -337,7 +377,8 @@ const Agenda = () => {
                   value={modalNuevoEvento.selectedUserId || ''}
                   onChange={(e) => setModalNuevoEvento({ ...modalNuevoEvento, selectedUserId: e.target.value })}
                 >
-                  {usuarios.map(u => (
+                  <option value={user?._id || user?.id}>Asignar a mí ({user?.nombre || 'Yo'})</option>
+                  {usuarios.filter(u => u._id !== (user?._id || user?.id)).map(u => (
                     <option key={u._id} value={u._id}>{u.nombre}</option>
                   ))}
                 </select>
@@ -353,19 +394,19 @@ const Agenda = () => {
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleCrearEvento();
-                if (e.key === 'Escape') setModalNuevoEvento({ show: false, selectInfo: null, title: '' });
+                if (e.key === 'Escape') setModalNuevoEvento({ show: false, startStr: '', endStr: '', allDay: false, title: '', selectedUserId: null });
               }}
             />
             <div className="flex justify-end gap-3">
               <button
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                onClick={() => setModalNuevoEvento({ show: false, selectInfo: null, title: '' })}
+                onClick={() => setModalNuevoEvento({ show: false, startStr: '', endStr: '', allDay: false, title: '', selectedUserId: null })}
               >
                 Cancelar
               </button>
               <button
                 className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                onClick={handleCrearEvento}
+                onClick={handleCrearEvento} 
               >
                 Guardar
               </button>

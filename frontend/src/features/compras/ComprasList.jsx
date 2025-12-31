@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
 import Modal from "../../components/Modal/Modal";
-import { FaPlus, FaCheck, FaTimes, FaFileInvoiceDollar, FaSearch, FaShoppingCart, FaEye, FaUpload, FaImage, FaTrash, FaEdit, FaPaperclip, FaFilePdf, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaPlus, FaCheck, FaTimes, FaFileInvoiceDollar, FaSearch, FaShoppingCart, FaEye, FaUpload, FaImage, FaTrash, FaEdit, FaPaperclip, FaFilePdf, FaChevronLeft, FaChevronRight, FaChartLine } from "react-icons/fa";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from 'react-hot-toast';
 import ModalConfirmacion from "../../components/ModalConfirmacion";
 import { generarReporteCompras } from "../../utils/generarReporteCompras";
+import { generarReporteGeneralCompras } from "../../utils/generarReporteGeneralCompras";
 
 // PEGA AQUÍ LA URL DE TU GOOGLE APPS SCRIPT (WEB APP)
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxsopO2QCw09B2pPx4bj1UVF7Z9QMvUhEM9479vkLjVyRNvfuBkwKOsI7IAJt_uYXaRag/exec";
@@ -26,6 +27,7 @@ export default function ComprasList() {
   const [cotizacionesAprobadas, setCotizacionesAprobadas] = useState([]);
   const [cotizacionId, setCotizacionId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false); // Estado para controlar el envío
+  const [proveedores, setProveedores] = useState([]); // Estado para lista de proveedores
 
   // Form States
   const [items, setItems] = useState([{ nombre: '', descripcion: '', cantidad: 1, unidad: 'und', foto: '', precioUnitario: 0 }]);
@@ -42,9 +44,17 @@ export default function ComprasList() {
     data: null
   });
 
+  // Estado para Reportes
+  const [mostrarReportes, setMostrarReportes] = useState(false);
+  const [filtrosReporte, setFiltrosReporte] = useState({
+    inicio: new Date().toISOString().slice(0, 8) + '01', // Primer día del mes actual
+    fin: new Date().toISOString().slice(0, 10) // Hoy
+  });
+
   useEffect(() => {
     fetchCompras();
     fetchCotizacionesAprobadas();
+    fetchProveedores();
   }, []);
 
   const fetchCompras = async () => {
@@ -67,6 +77,15 @@ export default function ComprasList() {
       console.error("Error cargando compras", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchProveedores = async () => {
+    try {
+      const res = await api.get("/proveedores");
+      setProveedores(res.data);
+    } catch (error) {
+      console.error("Error cargando proveedores", error);
     }
   };
 
@@ -99,6 +118,7 @@ export default function ComprasList() {
       asunto: compra.asunto,
       prioridad: compra.prioridad,
       proveedorNombre: compra.proveedorNombre || '',
+      proveedorId: compra.proveedor?._id || compra.proveedor || '',
       numeroFactura: '',
       montoFinal: compra.montoTotalEstimado || ''
     });
@@ -235,7 +255,8 @@ export default function ComprasList() {
       } else if (modalStep === 'cotizar') {
         const res = await api.put(`/compras/${selectedCompra._id}/cotizar`, { 
           items, 
-          proveedorNombre: formData.proveedorNombre
+          proveedorNombre: formData.proveedorNombre,
+          proveedor: formData.proveedorId || null // Enviamos el ID del proveedor seleccionado
         });
         setCompras(prev => prev.map(c => c._id === res.data._id ? res.data : c)); // Actualizamos el item en la lista
         toast.success("Cotización registrada. Se notificará al aprobador.");
@@ -323,6 +344,28 @@ export default function ComprasList() {
     generarReporteCompras(compra);
   };
 
+  const handleGenerarReporteGlobal = () => {
+    // Parsear fechas manualmente para respetar la zona horaria local y cubrir todo el día final
+    const [anioIni, mesIni, diaIni] = filtrosReporte.inicio.split('-').map(Number);
+    const inicio = new Date(anioIni, mesIni - 1, diaIni, 0, 0, 0, 0);
+
+    const [anioFin, mesFin, diaFin] = filtrosReporte.fin.split('-').map(Number);
+    const fin = new Date(anioFin, mesFin - 1, diaFin, 23, 59, 59, 999);
+
+    const comprasFiltradas = compras.filter(c => {
+      const fecha = new Date(c.createdAt);
+      // Filtrar por fecha y solo compras aprobadas o compradas (gastos reales)
+      return fecha >= inicio && fecha <= fin && ['aprobado', 'comprado'].includes(c.estado);
+    });
+
+    if (comprasFiltradas.length === 0) {
+      toast.error("No se encontraron compras aprobadas en este rango de fechas.");
+      return;
+    }
+
+    generarReporteGeneralCompras(comprasFiltradas, filtrosReporte.inicio, filtrosReporte.fin);
+  };
+
   // --- RENDER ---
   const getStatusBadge = (estado) => {
     const styles = {
@@ -347,10 +390,40 @@ export default function ComprasList() {
         <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
           <FaShoppingCart /> Gestión de Compras
         </h2>
-        <button onClick={handleOpenCrear} className="w-full sm:w-auto bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-orange-700">
-          <FaPlus /> Nuevo Requerimiento
-        </button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <button 
+            onClick={() => setMostrarReportes(!mostrarReportes)} 
+            className="w-full sm:w-auto bg-green-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-green-700 transition-colors"
+          >
+            <FaChartLine /> Reportes
+          </button>
+          <button onClick={handleOpenCrear} className="w-full sm:w-auto bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-orange-700 transition-colors">
+            <FaPlus /> Nuevo Requerimiento
+          </button>
+        </div>
       </div>
+
+      {/* Panel de Reportes */}
+      {mostrarReportes && (
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-green-200 mb-6 animate-fade-in-down">
+          <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+            <FaChartLine className="text-green-600" /> Generar Reporte de Gastos (Aprobados)
+          </h3>
+          <div className="flex flex-col sm:flex-row gap-4 items-end">
+            <div className="w-full sm:w-auto">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Fecha Inicio</label>
+              <input type="date" value={filtrosReporte.inicio} onChange={e => setFiltrosReporte({...filtrosReporte, inicio: e.target.value})} className="border rounded p-2 text-sm w-full" />
+            </div>
+            <div className="w-full sm:w-auto">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Fecha Fin</label>
+              <input type="date" value={filtrosReporte.fin} onChange={e => setFiltrosReporte({...filtrosReporte, fin: e.target.value})} className="border rounded p-2 text-sm w-full" />
+            </div>
+            <button onClick={handleGenerarReporteGlobal} className="bg-gray-800 text-white px-4 py-2 rounded text-sm hover:bg-gray-900 w-full sm:w-auto">
+              Descargar PDF
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Vista Móvil: Tarjetas */}
       <div className="md:hidden space-y-4 mb-6">
@@ -688,9 +761,24 @@ export default function ComprasList() {
               {/* Paso Cotización */}
               {modalStep === 'cotizar' && (
                 <div className="border-t pt-4">
-                  <label className="block text-sm font-medium text-gray-700">Nombre del Proveedor</label>
-                  <input type="text" value={formData.proveedorNombre} onChange={e => setFormData({...formData, proveedorNombre: e.target.value})} 
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Seleccionar Proveedor</label>
+                  <select 
+                    className="w-full border border-gray-300 rounded-md shadow-sm p-2 mb-2"
+                    value={formData.proveedorId || ''}
+                    onChange={(e) => {
+                      const selected = proveedores.find(p => p._id === e.target.value);
+                      setFormData({ 
+                        ...formData, 
+                        proveedorId: e.target.value, 
+                        proveedorNombre: selected ? selected.nombre : '' 
+                      });
+                    }}
+                  >
+                    <option value="">-- Seleccione o escriba abajo --</option>
+                    {proveedores.map(p => <option key={p._id} value={p._id}>{p.nombre}</option>)}
+                  </select>
+                  <input type="text" value={formData.proveedorNombre} onChange={e => setFormData({...formData, proveedorNombre: e.target.value, proveedorId: ''})} 
+                    className="block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="Nombre del proveedor (si no está en lista)" required />
                 </div>
               )}
 
