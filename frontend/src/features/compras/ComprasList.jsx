@@ -249,11 +249,21 @@ export default function ComprasList() {
         }
 
         // Preparamos el payload evitando enviar campos vacíos que puedan romper el backend
-        const payload = { 
-          ...formData, 
-          items: hasItems ? items : [], 
+        const payload = {
+          nombreObra: formData.nombreObra,
+          asunto: formData.asunto,
+          prioridad: formData.prioridad,
+          items: hasItems ? items.map(i => ({
+            ...i,
+            cantidad: Number(i.cantidad),
+            precioUnitario: Number(i.precioUnitario)
+          })) : [],
           archivosSolicitudUrls: archivoUrls
         };
+        
+        if (formData.proveedorNombre) payload.proveedorNombre = formData.proveedorNombre;
+        if (formData.numeroFactura) payload.numeroFactura = formData.numeroFactura;
+        if (formData.montoFinal) payload.montoFinal = Number(formData.montoFinal);
         if (cotizacionId) payload.cotizacion = cotizacionId;
 
         const res = await api.post('/compras/requerimiento', payload);
@@ -282,7 +292,7 @@ export default function ComprasList() {
       // fetchCompras(); // YA NO ES NECESARIO RECARGAR TODO
     } catch (error) {
       console.error(error);
-      toast.error("Error al guardar");
+      toast.error(error.response?.data?.msg || error.response?.data?.message || "Error al guardar");
     } finally {
       setIsSubmitting(false); // Desactivar carga al finalizar (éxito o error)
     }
