@@ -185,9 +185,11 @@ const Cotización = () => {
         }
       }
     } catch (error) {
-      console.error("Error al obtener tipo de cambio SUNAT:", error);
+      console.error("Error al obtener tipo de cambio SUNAT:", error.response?.data || error);
       if (showError) {
-        toast.error("No se pudo obtener el T.C. de SUNAT automáticamente. Por favor ingréselo manualmente.");
+        // Intentar mostrar el mensaje específico que devuelve el backend si existe
+        const msg = error.response?.data?.msg || error.response?.data?.message || error.response?.data?.error || "No se pudo obtener el T.C. de SUNAT automáticamente.";
+        toast.error(msg);
       }
     } finally {
       setLoadingSunat(false);

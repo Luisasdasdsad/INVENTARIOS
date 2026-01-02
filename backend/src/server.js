@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import axios from 'axios';
 import herramientasRoutes from './routes/herramienta.routes.js';
 import barcodeRoutes from './routes/barcode.routes.js';
 import qrRoutes from './routes/qr.routes.js';
@@ -17,7 +18,6 @@ import facturaRoutes from './routes/factura.routes.js';
 import proveedorRoutes from './routes/proveedor.routes.js';
 import movimientoProductoRoutes from './routes/movimientoProducto.routes.js';
 import notificacionRoutes from './routes/notificacion.routes.js';
-import https from 'https';
 import compraRoutes from "./routes/compra.routes.js";
 import uploadRoutes from './routes/upload.routes.js';
 import eventoRoutes from './routes/evento.routes.js';
@@ -68,24 +68,26 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/eventos', eventoRoutes);
 
 // Endpoint proxy para obtener tipo de cambio (evita CORS)
-app.get('/api/tipo-cambio', (req, res) => {
-  https.get('https://api.apis.net.pe/v1/tipo-cambio-sunat', (resp) => {
-    let data = '';
-    // Un fragmento de datos ha sido recibido.
-    resp.on('data', (chunk) => {
-      data += chunk;
+app.get('/api/tipo-cambio', async (req, res) => {
+  try {
+    // Usamos API Global (exchangerate-api) que es la que funciona correctamente
+    const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD', { timeout: 3000 });
+    const rate = response.data.rates.PEN;
+    
+    // Devolvemos el formato que tu frontend espera
+    res.json({
+      venta: rate,
+      compra: rate,
+      fecha: response.data.date,
+      origen: 'Mercado Global (Referencial)'
     });
-    // Toda la respuesta ha sido recibida.
-    resp.on('end', () => {
-      try {
-        res.json(JSON.parse(data));
-      } catch (e) {
-        res.status(500).json({ error: 'Error al procesar datos de SUNAT' });
-      }
+  } catch (error) {
+    console.error("Error al obtener tipo de cambio:", error.message);
+    res.status(500).json({ 
+      error: 'Error de red',
+      msg: 'No se pudo obtener el tipo de cambio automáticamente. Ingréselo manualmente.' 
     });
-  }).on("error", (err) => {
-    res.status(500).json({ error: "Error de conexión con SUNAT: " + err.message });
-  });
+  }
 });
 
 mongoose.connect(process.env.MONGO_URI)
