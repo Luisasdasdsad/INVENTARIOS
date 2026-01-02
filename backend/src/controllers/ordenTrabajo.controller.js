@@ -3,6 +3,29 @@ import Producto from "../models/producto.model.js";
 import Cotizacion from "../models/cotización.model.js";
 import Notificacion from "../models/notificacion.model.js"; // Importar modelo
 
+// Helper para generar número de OT con formato OT-YYYY-XXX
+const generarNumeroOT = async () => {
+    const currentYear = new Date().getFullYear();
+    const prefix = `OT-${currentYear}-`;
+
+    // Buscar la última OT que empiece con el prefijo del año actual (ej: OT-2026-)
+    const lastOT = await OrdenTrabajo.findOne({
+        numeroOT: new RegExp(`^${prefix}`)
+    }).sort({ numeroOT: -1 }); // Orden descendente para obtener el mayor
+
+    let nextNum = 1;
+    if (lastOT && lastOT.numeroOT) {
+        // Extraer la parte numérica final
+        const parts = lastOT.numeroOT.split('-');
+        const lastNumStr = parts[parts.length - 1];
+        const parsedNum = parseInt(lastNumStr, 10);
+        if (!isNaN(parsedNum)) nextNum = parsedNum + 1;
+    }
+
+    // Retornar formato: OT-2026-001
+    return `${prefix}${nextNum.toString().padStart(3, '0')}`;
+};
+
 export const crearOrdenTrabajo = async (req, res) => {
     try {
         const { numeroOT, cliente, productos, tecnicoAsignado, cotizacion, descripcionServicio, tareas, herramientas, fechaInicio, fechaFin, ubicacion, observaciones, instruccionesTecnico } = req.body;
@@ -25,31 +48,7 @@ export const crearOrdenTrabajo = async (req, res) => {
         // Generar número OT si no se proporcionó
         let numero = numeroOT;
         if (!numero) {
-            // Intentar obtener el máximo numérico a partir del campo numeroOT,
-            // manejando formatos como 'OT-001' y '001'. Si la conversión falla,
-            // hacer un fallback en JS para extraer dígitos.
-            try {
-                const maxOT = await OrdenTrabajo.aggregate([
-                    { $project: { nroNum: { $replaceAll: { input: "$numeroOT", find: "OT-", replacement: "" } } } },
-                    { $group: { _id: null, maxNum: { $max: { $toInt: "$nroNum" } } } }
-                ]);
-                const nextOT = maxOT.length > 0 && maxOT[0].maxNum ? maxOT[0].maxNum + 1 : 1;
-                numero = nextOT.toString().padStart(4, '0');
-            } catch (aggErr) {
-                console.warn('Aggregation to compute next OT failed, falling back to JS parse:', aggErr.message);
-                const docs = await OrdenTrabajo.find({}, 'numeroOT').lean();
-                let maxNum = 0;
-                for (const d of docs) {
-                    if (!d.numeroOT) continue;
-                    const m = (d.numeroOT + '').match(/(\d+)/);
-                    if (m) {
-                        const n = parseInt(m[0], 10);
-                        if (n > maxNum) maxNum = n;
-                    }
-                }
-                const nextOT = maxNum + 1;
-                numero = nextOT.toString().padStart(4, '0');
-            }
+            numero = await generarNumeroOT();
         }
 
         // --- VALIDACIÓN CORRECTA Y ÚNICA ---
@@ -128,9 +127,15 @@ export const crearOrdenTrabajo = async (req, res) => {
 
 export const listarOrdenesTrabajo = async (req, res) => {
     try {
-        const { tecnico, estado } = req.query;
+        const { tecnico, estado, year } = req.query;
 
         const filter = {};
+
+        if (year) {
+            const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
+            const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
+            filter.createdAt = { $gte: startDate, $lte: endDate };
+        }
 
         // role or query-based filters
         if (tecnico) filter.tecnicoAsignado = tecnico;
@@ -142,6 +147,7 @@ export const listarOrdenesTrabajo = async (req, res) => {
         }
 
         const orders = await OrdenTrabajo.find(filter)
+            .sort({ createdAt: -1 }) // Ordenar por fecha descendente
             .populate("tecnicoAsignado", "nombre email telefono celular")
             .populate("productos.producto", "nombre modelo stock")
             .populate("cotizacion")
@@ -330,28 +336,7 @@ export const crearDesdeCotizacion = async (req, res) => {
 
         // Generar número de OT (manejar formatos como 'OT-001')
         let numeroOT;
-        try {
-            const maxOT = await OrdenTrabajo.aggregate([
-                { $project: { nroNum: { $replaceAll: { input: "$numeroOT", find: "OT-", replacement: "" } } } },
-                { $group: { _id: null, maxNum: { $max: { $toInt: "$nroNum" } } } }
-            ]);
-            const nextOT = maxOT.length > 0 && maxOT[0].maxNum ? maxOT[0].maxNum + 1 : 1;
-            numeroOT = nextOT.toString().padStart(4, '0');
-        } catch (errAgg) {
-            console.warn('Aggregation to compute next OT failed (crearDesdeCotizacion), falling back to JS parse:', errAgg.message);
-            const docs = await OrdenTrabajo.find({}, 'numeroOT').lean();
-            let maxNum = 0;
-            for (const d of docs) {
-                if (!d.numeroOT) continue;
-                const m = (d.numeroOT + '').match(/(\d+)/);
-                if (m) {
-                    const n = parseInt(m[0], 10);
-                    if (n > maxNum) maxNum = n;
-                }
-            }
-            const nextOT = maxNum + 1;
-            numeroOT = nextOT.toString().padStart(4, '0');
-        }
+        numeroOT = await generarNumeroOT();
 
         const nuevaOT = new OrdenTrabajo({
             numeroOT,

@@ -9,10 +9,26 @@ const EMAILS_COTIZADORES = ['admiteamgassac@gmail.com'];
 const EMAILS_APROBADORES = ['gerencia@teamgas.pe']; // Correos que siempre reciben solicitud de aprobación
 
 const generarCodigo = async () => {
-    const last = await Compra.findOne().sort({ createdAt: -1 });
-    if(!last || !last.codigo) return "REQ-0001";
-    const num = parseInt(last.codigo.split('-')[1]) + 1;
-    return `REQ-${num.toString().padStart(4, '0')}`;
+    const currentYear = new Date().getFullYear();
+    const startDate = new Date(`${currentYear}-01-01T00:00:00.000Z`);
+    const endDate = new Date(`${currentYear}-12-31T23:59:59.999Z`);
+
+    // Buscar el último requerimiento creado ESTE AÑO
+    const lastCompra = await Compra.findOne({
+        createdAt: { $gte: startDate, $lte: endDate }
+    }).sort({ createdAt: -1 });
+
+    let nextNum = 1;
+    if (lastCompra && lastCompra.codigo) {
+        // Extraer el número final del formato (soporta REQ-0001 y REQ-2026-001)
+        const parts = lastCompra.codigo.split('-');
+        const lastNumStr = parts[parts.length - 1];
+        const parsedNum = parseInt(lastNumStr, 10);
+        if (!isNaN(parsedNum)) nextNum = parsedNum + 1;
+    }
+
+    // Retornar formato con año: REQ-2026-001
+    return `REQ-${currentYear}-${nextNum.toString().padStart(3, '0')}`;
 };
 
 export const crearRequerimiento = async (req, res) => {
@@ -120,7 +136,16 @@ export const crearRequerimiento = async (req, res) => {
 
 export const getCompras = async (req, res) => {
     try {
-        const compras = await Compra.find()
+        const { year } = req.query;
+        const filter = {};
+
+        if (year) {
+            const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
+            const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
+            filter.createdAt = { $gte: startDate, $lte: endDate };
+        }
+
+        const compras = await Compra.find(filter)
             .populate('solicitante', 'nombre')
             .populate('proveedor', 'nombre')
             .populate('cotizacion', 'numeroCotizacion descripcionServicio') // Poblar la cotización

@@ -69,7 +69,7 @@ const generarReporteOrdenTrabajo = async (ordenTrabajo) => {
         </div>
       </div>
       <div style="text-align: right;">
-        <h2 style="margin: 0; color: #333;">ORDEN DE TRABAJO N° ${numeroOT}</h2>
+        <h2 style="margin: 0; color: #333;">${numeroOT}</h2>
         <p style="margin: 0;">Fecha de Creación: ${formattedCreatedAt}</p>
       </div>
     </div>

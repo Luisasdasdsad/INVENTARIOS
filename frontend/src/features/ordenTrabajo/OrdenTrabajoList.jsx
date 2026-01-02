@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
-import { FaSearch, FaPlay, FaCheck, FaClock, FaPrint, FaPlus, FaTrash, FaEdit, FaWhatsapp, FaEnvelope, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaSearch, FaPlay, FaCheck, FaClock, FaPrint, FaPlus, FaTrash, FaEdit, FaWhatsapp, FaEnvelope, FaChevronLeft, FaChevronRight, FaFilter } from "react-icons/fa";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from 'react-hot-toast';
 import ModalConfirmacion from "../../components/ModalConfirmacion";
@@ -41,15 +41,19 @@ const OrdenTrabajoList = () => {
     data: null
   });
 
+  // Filtro de Año
+  const [yearFilter, setYearFilter] = useState(new Date().getFullYear());
+  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
+
   useEffect(() => {
     fetchOrdenes();
-  }, []);
+  }, [yearFilter]); // Recargar cuando cambia el año
 
   const fetchOrdenes = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get("/ordenes-trabajo");
+      const res = await api.get(`/ordenes-trabajo?year=${yearFilter}`);
       // El backend ya filtra según el rol del usuario
       setOrdenes(res.data);
     } catch (err) {
@@ -182,7 +186,7 @@ const OrdenTrabajoList = () => {
     <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <h2 className="text-2xl font-bold text-gray-800 tracking-tight">
             Mis Órdenes de Trabajo
           </h2>
@@ -198,15 +202,29 @@ const OrdenTrabajoList = () => {
           )}
         </div>
 
-        <div className="relative w-full sm:w-72">
-          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Buscar orden, cliente u observación..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 w-full text-sm md:text-base"
-          />
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          {/* Selector de Año */}
+          <div className="relative">
+            <FaFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <select
+              value={yearFilter}
+              onChange={(e) => setYearFilter(e.target.value)}
+              className="w-full sm:w-auto pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-700 font-medium h-[42px]"
+            >
+              {years.map(y => <option key={y} value={y}>Año {y}</option>)}
+            </select>
+          </div>
+
+          <div className="relative w-full sm:w-64">
+            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Buscar orden..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 w-full text-sm md:text-base h-[42px]"
+            />
+          </div>
         </div>
       </div>
 
@@ -228,7 +246,7 @@ const OrdenTrabajoList = () => {
               >
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-base font-bold text-gray-900">
-                    OT #{orden.numeroOT}
+                    {orden.numeroOT}
                   </h3>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getEstadoColor(orden.estado)}`}>
                     {getEstadoIcon(orden.estado)} {orden.estado.replace("_", " ")}
@@ -370,7 +388,7 @@ const OrdenTrabajoList = () => {
                       className="hover:bg-gray-50 transition"
                     >
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                        #{orden.numeroOT}
+                        {orden.numeroOT}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">
                         <div>

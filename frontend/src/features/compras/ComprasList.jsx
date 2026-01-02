@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
 import Modal from "../../components/Modal/Modal";
-import { FaPlus, FaCheck, FaTimes, FaFileInvoiceDollar, FaSearch, FaShoppingCart, FaEye, FaUpload, FaImage, FaTrash, FaEdit, FaPaperclip, FaFilePdf, FaChevronLeft, FaChevronRight, FaChartLine } from "react-icons/fa";
+import { FaPlus, FaCheck, FaTimes, FaFileInvoiceDollar, FaSearch, FaShoppingCart, FaEye, FaUpload, FaImage, FaTrash, FaEdit, FaPaperclip, FaFilePdf, FaChevronLeft, FaChevronRight, FaChartLine, FaFilter } from "react-icons/fa";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from 'react-hot-toast';
 import ModalConfirmacion from "../../components/ModalConfirmacion";
@@ -51,15 +51,23 @@ export default function ComprasList() {
     fin: new Date().toISOString().slice(0, 10) // Hoy
   });
 
+  // Filtro de Año para la lista principal
+  const [yearFilter, setYearFilter] = useState(new Date().getFullYear());
+  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i); // [2026, 2025, 2024...]
+
   useEffect(() => {
     fetchCompras();
+  }, [yearFilter]); // Recargar cuando cambia el año
+
+  useEffect(() => {
     fetchCotizacionesAprobadas();
     fetchProveedores();
   }, []);
 
   const fetchCompras = async () => {
+    setLoading(true);
     try {
-      const res = await api.get("/compras"); // Asegúrate de crear esta ruta en backend
+      const res = await api.get(`/compras?year=${yearFilter}`);
       setCompras(res.data);
     } catch (error) {
       console.error("Error cargando compras", error);
@@ -391,6 +399,18 @@ export default function ComprasList() {
           <FaShoppingCart /> Gestión de Compras
         </h2>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          {/* Selector de Año */}
+          <div className="relative">
+            <FaFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <select
+              value={yearFilter}
+              onChange={(e) => setYearFilter(e.target.value)}
+              className="w-full sm:w-auto pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-700 font-medium h-[42px]"
+            >
+              {years.map(y => <option key={y} value={y}>Año {y}</option>)}
+            </select>
+          </div>
+
           <button 
             onClick={() => setMostrarReportes(!mostrarReportes)} 
             className="w-full sm:w-auto bg-green-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-green-700 transition-colors"

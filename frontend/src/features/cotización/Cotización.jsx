@@ -68,19 +68,6 @@ const Cotización = () => {
     fetchProductos();
     fetchHerramientas();
 
-    // Cargar el siguiente número de cotización si es una nueva
-    const fetchNextNumber = async () => {
-      if (!cotizacionEdit) {
-        try {
-          const res = await api.get("/cotizaciones/next-number");
-          setNumeroCotizacion(res.data.numeroCotizacion);
-        } catch (error) {
-          console.error("Error al obtener el siguiente número de cotización:", error);
-        }
-      }
-    };
-
-    fetchNextNumber();
     if (cotizacionEdit) {
       setIsEditing(true);
       setClienteSeleccionado(cotizacionEdit.cliente._id);
@@ -112,6 +99,23 @@ const Cotización = () => {
       setValidez(parseInt(cotizacionEdit.validez) || 15);
     }
   }, [cotizacionEdit]);
+
+  // === Obtener correlativo dinámico por año (Reinicio 2026) ===
+  const year = fecha.split("-")[0]; // Extraer año de la fecha seleccionada
+  useEffect(() => {
+    const fetchNextNumber = async () => {
+      if (!cotizacionEdit) {
+        try {
+          // Enviamos el año al backend para que reinicie la numeración (ej: COT-2026-001)
+          const res = await api.get(`/cotizaciones/next-number?year=${year}`);
+          setNumeroCotizacion(res.data.numeroCotizacion);
+        } catch (error) {
+          console.error("Error al obtener el siguiente número de cotización:", error);
+        }
+      }
+    };
+    fetchNextNumber();
+  }, [cotizacionEdit, year]); // Se ejecuta cuando cambia el año o el modo edición
 
   // === Manejo de productos ===
   const handleProductoChange = (index, campo, valor) => {

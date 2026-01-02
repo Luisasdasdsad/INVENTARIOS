@@ -85,7 +85,7 @@ const generarReporteCotizacion = async (cotizacion) => {
         </div>
       </div>
       <div style="text-align: right;">
-        <h2 style="margin: 0; color: #333;">COTIZACIÓN N° ${numeroCotizacion}</h2>
+        <h2 style="margin: 0; color: #333;">${numeroCotizacion}</h2>
         <p style="margin: 0;">Fecha: ${fecha}</p>
       </div>
     </div>

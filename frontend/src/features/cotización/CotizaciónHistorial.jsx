@@ -10,8 +10,8 @@ const CotizaciónHistorial = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filtros, setFiltros] = useState({
-    fechaDesde: "",
-    fechaHasta: "",
+    fechaDesde: `${new Date().getFullYear()}-01-01`, // Inicio del año actual (2026)
+    fechaHasta: `${new Date().getFullYear()}-12-31`, // Fin del año actual
     page: 1
   });
   const [paginacion, setPaginacion] = useState({});

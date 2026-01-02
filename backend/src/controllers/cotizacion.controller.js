@@ -1,18 +1,39 @@
 import Cotizacion from "../models/cotización.model.js";
 
 // 💡 FUNCIÓN INTERNA REUTILIZABLE para obtener el siguiente número de cotización
-const getNextNumber = async () => {
+const getNextNumber = async (year) => {
   try {
+    // Definir el rango de fechas para el año solicitado (o el actual por defecto)
+    const currentYear = year || new Date().getFullYear();
+    const startDate = new Date(`${currentYear}-01-01T00:00:00.000Z`);
+    const endDate = new Date(`${currentYear}-12-31T23:59:59.999Z`);
+
     const maxCotizacion = await Cotizacion.aggregate([
-      // PASO 1: Intentar convertir 'numeroCotizacion' a número. Si falla, se vuelve null.
+      // PASO 0: Filtrar solo las cotizaciones de ese año
       {
-        $project: {
-          numero: { $toInt: "$numeroCotizacion" }
+        $match: {
+          fecha: { $gte: startDate, $lte: endDate }
         }
       },
-      // PASO 2: Filtrar solo los que se pudieron convertir (no son null).
+      // PASO 1: Extraer la parte numérica. Soporta formatos "001" y "COT-2026-001"
       {
-        $match: { numero: { $ne: null } }
+        $project: {
+          // Dividimos por guión "-" y tomamos la última parte
+          parts: { $split: ["$numeroCotizacion", "-"] }
+        }
+      },
+      {
+        $project: {
+          // Convertimos la última parte a entero de forma segura
+          numero: { 
+            $convert: { 
+              input: { $arrayElemAt: ["$parts", -1] }, 
+              to: "int", 
+              onError: 0, 
+              onNull: 0 
+            } 
+          }
+        }
       },
       // PASO 3: Agrupar para encontrar el máximo.
       {
@@ -20,20 +41,21 @@ const getNextNumber = async () => {
       }
     ]);
     const nextNum = maxCotizacion.length > 0 ? maxCotizacion[0].maxNum + 1 : 1;
-    return nextNum.toString().padStart(4, '0');
+    // 💡 RETORNO SEGURO: Agregamos prefijo del año (ej: COT-2026-001) para evitar duplicados
+    return `COT-${currentYear}-${nextNum.toString().padStart(3, '0')}`;
   } catch (error) {
     console.error("Error en getNextNumber:", error);
-    // Si la agregación falla por alguna razón, recurrimos a un método más simple
-    const lastCotizacion = await Cotizacion.findOne().sort({ numeroCotizacion: -1 });
-    const nextNum = lastCotizacion && !isNaN(lastCotizacion.numeroCotizacion) ? parseInt(lastCotizacion.numeroCotizacion) + 1 : 1;
-    return nextNum.toString().padStart(4, '0');
+    // Fallback seguro en caso de error
+    return `COT-${year || new Date().getFullYear()}-001`;
   }
 };
 
 // 🆕 Obtener el siguiente número de cotización (Endpoint)
 export const getNextCotizacionNumber = async (req, res) => {
   try {
-    const numeroCotizacion = await getNextNumber();
+    // Recibir el año desde el frontend (req.query.year)
+    const { year } = req.query;
+    const numeroCotizacion = await getNextNumber(year);
     res.json({ numeroCotizacion });
   } catch (error) {
     res.status(500).json({ msg: "Error al obtener el siguiente número de cotización", error: error.message });
@@ -43,8 +65,9 @@ export const getNextCotizacionNumber = async (req, res) => {
 // Crear cotización (asigna automáticamente al usuario autenticado)
 export const createCotizacion = async (req, res) => {
   try {
-    // 💡 Usar la función interna para obtener el número de cotización
-    const numeroCotizacion = await getNextNumber();
+    // 💡 Extraer el año de la fecha de la cotización para generar el correlativo correcto
+    const year = req.body.fecha ? new Date(req.body.fecha).getFullYear() : new Date().getFullYear();
+    const numeroCotizacion = await getNextNumber(year);
 
     // Asignar el número generado y el usuario responsable
     req.body.numeroCotizacion = numeroCotizacion;

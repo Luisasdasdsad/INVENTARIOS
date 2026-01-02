@@ -74,7 +74,7 @@ export default function OrdenTrabajoDetalle() {
             <FaArrowLeft />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Orden #{orden.numeroOT}</h1>
+            <h1 className="text-2xl font-bold text-gray-800">{orden.numeroOT}</h1>
             <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getEstadoColor(orden.estado)}`}>
               {orden.estado?.toUpperCase().replace('_', ' ')}
             </span>
