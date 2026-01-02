@@ -34,6 +34,8 @@ export default function ComprasList() {
   const [formData, setFormData] = useState({ nombreObra: '', asunto: '', prioridad: 'media', proveedorNombre: '', numeroFactura: '', montoFinal: '' });
   const [evaluacionComentario, setEvaluacionComentario] = useState('');
   const [archivosSolicitud, setArchivosSolicitud] = useState([]); // Estado para los archivos de requerimiento
+  const [archivoCotizacion, setArchivoCotizacion] = useState(null); // NUEVO: Estado para el archivo de sustento de cotización
+  const [cotizacionNota, setCotizacionNota] = useState(''); // NUEVO: Nota para cotización
   const [modalConfirmacion, setModalConfirmacion] = useState({
     show: false,
     title: "",
@@ -113,6 +115,8 @@ export default function ComprasList() {
     setFormData({ nombreObra: '', asunto: '', prioridad: 'media', proveedorNombre: '', numeroFactura: '', montoFinal: '' });
     setCotizacionId('');
     setArchivosSolicitud([]);
+    setArchivoCotizacion(null);
+    setCotizacionNota('');
     setShowModal(true);
   };
 
@@ -130,6 +134,8 @@ export default function ComprasList() {
       numeroFactura: '',
       montoFinal: compra.montoTotalEstimado || ''
     });
+    setArchivoCotizacion(null);
+    setCotizacionNota('');
     setShowModal(true);
   };
 
@@ -216,6 +222,21 @@ export default function ComprasList() {
     return urls;
   };
 
+  // NUEVO: Helper para subir un solo archivo (Cotización)
+  const uploadSingleFile = async (file) => {
+    try {
+      const base64 = await fileToBase64(file);
+      const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ filename: file.name, mimeType: file.type, fileBase64: base64 })
+      });
+      const data = await response.json();
+      return data.status === 'success' ? data.url : null;
+    } catch (error) {
+      throw new Error(`Error al subir ${file.name}`);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting) return; // Evitar doble clic
@@ -234,30 +255,34 @@ export default function ComprasList() {
            archivoUrls = uploadedUrls;
         }
 
-        const hasItems = items && items.length > 0 && items.some(i => i.nombre.trim());
+        // 1. Filtramos solo los items que el usuario haya escrito (que tengan nombre)
+        const validItems = items.filter(i => i.nombre && i.nombre.trim() !== '');
         
-        if (!hasItems && archivoUrls.length === 0) {
+        if (validItems.length === 0 && archivoUrls.length === 0) {
           toast.error("Debes agregar al menos un ítem o subir un archivo con la lista.");
           setIsSubmitting(false);
           return;
         }
 
-        if (hasItems && items.some(i => i.nombre && i.cantidad <= 0)) {
+        if (validItems.some(i => i.cantidad <= 0)) {
            toast.error("Los items deben tener cantidad mayor a 0.");
            setIsSubmitting(false);
            return;
         }
+
+        // 2. Si hay items manuales, los usamos. Si NO hay items pero SÍ hay archivo, creamos un item automático.
+        const itemsPayload = validItems.length > 0 ? validItems.map(i => ({
+          ...i,
+          cantidad: Number(i.cantidad),
+          precioUnitario: Number(i.precioUnitario)
+        })) : [{ nombre: "Ver archivos adjuntos", descripcion: "Detalle en documentos adjuntos", cantidad: 1, unidad: "GLB", precioUnitario: 0 }];
 
         // Preparamos el payload evitando enviar campos vacíos que puedan romper el backend
         const payload = {
           nombreObra: formData.nombreObra,
           asunto: formData.asunto,
           prioridad: formData.prioridad,
-          items: hasItems ? items.map(i => ({
-            ...i,
-            cantidad: Number(i.cantidad),
-            precioUnitario: Number(i.precioUnitario)
-          })) : [],
+          items: itemsPayload,
           archivosSolicitudUrls: archivoUrls
         };
         
@@ -271,10 +296,19 @@ export default function ComprasList() {
         setCurrentPage(1); // Volver a la primera página para ver el nuevo item
         toast.success("Requerimiento creado. Se notificará al encargado de cotizar.");
       } else if (modalStep === 'cotizar') {
+        // Subir archivo de cotización si existe
+        let cotizacionUrl = '';
+        if (archivoCotizacion) {
+           const url = await uploadSingleFile(archivoCotizacion);
+           if (url) cotizacionUrl = url;
+        }
+
         const res = await api.put(`/compras/${selectedCompra._id}/cotizar`, { 
           items, 
           proveedorNombre: formData.proveedorNombre,
-          proveedor: formData.proveedorId || null // Enviamos el ID del proveedor seleccionado
+          proveedor: formData.proveedorId || null, // Enviamos el ID del proveedor seleccionado
+          archivoCotizacionUrl: cotizacionUrl, // Enviamos la URL del archivo al backend
+          comentarios: cotizacionNota // Enviamos la nota como comentario
         });
         setCompras(prev => prev.map(c => c._id === res.data._id ? res.data : c)); // Actualizamos el item en la lista
         toast.success("Cotización registrada. Se notificará al aprobador.");
@@ -687,7 +721,8 @@ export default function ComprasList() {
                 </div>
               )}
 
-              {/* Lista de Items */}
+              {/* Lista de Items (Ocultar si es solo archivo en cotizar/aprobar) */}
+              {!(items.length === 1 && items[0].nombre === "Ver archivos adjuntos" && (modalStep === 'cotizar' || modalStep === 'aprobar')) && (
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h4 className="font-medium mb-2">Items Requeridos</h4>
                 {items.map((item, idx) => (
@@ -787,9 +822,24 @@ export default function ComprasList() {
                   </div>
                 )}
               </div>
+              )}
 
               {/* Paso Cotización */}
               {modalStep === 'cotizar' && (
+                <div className="border-t pt-4 mb-4">
+                  {/* 1. Ver archivos originales para poder cotizar */}
+                  {selectedCompra?.archivosSolicitudUrls?.length > 0 && (
+                    <div className="mb-4 bg-blue-50 p-3 rounded border border-blue-100">
+                      <label className="block text-xs font-bold text-blue-800 mb-2">Archivos de Solicitud (Referencia):</label>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedCompra.archivosSolicitudUrls.map((url, idx) => (
+                          <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs bg-white text-blue-600 px-2 py-1 rounded border border-blue-200 hover:bg-blue-50">
+                            <FaPaperclip /> Ver Archivo {idx + 1}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 <div className="border-t pt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Seleccionar Proveedor</label>
                   <select 
@@ -810,6 +860,35 @@ export default function ComprasList() {
                   <input type="text" value={formData.proveedorNombre} onChange={e => setFormData({...formData, proveedorNombre: e.target.value, proveedorId: ''})} 
                     className="block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="Nombre del proveedor (si no está en lista)" required />
                 </div>
+
+                  {/* 2. Subir archivo de cotización (Sustento) */}
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Adjuntar Cotización del Proveedor (PDF/Imagen)</label>
+                    <input 
+                      type="file" 
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => setArchivoCotizacion(e.target.files[0])}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                    />
+                    {archivoCotizacion && (
+                      <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                        <FaCheck /> Archivo seleccionado: {archivoCotizacion.name}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* 3. Nota de Cotización (Opcional) */}
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Nota / Observación (Opcional)</label>
+                    <textarea
+                      rows={2}
+                      value={cotizacionNota}
+                      onChange={(e) => setCotizacionNota(e.target.value)}
+                      className="block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm"
+                      placeholder="Ej: Se revisó el Excel adjunto y se actualizaron los precios ahí mismo."
+                    />
+                  </div>
+                </div>
               )}
 
               {/* Ver Detalles: Mostrar Comentarios si existen */}
@@ -822,6 +901,39 @@ export default function ComprasList() {
 
               {/* Paso Aprobar: Comentarios */}
               {modalStep === 'aprobar' && (
+                <div className="mb-4">
+                  {/* Mostrar archivos originales */}
+                  {selectedCompra?.archivosSolicitudUrls?.length > 0 && (
+                    <div className="mb-2">
+                      <label className="block text-xs font-bold text-gray-700 mb-1">Archivos Solicitados:</label>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedCompra.archivosSolicitudUrls.map((url, idx) => (
+                          <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs bg-gray-100 text-blue-600 px-2 py-1 rounded border hover:bg-gray-200">
+                            <FaPaperclip /> Ver Solicitud {idx + 1}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Mostrar archivo de cotización si existe */}
+                  {selectedCompra?.archivoCotizacionUrl && (
+                    <div className="mb-4 bg-green-50 p-3 rounded border border-green-100">
+                      <label className="block text-xs font-bold text-green-800 mb-1">Sustento de Cotización (Proveedor):</label>
+                      <a href={selectedCompra.archivoCotizacionUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm font-medium text-green-700 hover:underline">
+                        <FaFilePdf /> Ver Archivo de Cotización Adjunto
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Mostrar Nota de Cotización si existe (usando campo comentarios) */}
+                  {selectedCompra?.comentarios && (
+                    <div className="mb-4 bg-yellow-50 p-3 rounded border border-yellow-100">
+                      <label className="block text-xs font-bold text-yellow-800 mb-1">Nota de Cotización / Observación:</label>
+                      <p className="text-sm text-yellow-800">{selectedCompra.comentarios}</p>
+                    </div>
+                  )}
+
                 <div className="border-t pt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Nota de Evaluación <span className="text-xs text-gray-500 font-normal">(Opcional para aprobar, obligatorio para rechazar)</span></label>
                   <textarea 
@@ -830,6 +942,7 @@ export default function ComprasList() {
                     className="w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                     rows={3} 
                     placeholder="Ingrese observaciones o motivos de la decisión..." />
+                </div>
                 </div>
               )}
 
