@@ -67,7 +67,6 @@ export default function AppRouter() {
           <Route path="/" element={<PrivateRoute allowedRoles={['admin', 'superadmin', 'administracion']} />}>
           <Route path="clientes" element={<ClienteList />} />
           <Route path="proveedores" element={<ProveedorList />} />
-          <Route path="cotizaciones" element={<Cotización />} />
           </Route>
 
           {/* Ruta para 404 */}

@@ -207,7 +207,7 @@ export default function DashboardLayout() {
           {user?.rol !== 'tecnico' && user?.rol !== 'ingeniero' && user?.rol !== 'jefe_inventario' && (
             <NavGroup title="Ventas" icon={FaFileInvoiceDollar} id="ventas">
               {/* Nueva Cotización - Solo Admin */}
-              {(user.rol === 'admin' || user.rol === 'superadmin' || user.rol === 'administracion') && (
+              {['admin', 'superadmin', 'administracion'].includes(user.rol) && (
                 <Link to="/cotización" onClick={handleNavClick} className="flex items-center gap-3 p-2 rounded-lg hover:bg-green-50 text-secondary-600 hover:text-green-700 transition-colors">
                   <FaPlus size={14} /> <span className="text-sm">Nueva Cotización</span>
                 </Link>
@@ -258,7 +258,7 @@ export default function DashboardLayout() {
           )}
 
           {/* --- SECCIÓN GESTIÓN (Admin) --- */}
-          {user && (user.rol === 'admin' || user.rol === 'superadmin' || user.rol === 'administracion') && (
+          {user && ['admin', 'superadmin', 'administracion'].includes(user.rol) && (
             <NavGroup title="Gestión" icon={FaCogs} id="gestion">
               <Link to="/clientes" onClick={handleNavClick} className="flex items-center gap-3 p-2 rounded-lg hover:bg-primary-50 text-secondary-600 hover:text-primary-700 transition-colors">
                 <FaUsers size={14} /> <span className="text-sm">Clientes</span>

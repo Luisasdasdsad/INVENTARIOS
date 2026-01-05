@@ -13,7 +13,7 @@ const router = express.Router();
 router.use(auth);
 
 // Solo los administradores pueden gestionar proveedores
-router.use(requireRole(['admin']));
+router.use(requireRole(['admin', 'superadmin', 'administracion']));
 
 router.post("/", createProveedor);
 router.get("/", getProveedores);

@@ -7,7 +7,7 @@ const router = express.Router();
 // Todas las rutas de este archivo requieren autenticación
 router.use(auth);
 // Y además, requieren que el usuario tenga el rol de 'admin'
-router.use(requireRole(['admin']));
+router.use(requireRole(['admin', 'superadmin', 'administracion']));
 
 // Crear cliente
 router.post("/", createCliente);
